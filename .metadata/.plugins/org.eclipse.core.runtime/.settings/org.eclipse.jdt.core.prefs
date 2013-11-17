@@ -1,10 +1,11 @@
-#Sun Oct 06 10:12:39 EDT 2013
+#Sun Nov 17 02:43:33 EST 2013
 org.eclipse.jdt.core.classpathVariable.JDK=C\:/Program Files/Java/jdk1.6.0_45
 org.eclipse.jdt.core.compiler.compliance=1.6
 org.eclipse.jdt.core.classpathVariable.SynJar=Z\:/Dropbox/Private/Synx/Syn/Syn.jar
 org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode=enabled
 org.eclipse.jdt.core.classpathVariable.JUNIT_HOME=C\:/Users/Robyn/Desktop/Development/1-Desktop/Utils-Down-Prog/e/plugins/org.junit_3.8.2.v3_8_2_v20100427-1100/
 org.eclipse.jdt.core.classpathVariable.Zync=Z\:/Dropbox/Private/Zen/workspace/Zync
+org.eclipse.jdt.core.classpathVariable.Wakfu=C\:/Program Files (x86)/Wakfu
 eclipse.preferences.version=1
 org.eclipse.jdt.core.classpathVariable.ECLIPSE_HOME=C\:/Users/Robyn/Desktop/Development/1-Desktop/Utils-Down-Prog/e
 org.eclipse.jdt.core.classpathVariable.Zen=Z\:/Dropbox/Private/Zen/workspace/Zen
