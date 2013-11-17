@@ -1,0 +1,58 @@
+	NEURON 							|   		THRESHOLD
+
+
+
+MOVING & SPELLING
+
+	|- ATTACKING
+- vers celui avec le moins de vie						
+- vers celui avec le plus de vie
+- vers celui le plus près
+- vers celui le plus loin.
+- vers celui à qui on peut causer le plus de dommages possibles
+- vers celui dans une zone de gens auxquels on peut causer le plus de dommages totals possibles
+- vers celui qu'on peut tuer
+- vers celui d'ou on peut tuer le plus de personnes
+- vers celui qui est un invocateur 
+- vers celui qui est une invocation
+- vers celui qui cause le moins de dommages
+- vers celui qui cause le plus de dommages
+- vers celui qu'on peut tacler
+- vers celui qui cause le plus de dommages
+- vers celui qui cause le moins de dommages
+- vers celui qui cause le plus d'entrave à nous (buffs négatifs, -PA, -PM.. sur nous)
+- vers celui qui boost le plus son équipe  (buffs positifs, +PA, +PM.. sur son équipe)
+- vers celui qui heal le plus son équipe
+- Vers une zone dans laquelle un gars invisible pourrait être 
+	- avec une chance sur X de réduire la zone en fonction du "flair" du monstre 
+		- pour trouver l'emplacement exact du gars invi.
+
+
+	|- Escaping
+- vers l'extérieur, à l'opposé des méchants.
+- vers l'extérieur, à l'opposé des méchants, en les gardant à portée
+- vers l'extérieur, à l'opposé des méchants, en les gardant à portée en prédisant leur prochain déplacement vers nous
+	
+	|- Healing
+- vers celui qui a le moins de vie
+- vers celui le plus proche
+- vers celui le plus susceptible de mourrir aux prochains tours en prédisant les dommages des adversaires
+
+	|- Buffing
+- vers celui qui a le moins de vie
+- vers celui qui a le moins de résistances/plus susceptible de mourrir
+- vers celui qui cause le plus de dommages
+- vers celui qui cause le moins de dommages
+- vers celui qui gagne le plus de dommages grace au buff
+
+
+
+
+
+
+
+
+
+
+
+

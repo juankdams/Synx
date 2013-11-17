@@ -1,0 +1,18 @@
+
+
+
+#To create the Header.h file:    (HelloWorld = java.class file)
+javah -jni HelloWorld
+
+
+#To Compile HelloWorldImp.c to libHelloWorldImp.so:
+g++ -I/usr/lib/jvm/jdk1.6.0_45/include -I/usr/lib/jvm/jdk1.6.0_45/include/linux -fPIC -shared HelloWorldImp.c -o libHelloWorldImp.so
+
+
+#To load the C library into java:   (it will load libHelloWorld.so)
+static {  System.loadLibrary("HelloWorldImp");  }
+
+
+#Dont forget:  (NewTests = the directory containing the libHelloWorld.so file)
+set the VM arguments to : -Djava.library.path=/media/Synz/Dropbox/Private/Synx/NewTests
+

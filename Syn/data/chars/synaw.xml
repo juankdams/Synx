@@ -1,0 +1,27 @@
+<player>
+  <name>Synaw</name>
+  <displayName>Synaw</displayName>
+  <password>z</password>
+  <characters>
+    <character>
+      <id>-431814805</id>
+      <idType>-1</idType>
+      <owner>0</owner>
+      <breed>ECAFLIP</breed>
+      <appearance>
+        <sex>1</sex>
+        <skinColorIndex>5</skinColorIndex>
+        <hairColorIndex>0</hairColorIndex>
+        <pupilColorIndex>2</pupilColorIndex>
+        <skinColorFactor>1</skinColorFactor>
+        <hairColorFactor>4</hairColorFactor>
+        <clothIndex>2</clothIndex>
+        <faceIndex>0</faceIndex>
+        <title>-1</title>
+      </appearance>
+      <xp>0</xp>
+      <nation>NONE</nation>
+      <name>Ecaflop</name>
+    </character>
+  </characters>
+</player>

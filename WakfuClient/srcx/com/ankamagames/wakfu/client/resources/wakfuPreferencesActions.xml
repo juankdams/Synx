@@ -1,0 +1,7 @@
+<!--
+  ~ Copyright (c) 2012. Ankama.com Tous droits réservés.
+  -->
+
+<actions>
+	<action type="setProperty" name="displayTerritories" value="false" version="11"/>
+</actions>

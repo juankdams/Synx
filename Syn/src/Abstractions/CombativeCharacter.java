@@ -1,0 +1,357 @@
+package Abstractions;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ConfigurationObjects.Classe;
+import ConfigurationObjects.SimpleIA;
+import Constants.CSpells;
+import Enums.CharacterType;
+import Enums.PlayerState;
+import Enums.SynActions.MapAction;
+import Game.GameServer;
+import GameObjects.GBuff;
+import GameObjects.GMonster;
+import GameObjects.GSpell;
+import GameObjects.GStatistiques;
+import GameObjects.Fights.GFight;
+import GlobalObjects.Map;
+import Misc.Utils;
+import Plugins.Managers.PluginsManager;
+
+
+public abstract class CombativeCharacter extends AbstractCharacter {
+	
+	public static Logger log = LoggerFactory.getLogger(CombativeCharacter.class);
+
+	
+	public static class BasicCombativeCharacter extends CombativeCharacter{
+		//From AbstractCharacter
+		@Override public CharacterType getCharacterType() { return null; }
+		@Override public Classe getClasse() { return null; }
+		@Override public String getName() { return null; }
+		@Override public byte getAlignementSpecialization() { return 0; }
+		@Override public String getAccessoriesPacket() { return null; }
+		@Override public String getSpritePacket(String prefix) { return null; }
+		@Override public void onAddedToMap(Map m) { }
+		@Override public void onRemovedFromMap(Map m) { }
+		//From CombativeCharacter
+		@Override public short getLevel() { return 0; }
+		@Override public void setLevel(short lvl) { }
+		@Override public GStatistiques getStatistique() { return null; }
+		@Override public String getSpritePacket(PluginsManager pm, String prefix) { return null; }
+	}
+	
+
+	protected HashMap<Integer, GSpell> spells = null;
+	protected ArrayList<GBuff> buffs = null;
+	protected ArrayList<PlayerState> states = null;
+	protected short ia = 0;
+	
+	public abstract short getLevel();
+	public abstract void setLevel(short lvl);
+	public abstract GStatistiques getStatistique();
+	
+	
+
+	public CombativeCharacter(){
+		
+	}
+	
+	
+	//@Override
+	public ArrayList<PlayerState> getStates() {
+		return states;
+	}
+	
+	//@Override
+	public ArrayList<PlayerState> addState(PlayerState ps){
+		if(states == null){
+			states = new ArrayList<PlayerState>();
+			states.add(ps);
+		}
+		states.add(ps);
+		return states;
+	}
+
+	//@Override
+	public ArrayList<PlayerState> removeState(PlayerState ps){
+		if(states == null){
+			return states;
+		}
+		//states = (PlayerState[]) Utils.removeElementFromArray(states, ps);
+		states.remove(ps);
+		if(states.size() == 0){
+			states = null;
+		}
+		return states;
+	}
+	
+	//Override
+	public boolean hasState(PlayerState ps){
+		if(states == null || states.size() == 0){
+			return false;
+		}
+		return states.indexOf(ps) != -1;
+		//for(PlayerState p : states){
+		//	if(p.get() == ps.get()){
+		//		return true;
+		//	}
+		//}
+		//return false;
+	}
+
+	//@Override
+	public ArrayList<PlayerState> setStates(ArrayList<PlayerState> ps){
+		return states = ps;
+	}
+	
+	
+	//@Override
+	public void setBuffs(ArrayList<GBuff> buffs) {
+		this.buffs = buffs;
+	}
+	//@Override
+	public ArrayList<GBuff> getBuffs() {
+		return buffs;
+	}
+	//@Override
+	public GBuff getBuff(int effectID) {
+		for(GBuff b : buffs){
+			if(b.getEffectID() == effectID){
+				return b;
+			}
+		}
+		return null;
+	}
+	//@Override
+	public ArrayList<GBuff> addBuff(GBuff b){
+		if(buffs == null){
+			buffs = new ArrayList<GBuff>(1);
+		}
+		buffs.add(b);
+		return buffs;
+	}
+	//@Override
+	public ArrayList<GBuff> removeBuff(GBuff b){
+		if(buffs == null){
+			return buffs;
+		}
+		buffs.remove(b);
+		if(buffs.size() == 0){
+			buffs = null;
+		}
+		return buffs;
+	}
+	
+	public void setSpells(HashMap<Integer, GSpell> spells) {
+		this.spells = spells;
+	}
+	/**
+	 * Pour setter la liste de spells à partir de la string la représentant en base de donnée
+	 */
+	public void setSpells(String spells) {
+		if(spells.length() == 0){
+			//Syn.d("spells.length() == 0");
+			this.spells = new HashMap<Integer, GSpell>();
+			return;
+		}
+		String[] split = spells.split(";");
+		//Syn.d("split().length == "+split.length);
+		this.spells = new HashMap<Integer, GSpell>(split.length-1);
+		
+		for(String sort : split){
+			short spellID = Short.parseShort( sort.substring(0, sort.indexOf("~")) );
+			int spellLvl = Integer.parseInt( sort.substring(sort.indexOf("~")+1,sort.lastIndexOf("~") ) );
+			int position = Integer.parseInt( sort.substring(sort.lastIndexOf("~")+1) );
+			//Syn.d("paramSplit.position = "+position+", spellID ="+spellID+", spellLvl="+spellLvl);
+			this.spells.put(position, getWorld().getSpell(spellID)[spellLvl-1]);
+		}
+	}
+	public HashMap<Integer, GSpell> getSpells() {
+		return spells;
+	}
+	/**
+	 * Check si c'est le sort coup de poing qu'on demande et le renvoie
+	 * <br> sinon bien return spells.get(position);  
+	 * <br>Donc ceux qui ne sont pas positionnés dans les raccourcis ne retourneront rien (à part le coup de poing)
+	 */
+	public GSpell getSpellByPosition(int position) {
+		if(position == CSpells.specialSpell_CAC){
+			return getWorld().getSpell((short) position)[0];
+		}
+		return spells.get(position);
+	}
+	/**
+	 * Check si c'est le sort coup de poing qu'on demande et le renvoie
+	 * <br> sinon bien fais bien juste spells.remove(position);  
+	 * <br>Donc ceux qui ne sont pas positionnés dans les raccourcis ne retourneront rien (à part le coup de poing)
+	 */
+	public GSpell removeSpellByPosition(int position) {
+		return spells.remove(position);
+	}
+	/**
+	 * Un simple: spells.put(position, s);
+	 */
+	public void setSpellByPosition(GSpell s, int position) {
+		spells.put(position, s);
+	}
+	/**
+	 * Un simple: spells.put(-ID, s);
+	 */
+	public void setSpellByID(GSpell s, int ID) {
+		if(spells == null){
+			spells = new HashMap<Integer, GSpell>(1);
+		}
+		spells.put(-ID, s);
+	}
+	/**
+	 * Vérifie d'abord s'il peut faire spells.get(-spellID).
+	 * <br> Et check si c'est le sort coup de poing qu'on demande + le renvoie
+	 * <br>Sinon il foreach tous les spells de la liste
+	 */
+	public GSpell getSpellByID(int spellID) {
+		//Syn.d("getSpellByID spellID="+spellID);
+
+		if(spells.get(-spellID) != null){
+			return spells.get(-spellID);
+		}
+		if(spellID == CSpells.specialSpell_CAC){
+			return getWorld().getSpell((short) spellID)[0];
+		}
+		for(GSpell s : spells.values()){
+			if(s.getID() == spellID){
+				return s;
+			}
+		}
+		return null;
+	}
+	/**
+	 * Vérifie d'abord s'il peut faire spells.get(-spellID).  
+	 * <br>Sinon il foreach tous les spells de la liste
+	 * Ensuite enleve le spell de la liste et le retourne.
+	 */
+	public GSpell removeSpellByID(int spellID){
+		if(spells.get(-spellID) != null){
+			return spells.get(-spellID);
+		}
+		int key = 0;
+		
+		for(Entry<Integer, GSpell> s : spells.entrySet()){
+			if(s.getValue().getID() == spellID){
+				key = s.getKey();
+				break;
+			}
+		}
+		if(key != 0){
+			return spells.remove(key);
+		}
+		return null;
+	}
+	/**
+	 * Vérifie d'abord s'il peut faire spells.get(-spellID).  
+	 * <br>Sinon il foreach tous les spells de la liste.
+	 */
+	public void upgradeSpellByID(int spellID, GSpell newSpell){
+		if(spells.get(-spellID) != null){
+			spells.put(-spellID, newSpell);
+		}else{
+			for(Entry<Integer, GSpell> s : spells.entrySet()){
+				if(s.getValue().getID() == spellID){
+					s.setValue(newSpell);
+				}
+			}
+		}
+	}
+
+	public String getSpellListString(boolean hashPosition) {
+		if(spells == null){
+			log.equals("Erreur dans GPerso.getSpellListString, la liste de spells est NULL");
+		}
+		if(spells.size() == 0){
+			return "";
+		}
+		StringBuilder list = new StringBuilder(spells.size()*5);//minimum 5 charactères par sort/emplacement de sort
+		for(Entry<Integer, GSpell> entry : spells.entrySet()){
+			if(list.length() > 0){
+				list.append(";");
+			}
+			//spellID~spellLvl~spellPosition;...
+			if(hashPosition){
+				list.append(entry.getValue().getID()).append("~").append(entry.getValue().getSpellLvl(getWorld())).append("~").append(Utils.getHashedValueByInt(entry.getKey()));
+			}else{
+				list.append(entry.getValue().getID()).append("~").append(entry.getValue().getSpellLvl(getWorld())).append("~").append(entry.getKey());
+			}
+		}
+		return list.toString();
+	}
+
+	public SimpleIA getIA() {
+		return getWorld().getIntelligence(ia);
+	}
+	public short getIAID(){
+		return ia;
+	}
+	public void setIA(short ia) {
+		this.ia = ia;
+	}
+	
+	//@Override
+	public GFight getFight() {
+		if(getMap() == null){
+			return null;
+		}
+		//Syn.d("Combative.getFight.getmap == null ? ("+(getMap()==null)+") getID("+getID()+") ");
+		ArrayList<GFight> gf = getMap().updateFightsList(MapAction.GET_FIGHTS, null);
+		if(gf != null && gf.size() > 0){
+			for(GFight f : gf){
+				if(f.isCharacterInFight(this)){
+					if(f.getLayer() != getLayer()){//du genre si le perso s'est déco ou s'il a abandonné
+						return null;
+					}
+					//Syn.d("Combative.getFight == null ? (false) .getmap == null ? ("+(getMap()==null)+") getID("+getID()+") ");
+					return f;
+				}
+			}
+		}//else{
+			//Syn.d("Combative.getMap.getFights = null");
+		//}
+		//Syn.d("Combative.getFight == null ? (true) .getmap == null ? ("+(getMap()==null)+") getID("+getID()+") ");
+		return null;
+		//return getWorld().getFightByCharacter(getID());
+	}
+	
+	
+	@Override
+	public CombativeCharacter copy(GameServer s) {
+		CombativeCharacter cc = (CombativeCharacter) super.copy(s);
+		
+		cc.setBuffs(this.getBuffs());
+		cc.setSpells(this.getSpells());
+		cc.setStates(this.getStates());
+		if(this instanceof GMonster == false){ 
+			//Pcq c'est impossible de trouver le level du monstre sans qu'il ai déjà setté son monsterTemplateID
+			//Donc on peut pas setter son level ici.
+			cc.setLevel(getLevel());
+		}
+		return cc;
+	}
+
+	@Override
+	public void terminate() throws Throwable{
+		super.terminate();
+		if(spells != null) spells.clear();
+		spells = null;
+		if(buffs != null) buffs.clear();
+		buffs = null;
+		if(states != null) states.clear();
+		states = null;
+		getStatistique().terminate();
+		this.finalize();
+	}
+	
+}

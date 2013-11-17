@@ -1,0 +1,19 @@
+#onLoadBloc{
+	filePath="Syn_scripts/macros/";
+	fileName="test";
+	characterID="test";
+	scope=TO_MAP;
+}
+
+
+#1:
+	$CHAT:".all allo j'suis un pnj =O";
+	$EMOTE:4;
+	$DIRECTION:5;
+	$MOVEMENT:311;
+;
+
+
+#2:
+	$CHAT:".all allo j'suis un coq =O";
+;

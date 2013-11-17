@@ -1,0 +1,61 @@
+G [RECV] << AS41
+[DEBUG]: Setted CurPerso index : 1
+[Send] >> ASK|41|Eca|90|6|1|61|-1|-1|-1|1f2~97c~2~-1~9e#0#112#0#0d0+274;1f1~979~2~-1~76#0#4#0#0d0+4,7e#0#3#0#0d0+3;1f0~976~2~-1~8a#0#a#0#0d0+10,6e#1#23#0#1d35+0;1ef~973~2~-1~6e#1#1e#0#1d30+0;1ee~970~2~-1~61#4#8#0#1d5+3,63#4#8#0#1d5+3,b6#0#1#0#0d0+1;1ed~96e~2~-1~ae#0#85#0#0d0+133,6e#1#32#0#1d50+0;1ec~96b~1~-1~7e#0#8#0#0d0+8,76#0#23#0#0d0+35
+[Send] >> cC+i*#$%!:?p^465
+[Send] >> ZS0
+[Send] >> al|
+[Send] >> Rx0
+[Send] >> Ow215|1000
+[Send] >> AR6bk
+[Send] >> SL61~1~b;62~1~c;63~1~d;110~1~ ;102~1~ 
+[Send] >> eL-2147483648|0
+[Send] >> SLo+
+[Send] >> Im189
+[Send] >> Im0152;2013~07~22~16~51~127.0.0.1
+[Send] >> Im0153;127.0.0.1
+[Send] >> cs<font color='#31f42b'>Bienvenue sur le serveur Crystal !</font>
+G [RECV] << Af
+G [RECV] << GC1
+[Send] >> GCK|1|Eca
+[Send] >> As22385000,62712000,65565000|0|345|69|0~0,48,2,0,0,0|450,500|10000,10000|90|100|6,0,0,0,6|3,0,0,0,3|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|1,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0,|0,0,0,0,|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|
+Longeur du packet As: 422
+Temps d'exécution de Envoie du packet As (SM.Account().As()): 1ms
+[Send] >> GDM|7411|0711291819|556a5867706b7f7f694d754537565e7d437357343b49337d7a455d3c722a4974415445242e654c277c542f246f7764593831672c3f65227725324274565c692532422f2e3e2f726934556c512e387f4e75447b3e475b2972642c64685a33374b2a555d4c5f4f435c612d64566c2e2e38695248205b4c5c5a4c6242512947213536747d5f522d582d366b26647d2d73576a6b487b5f574a225a3440543a405a517551522d622a403d4a486477675646725f3367677c7d2934657f32663e46634064233d48677f3b524b2c352f402922744167333f7c5d7076674f43
+G [RECV] << BD
+[Send] >> BD642|7|22
+G [RECV] << GI
+[Send] >> GDK
+
+
+[Send] >> fC1
+[DEBUG]: showAllSprites to guy in fight
+[Send] >> GM|+249;7;0;41;Eca;6;61^100;1;90;0,0,0,90;-1;-1;-1;,,,,;450;6;3;0;0;0;0;0;0;0;0;   ..........ca continue....
+[Send] >> cs<font color='#f702e0'>Le joueur Eca s'est reconnecté en combat!</font>
+
+[Send] >> GA11;905;41;
+[Send] >> GJK3|0|1|0|45000|4
+[Send] >> GPfbfpfqfEfFfT|e0|0
+[Send] >> ILF0
+[Send] >> GA0;950;41;41,8,0
+[Send] >> GA0;950;41;41,3,0
+[Send] >> GA0;950;41;-9,8,0
+[Send] >> GA0;950;41;-9,3,0
+
+
+[DEBUG]: in GFight.endTurn
+[Send] >> cs<font color='#0019FF'>end  36</font>
+[Send] >> GTF-9
+[Send] >> GTR41
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  Eca</font>
+
+
+[Send] >> GTS41|30000
+[Send] >> GIC|-9;229;5|41;249;7
+[Send] >> GS
+[Send] >> GTL|-9|41
+[Send] >> GTM|-9;0;30;5;3;229;;30|41;0;450;6;3;249;;500
+
+G [RECV] << GKK11
+in parseOnGameActionKorect.   actionID =11.
+G [RECV] << GT

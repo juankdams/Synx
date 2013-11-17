@@ -1,0 +1,16 @@
+#onLoadBloc:{
+	filePath="Syn_scripts/macros/";
+	fileName="move";
+	characterID="1";
+	scope=TO_MAP;
+;}
+
+
+#1:
+	$CHAT:".all allo j'suis un pnj =O";
+;
+
+
+#2:
+	$MOVEMENT:150;
+;
