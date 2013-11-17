@@ -1,0 +1,332 @@
+ INFO 02:55:32,125 [main] (aUk:114) - 1.28 (build 101720 [2013-10-29 @ 00H00min00])
+ INFO 02:55:32,127 [main] (com.ankamagames.wakfu.client.WakfuClient:120) - java.vm.vendor = Sun Microsystems Inc.
+ INFO 02:55:32,128 [main] (com.ankamagames.wakfu.client.WakfuClient:121) - java.runtime.name = Java(TM) SE Runtime Environment
+ INFO 02:55:32,128 [main] (com.ankamagames.wakfu.client.WakfuClient:122) - java.vm.name = Java HotSpot(TM) 64-Bit Server VM
+ INFO 02:55:32,129 [main] (com.ankamagames.wakfu.client.WakfuClient:123) - java.vm.version = 20.45-b01
+ INFO 02:55:32,129 [main] (com.ankamagames.wakfu.client.WakfuClient:124) - java.runtime.version = 1.6.0_45-b06
+ INFO 02:55:32,129 [main] (com.ankamagames.wakfu.client.WakfuClient:125) - os.name = Windows 7
+ INFO 02:55:32,129 [main] (com.ankamagames.wakfu.client.WakfuClient:126) - os.arch = amd64
+ INFO 02:55:32,130 [main] (com.ankamagames.wakfu.client.WakfuClient:127) - os.version = 6.1
+ INFO 02:55:32,130 [main] (com.ankamagames.wakfu.client.WakfuClient:128) - sun.os.patch.level = Service Pack 1
+ INFO 02:55:32,130 [main] (com.ankamagames.wakfu.client.WakfuClient:129) - user.language = fr
+ INFO 02:55:32,130 [main] (com.ankamagames.wakfu.client.WakfuClient:130) - user.country = FR
+ INFO 02:55:32,135 [main] (com.ankamagames.wakfu.client.WakfuClient:136) - log path=
+ INFO 02:55:32,139 [main] (ay:339) - Chargement de la configuration depuis le fichier : ''
+ERROR 02:55:32,140 [main] (cOH:326) - Impossible de trouver le fichier de propriété config.properties
+FATAL 02:55:32,140 [main] (com.ankamagames.wakfu.client.WakfuClient:68) - Echec du chargement de la configuration, WakfuConfiguration introuvable
+ INFO 02:56:35,235 [main] (aUk:114) - 1.28 (build 101720 [2013-10-29 @ 00H00min00])
+ INFO 02:56:35,237 [main] (com.ankamagames.wakfu.client.WakfuClient:120) - java.vm.vendor = Sun Microsystems Inc.
+ INFO 02:56:35,238 [main] (com.ankamagames.wakfu.client.WakfuClient:121) - java.runtime.name = Java(TM) SE Runtime Environment
+ INFO 02:56:35,238 [main] (com.ankamagames.wakfu.client.WakfuClient:122) - java.vm.name = Java HotSpot(TM) 64-Bit Server VM
+ INFO 02:56:35,239 [main] (com.ankamagames.wakfu.client.WakfuClient:123) - java.vm.version = 20.45-b01
+ INFO 02:56:35,239 [main] (com.ankamagames.wakfu.client.WakfuClient:124) - java.runtime.version = 1.6.0_45-b06
+ INFO 02:56:35,239 [main] (com.ankamagames.wakfu.client.WakfuClient:125) - os.name = Windows 7
+ INFO 02:56:35,239 [main] (com.ankamagames.wakfu.client.WakfuClient:126) - os.arch = amd64
+ INFO 02:56:35,240 [main] (com.ankamagames.wakfu.client.WakfuClient:127) - os.version = 6.1
+ INFO 02:56:35,240 [main] (com.ankamagames.wakfu.client.WakfuClient:128) - sun.os.patch.level = Service Pack 1
+ INFO 02:56:35,240 [main] (com.ankamagames.wakfu.client.WakfuClient:129) - user.language = fr
+ INFO 02:56:35,240 [main] (com.ankamagames.wakfu.client.WakfuClient:130) - user.country = FR
+ INFO 02:56:35,246 [main] (com.ankamagames.wakfu.client.WakfuClient:136) - log path=
+ INFO 02:56:35,249 [main] (ay:339) - Chargement de la configuration depuis le fichier : ''
+ INFO 02:56:35,317 [Worker (in OpenGL thread)] (dmw:184) - Worker running (in OpenGL thread)
+ INFO 02:56:35,321 [MessageScheduler] (cAo:361) - MessageScheduler running
+ERROR 02:56:35,335 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarTop2
+ERROR 02:56:35,336 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarBottom2
+ERROR 02:56:35,336 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarCenter2
+ERROR 02:56:35,337 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopLeft
+ERROR 02:56:35,338 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTop
+ERROR 02:56:35,341 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopRight
+ERROR 02:56:35,342 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderLeft
+ERROR 02:56:35,343 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomLeft
+ERROR 02:56:35,343 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottom
+ERROR 02:56:35,344 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomRight
+ERROR 02:56:35,345 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderRight
+ERROR 02:56:35,345 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseDefault
+ERROR 02:56:35,346 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseOver
+ERROR 02:56:35,347 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeDefault
+ERROR 02:56:35,347 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeOver
+ERROR 02:56:35,348 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeDefault
+ERROR 02:56:35,348 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeOver
+ERROR 02:56:35,349 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreDefault
+ERROR 02:56:35,349 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreOver
+ WARN 02:56:35,349 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 02:56:35,350 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ WARN 02:56:35,355 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 02:56:35,355 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ERROR 02:56:35,543 [AWT-EventQueue-0] (aDM:126) - Exception
+java.io.FileNotFoundException: Fichier non trouvé : jar:file:contents/data/data.jar!/graphics.xml
+	at bpA.iy(SourceFile:89)
+	at aDM.gm(SourceFile:122)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
+FATAL 02:56:35,546 [AWT-EventQueue-0] (bZC:92) - Erreur au lancement
+java.lang.NullPointerException
+	at aDM.a(SourceFile:84)
+	at aDM.gm(SourceFile:129)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
+ INFO 02:57:45,722 [main] (aUk:114) - 1.28 (build 101720 [2013-10-29 @ 00H00min00])
+ INFO 02:57:45,724 [main] (com.ankamagames.wakfu.client.WakfuClient:120) - java.vm.vendor = Sun Microsystems Inc.
+ INFO 02:57:45,724 [main] (com.ankamagames.wakfu.client.WakfuClient:121) - java.runtime.name = Java(TM) SE Runtime Environment
+ INFO 02:57:45,724 [main] (com.ankamagames.wakfu.client.WakfuClient:122) - java.vm.name = Java HotSpot(TM) 64-Bit Server VM
+ INFO 02:57:45,725 [main] (com.ankamagames.wakfu.client.WakfuClient:123) - java.vm.version = 20.45-b01
+ INFO 02:57:45,725 [main] (com.ankamagames.wakfu.client.WakfuClient:124) - java.runtime.version = 1.6.0_45-b06
+ INFO 02:57:45,725 [main] (com.ankamagames.wakfu.client.WakfuClient:125) - os.name = Windows 7
+ INFO 02:57:45,726 [main] (com.ankamagames.wakfu.client.WakfuClient:126) - os.arch = amd64
+ INFO 02:57:45,726 [main] (com.ankamagames.wakfu.client.WakfuClient:127) - os.version = 6.1
+ INFO 02:57:45,726 [main] (com.ankamagames.wakfu.client.WakfuClient:128) - sun.os.patch.level = Service Pack 1
+ INFO 02:57:45,726 [main] (com.ankamagames.wakfu.client.WakfuClient:129) - user.language = fr
+ INFO 02:57:45,727 [main] (com.ankamagames.wakfu.client.WakfuClient:130) - user.country = FR
+ INFO 02:57:45,731 [main] (com.ankamagames.wakfu.client.WakfuClient:136) - log path=
+ INFO 02:57:45,735 [main] (ay:339) - Chargement de la configuration depuis le fichier : ''
+ INFO 02:57:45,803 [Worker (in OpenGL thread)] (dmw:184) - Worker running (in OpenGL thread)
+ INFO 02:57:45,807 [MessageScheduler] (cAo:361) - MessageScheduler running
+ERROR 02:57:45,820 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarTop2
+ERROR 02:57:45,821 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarBottom2
+ERROR 02:57:45,821 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarCenter2
+ERROR 02:57:45,822 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopLeft
+ERROR 02:57:45,822 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTop
+ERROR 02:57:45,826 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopRight
+ERROR 02:57:45,827 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderLeft
+ERROR 02:57:45,828 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomLeft
+ERROR 02:57:45,828 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottom
+ERROR 02:57:45,829 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomRight
+ERROR 02:57:45,829 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderRight
+ERROR 02:57:45,830 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseDefault
+ERROR 02:57:45,831 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseOver
+ERROR 02:57:45,831 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeDefault
+ERROR 02:57:45,832 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeOver
+ERROR 02:57:45,832 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeDefault
+ERROR 02:57:45,833 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeOver
+ERROR 02:57:45,833 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreDefault
+ERROR 02:57:45,834 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreOver
+ WARN 02:57:45,834 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 02:57:45,834 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ WARN 02:57:45,840 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 02:57:45,841 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ERROR 02:57:46,022 [AWT-EventQueue-0] (aDM:126) - Exception
+java.io.FileNotFoundException: Fichier non trouvé : jar:file:contents/data/data.jar!/graphics.xml
+	at bpA.iy(SourceFile:89)
+	at aDM.gm(SourceFile:122)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
+FATAL 02:57:46,025 [AWT-EventQueue-0] (bZC:92) - Erreur au lancement
+java.lang.NullPointerException
+	at aDM.a(SourceFile:84)
+	at aDM.gm(SourceFile:129)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
+ INFO 02:59:00,190 [main] (aUk:114) - 1.28 (build 101720 [2013-10-29 @ 00H00min00])
+ INFO 02:59:00,192 [main] (com.ankamagames.wakfu.client.WakfuClient:120) - java.vm.vendor = Sun Microsystems Inc.
+ INFO 02:59:00,192 [main] (com.ankamagames.wakfu.client.WakfuClient:121) - java.runtime.name = Java(TM) SE Runtime Environment
+ INFO 02:59:00,192 [main] (com.ankamagames.wakfu.client.WakfuClient:122) - java.vm.name = Java HotSpot(TM) 64-Bit Server VM
+ INFO 02:59:00,193 [main] (com.ankamagames.wakfu.client.WakfuClient:123) - java.vm.version = 20.45-b01
+ INFO 02:59:00,193 [main] (com.ankamagames.wakfu.client.WakfuClient:124) - java.runtime.version = 1.6.0_45-b06
+ INFO 02:59:00,193 [main] (com.ankamagames.wakfu.client.WakfuClient:125) - os.name = Windows 7
+ INFO 02:59:00,194 [main] (com.ankamagames.wakfu.client.WakfuClient:126) - os.arch = amd64
+ INFO 02:59:00,194 [main] (com.ankamagames.wakfu.client.WakfuClient:127) - os.version = 6.1
+ INFO 02:59:00,194 [main] (com.ankamagames.wakfu.client.WakfuClient:128) - sun.os.patch.level = Service Pack 1
+ INFO 02:59:00,194 [main] (com.ankamagames.wakfu.client.WakfuClient:129) - user.language = fr
+ INFO 02:59:00,195 [main] (com.ankamagames.wakfu.client.WakfuClient:130) - user.country = FR
+ INFO 02:59:00,199 [main] (com.ankamagames.wakfu.client.WakfuClient:136) - log path=
+ INFO 02:59:00,204 [main] (ay:339) - Chargement de la configuration depuis le fichier : ''
+ INFO 02:59:00,272 [Worker (in OpenGL thread)] (dmw:184) - Worker running (in OpenGL thread)
+ INFO 02:59:00,277 [MessageScheduler] (cAo:361) - MessageScheduler running
+ERROR 02:59:00,290 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarTop2
+ERROR 02:59:00,290 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarBottom2
+ERROR 02:59:00,291 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarCenter2
+ERROR 02:59:00,291 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopLeft
+ERROR 02:59:00,292 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTop
+ERROR 02:59:00,295 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopRight
+ERROR 02:59:00,296 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderLeft
+ERROR 02:59:00,297 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomLeft
+ERROR 02:59:00,298 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottom
+ERROR 02:59:00,298 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomRight
+ERROR 02:59:00,299 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderRight
+ERROR 02:59:00,299 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseDefault
+ERROR 02:59:00,300 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseOver
+ERROR 02:59:00,300 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeDefault
+ERROR 02:59:00,301 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeOver
+ERROR 02:59:00,301 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeDefault
+ERROR 02:59:00,302 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeOver
+ERROR 02:59:00,303 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreDefault
+ERROR 02:59:00,303 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreOver
+ WARN 02:59:00,304 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 02:59:00,304 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ WARN 02:59:00,309 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 02:59:00,310 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ERROR 02:59:00,489 [AWT-EventQueue-0] (aDM:126) - Exception
+java.io.FileNotFoundException: Fichier non trouvé : jar:file:contents/data/data.jar!/graphics.xml
+	at bpA.iy(SourceFile:89)
+	at aDM.gm(SourceFile:122)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
+FATAL 02:59:00,508 [AWT-EventQueue-0] (bZC:92) - Erreur au lancement
+java.lang.NullPointerException
+	at aDM.a(SourceFile:84)
+	at aDM.gm(SourceFile:129)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
+ INFO 03:00:00,700 [main] (aUk:114) - 1.28 (build 101720 [2013-10-29 @ 00H00min00])
+ INFO 03:00:00,702 [main] (com.ankamagames.wakfu.client.WakfuClient:120) - java.vm.vendor = Sun Microsystems Inc.
+ INFO 03:00:00,702 [main] (com.ankamagames.wakfu.client.WakfuClient:121) - java.runtime.name = Java(TM) SE Runtime Environment
+ INFO 03:00:00,703 [main] (com.ankamagames.wakfu.client.WakfuClient:122) - java.vm.name = Java HotSpot(TM) 64-Bit Server VM
+ INFO 03:00:00,703 [main] (com.ankamagames.wakfu.client.WakfuClient:123) - java.vm.version = 20.45-b01
+ INFO 03:00:00,704 [main] (com.ankamagames.wakfu.client.WakfuClient:124) - java.runtime.version = 1.6.0_45-b06
+ INFO 03:00:00,704 [main] (com.ankamagames.wakfu.client.WakfuClient:125) - os.name = Windows 7
+ INFO 03:00:00,704 [main] (com.ankamagames.wakfu.client.WakfuClient:126) - os.arch = amd64
+ INFO 03:00:00,704 [main] (com.ankamagames.wakfu.client.WakfuClient:127) - os.version = 6.1
+ INFO 03:00:00,704 [main] (com.ankamagames.wakfu.client.WakfuClient:128) - sun.os.patch.level = Service Pack 1
+ INFO 03:00:00,705 [main] (com.ankamagames.wakfu.client.WakfuClient:129) - user.language = fr
+ INFO 03:00:00,705 [main] (com.ankamagames.wakfu.client.WakfuClient:130) - user.country = FR
+ INFO 03:00:00,710 [main] (com.ankamagames.wakfu.client.WakfuClient:136) - log path=
+ INFO 03:00:00,714 [main] (ay:339) - Chargement de la configuration depuis le fichier : ''
+ INFO 03:00:00,784 [Worker (in OpenGL thread)] (dmw:184) - Worker running (in OpenGL thread)
+ INFO 03:00:00,788 [MessageScheduler] (cAo:361) - MessageScheduler running
+ERROR 03:00:00,801 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarTop2
+ERROR 03:00:00,802 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarBottom2
+ERROR 03:00:00,803 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/TitleBarCenter2
+ERROR 03:00:00,804 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopLeft
+ERROR 03:00:00,805 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTop
+ERROR 03:00:00,808 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderTopRight
+ERROR 03:00:00,809 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderLeft
+ERROR 03:00:00,811 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomLeft
+ERROR 03:00:00,812 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottom
+ERROR 03:00:00,812 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderBottomRight
+ERROR 03:00:00,813 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BorderRight
+ERROR 03:00:00,813 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseDefault
+ERROR 03:00:00,814 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnCloseOver
+ERROR 03:00:00,815 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeDefault
+ERROR 03:00:00,815 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMinimizeOver
+ERROR 03:00:00,816 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeDefault
+ERROR 03:00:00,817 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnMaximizeOver
+ERROR 03:00:00,818 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreDefault
+ERROR 03:00:00,819 [main] (bFD:219) - Skin image not present : jar:file:contents/gui_jar/gui.jar!/gui/appSkin/BtnRestoreOver
+ WARN 03:00:00,819 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 03:00:00,819 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ WARN 03:00:00,828 [main] (bFD:166) - Skin pbm : top left image height not consistent : -1 != 18
+ WARN 03:00:00,828 [main] (bFD:168) - Skin pbm : top right image height not consistent : -1 != 18
+ERROR 03:00:01,052 [AWT-EventQueue-0] (aDM:126) - Exception
+java.io.FileNotFoundException: Fichier non trouvé : jar:file:contents/data/data.jar!/graphics.xml
+	at bpA.iy(SourceFile:89)
+	at aDM.gm(SourceFile:122)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
+FATAL 03:00:01,055 [AWT-EventQueue-0] (bZC:92) - Erreur au lancement
+java.lang.NullPointerException
+	at aDM.a(SourceFile:84)
+	at aDM.gm(SourceFile:129)
+	at com.ankamagames.wakfu.client.WakfuClientInstance.initialize(SourceFile:397)
+	at bZC.run(SourceFile:86)
+	at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
+	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:672)
+	at java.awt.EventQueue.access$400(EventQueue.java:81)
+	at java.awt.EventQueue$2.run(EventQueue.java:633)
+	at java.awt.EventQueue$2.run(EventQueue.java:631)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
+	at java.awt.EventQueue.dispatchEvent(EventQueue.java:642)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:269)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:184)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:174)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:169)
+	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:161)
+	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)

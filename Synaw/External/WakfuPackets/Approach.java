@@ -1,8 +1,8 @@
 package WakfuPackets;
 
+import JWakfu.RSACertificateManager;
 import io.netty.buffer.ByteBuf;
 
-import com.velocity.jwakfu.crypto.RSACertificateManager;
 
 public class Approach {
 	

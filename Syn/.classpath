@@ -30,10 +30,9 @@
 	<classpathentry exported="true" kind="var" path="ZLIBS/rhino1_7R4/js-14.jar"/>
 	<classpathentry exported="true" kind="var" path="ZLIBS/guava-14.0.1.jar"/>
 	<classpathentry exported="true" kind="var" path="ZLIBS/apache-commons-lang3-3.1/commons-lang3-3.1.jar"/>
-	<classpathentry exported="true" kind="var" path="Synx/Syn/Syn_plugins/JWakfu.jar"/>
 	<classpathentry exported="true" kind="var" path="ZLIBS/log4j-1.2.16.jar"/>
 	<classpathentry exported="true" kind="var" path="ZLIBS/javassist-3.18.0-GA/javassist.jar" sourcepath="/ZLIBS/javassist-3.18.0-GA/src"/>
-	<classpathentry kind="lib" path="Z:/Dropbox/Private/Synx/Synaw/bin" sourcepath="Z:/Dropbox/Private/Synx/Synaw"/>
-	<classpathentry kind="lib" path="Z:/Dropbox/Private/Synx/Synod/bin" sourcepath="Z:/Dropbox/Private/Synx/Synod"/>
+	<classpathentry exported="true" kind="lib" path="Z:/Dropbox/Private/Synx/Synaw/bin" sourcepath="Z:/Dropbox/Private/Synx/Synaw"/>
+	<classpathentry exported="true" kind="lib" path="Z:/Dropbox/Private/Synx/Synod/bin" sourcepath="Z:/Dropbox/Private/Synx/Synod"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -38,7 +38,7 @@ public class PacketDecoder extends MessageToMessageDecoder<ByteBuf, ByteBuf> {
 			int type = msg.readByte();			 // 1 byte  / 8  bits
 			int opcode = msg.readUnsignedShort();// 2 bytes / 16 bits
 												 // total de 5 bytes de header à enlever au packet
-			
+			logger.info("Receiving opcode : "+opcode);
 			if (INCOMING_PACKET_MAP.containsKey(opcode)) {
 				INCOMING_PACKET_MAP.get(opcode).decode(sess, msg, size);
 			} else {

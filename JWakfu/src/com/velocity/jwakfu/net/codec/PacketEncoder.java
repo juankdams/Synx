@@ -14,7 +14,6 @@ import com.velocity.jwakfu.util.LoggingUtil;
 @Sharable
 public class PacketEncoder extends MessageToMessageEncoder<OutPacket, ByteBuf> {
 	
-	@SuppressWarnings("unused")
 	private static final Logger logger = LoggingUtil.log();
 	
 	public PacketEncoder() {
@@ -26,7 +25,7 @@ public class PacketEncoder extends MessageToMessageEncoder<OutPacket, ByteBuf> {
     	ByteBuf buf = Unpooled.buffer();
     	msg.finish();
     	buf.writeBytes(msg.getData());
-		System.out.println("[w] Sending Opcode: "+buf.getUnsignedShort(2)+"");
+		logger.info("Sending opcode : "+buf.getUnsignedShort(2));
         return buf;
     }
     

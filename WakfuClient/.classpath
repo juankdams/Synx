@@ -3,5 +3,19 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="var" path="Wakfu/game/core.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/antlr.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/gluegen-rt.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/jdom.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/jogl.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/log4j.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/logback-classic.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/logback-core.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/luajava.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/lwjgl.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/MozillaInterfaces.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/slf4j-api.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/swt-win32_x86.jar"/>
+	<classpathentry kind="var" path="Wakfu/game/lib/swt-windows.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files (x86)/Wakfu/game/contents/data/data.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

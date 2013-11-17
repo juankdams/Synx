@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2010. Ankama.com Tous droits réservés.
+  -->
+
+<!--Les raccourcis qu'ont peut binder appartiennent forcément aux groupes autorisés (cf ShortcutsFieldProvider)-->
+<!--et ont un id, attention à ne pas dupliquer les ids et à ne pas les modifier sans modifier les interfaces -->
+<shortcuts>
+
+	<!--groupe bloqué pour le bind, placer ici des touches réservées-->
+	<group name="admin">
+
+		<shortcut consoleCommand="!/debug/console" ctrlKey="true" id="console" keyCode="10" alwaysValid="true"/>
+
+	</group>
+
+	<group name="default">
+
+		<!-- Prendre un screenShot -->
+		<shortcut category="shortcutCategory.display" consoleCommand="!/common/takeScreenShot" id="screenShot" alwaysValid="true" keyCode="123"/>
+
+		<!-- Fermer les fenêtres -->
+		<shortcut consoleCommand="!/common/closeWindow" id="closeWindow" keyCode="27" alwaysValid="true" rebindAllowed="false"/>
+
+		<!-- Ouvrir le menu -->
+		<shortcut consoleCommand="!/common/menu" keyCode="155"/>
+
+	</group>
+
+	<!--groupe bloqué pour le bind, placer ici les touches réservées-->
+	<group name="debug">
+
+		<!--<shortcut id="console" keyCode="0" ctrlKey="true" consoleCommand="!/debug/console"/>-->
+		<shortcut consoleCommand="!/debug/fps" id="fps" keyCode="113" shiftKey="true"/>
+
+		<shortcut consoleCommand="!/debug/logoff" shiftKey="true" id="logoff" keyCode="112"/>
+
+		<shortcut consoleCommand="!/debug/switchResolution 1" ctrlKey="true" keyCode="116"/>
+
+		<shortcut consoleCommand="!/debug/switsacchResolution 0" ctrlKey="true" keyCode="117"/>
+
+		<shortcut consoleCommand="!/debug/video" shiftKey="true" id="video" keyCode="10" alwaysValid="true"/>
+
+	</group>
+
+	<group name="world">
+		<shortcut category="shortcutCategory.world" consoleCommand="!/world/enterLeaveBag" id="enterLeaveBag" keyCode="72" shiftKey="true"/>
+	</group>
+
+	<!--groupe bloqué pour le bind, placer ici les touches réservées-->
+	<group name="display">
+
+		<!-- Masquer les murs -->
+		<shortcut consoleCommand="!/display/hideFightOccluders" ctrlkey="true" keyCode="77" id="hideFightOccluders"/>
+
+	</group>
+
+	<!--groupe bindable-->
+	<group name="common">
+
+		<!--afficher perso caché derrière un mur-->
+		<shortcut category="shortcutCategory.display" id="alphaMask" consoleCommand="!/display/alphaMask" keyCode="65"/>
+
+		<!-- Afficher l'inventaire des Challenges -->
+		<!--<shortcut consoleCommand="!/common/loadChallengeLogFrame" id="loadChallengeLogFrame" keyCode="76"/>-->
+
+		<!-- Afficher la map -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/map" id="map" keyCode="77"/>
+
+		<!-- Afficher l'inventaire de sorts (feuille de perso)-->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/spellsInventory" id="spellsInventory" keyCode="83"/>
+
+		<!-- Afficher l'inventaire (tous les sacs)-->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/inventory" id="inventory" keyCode="73"/>
+
+		<!-- Afficher la feuille de perso -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/characterBook" id="characterBook" keyCode="80"/>
+
+		<!-- Afficher l'inventaire de créatures osa (shortcut)-->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/osamodasSymbiot" id="osamodasSymbiot" keyCode="79" shiftKey="true"/>
+
+		<!-- Afficher les états sous le controlCenter -->
+		<shortcut consoleCommand="!/common/states" id="states" keyCode="83" shiftKey="true"/>
+
+		<!-- Afficher la barre de raccourcis 1 -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/shortcutBar 0" id="shortcutBar0" keyCode="112"/>
+
+		<!-- Afficher la barre de raccourcis 2 -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/shortcutBar 1" id="shortcutBar1" keyCode="113"/>
+
+		<!-- Afficher la barre de raccourcis 3 -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/shortcutBar 2" id="shortcutBar2" keyCode="114"/>
+
+		<!-- Afficher la barre de raccourcis 4 -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/shortcutBar 3" id="shortcutBar3" keyCode="115"/>
+
+		<!-- Affiche/Désaffiche une barre de raccourci supplémentaire du numéro affiché sur la barre principale -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/additionalShortcutBar 0" id="additionalShortcutBar0" keyCode="112" ctrlKey="true"/>
+
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/additionalShortcutBar 1" id="additionalShortcutBar1" keyCode="113" ctrlKey="true"/>
+
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/additionalShortcutBar 2" id="additionalShortcutBar2" keyCode="114" ctrlKey="true"/>
+
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/additionalShortcutBar 3" id="additionalShortcutBar3" keyCode="115" ctrlKey="true"/>
+
+		<!-- changer le type de barre de racc -->
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/common/changeShortcutBarType" id="changeShortcutBarType" keyCode="66"/>
+
+		<!-- Utiliser item 1 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 00" keyCode="49" id="shortcut00"/>
+
+		<!-- Utiliser item 2 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 10" keyCode="50" id="shortcut01"/>
+
+		<!-- Utiliser item 3 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 20" keyCode="51" id="shortcut02"/>
+
+		<!-- Utiliser item 4 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 30" keyCode="52" id="shortcut03"/>
+
+		<!-- Utiliser item 5 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 40" keyCode="53" id="shortcut04"/>
+
+		<!-- Utiliser item 6 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 50" keyCode="54" id="shortcut05"/>
+
+		<!-- Utiliser item 7 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 60" keyCode="55" id="shortcut06"/>
+
+		<!-- Utiliser item 8 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 70" keyCode="56" id="shortcut07"/>
+
+		<!-- Utiliser item 9 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 80" keyCode="57" id="shortcut08"/>
+
+		<!-- Utiliser item 10 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 90" keyCode="48" id="shortcut09"/>
+
+
+		<!-- Utiliser item 1 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 01" keyCode="49" shiftKey="true" id="shortcut10"/>
+
+		<!-- Utiliser item 2 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 11" keyCode="50" shiftKey="true" id="shortcut11"/>
+
+		<!-- Utiliser item 3 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 21" keyCode="51" shiftKey="true" id="shortcut12"/>
+
+		<!-- Utiliser item 4 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 31" keyCode="52" shiftKey="true" id="shortcut13"/>
+
+		<!-- Utiliser item 5 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 41" keyCode="53" shiftKey="true" id="shortcut14"/>
+
+		<!-- Utiliser item 6 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 51" keyCode="54" shiftKey="true" id="shortcut15"/>
+
+		<!-- Utiliser item 7 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 61" keyCode="55" shiftKey="true" id="shortcut16"/>
+
+		<!-- Utiliser item 8 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 71" keyCode="56" shiftKey="true" id="shortcut17"/>
+
+		<!-- Utiliser item 9 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 81" keyCode="57" shiftKey="true" id="shortcut18"/>
+
+		<!-- Utiliser item 10 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 91" keyCode="48" shiftKey="true" id="shortcut19"/>
+
+
+		<!-- Utiliser item 1 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 02" keyCode="49" ctrlKey="true" id="shortcut20"/>
+
+		<!-- Utiliser item 2 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 12" keyCode="50" ctrlKey="true" id="shortcut21"/>
+
+		<!-- Utiliser item 3 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 22" keyCode="51" ctrlKey="true" id="shortcut22"/>
+
+		<!-- Utiliser item 4 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 32" keyCode="52" ctrlKey="true" id="shortcut23"/>
+
+		<!-- Utiliser item 5 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 42" keyCode="53" ctrlKey="true" id="shortcut24"/>
+
+		<!-- Utiliser item 6 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 52" keyCode="54" ctrlKey="true" id="shortcut25"/>
+
+		<!-- Utiliser item 7 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 62" keyCode="55" ctrlKey="true" id="shortcut26"/>
+
+		<!-- Utiliser item 8 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 72" keyCode="56" ctrlKey="true" id="shortcut27"/>
+
+		<!-- Utiliser item 9 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 82" keyCode="57" ctrlKey="true" id="shortcut28"/>
+
+		<!-- Utiliser item 10 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 92" keyCode="48" ctrlKey="true" id="shortcut29"/>
+
+
+		<!-- Utiliser item 1 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 03" keyCode="49" altKey="true" id="shortcut30"/>
+
+		<!-- Utiliser item 2 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 13" keyCode="50" altKey="true" id="shortcut31"/>
+
+		<!-- Utiliser item 3 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 23" keyCode="51" altKey="true" id="shortcut32"/>
+
+		<!-- Utiliser item 4 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 33" keyCode="52" altKey="true" id="shortcut33"/>
+
+		<!-- Utiliser item 5 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 43" keyCode="53" altKey="true" id="shortcut34"/>
+
+		<!-- Utiliser item 6 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 53" keyCode="54" altKey="true" id="shortcut35"/>
+
+		<!-- Utiliser item 7 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 63" keyCode="55" altKey="true" id="shortcut36"/>
+
+		<!-- Utiliser item 8 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 73" keyCode="56" altKey="true" id="shortcut37"/>
+
+		<!-- Utiliser item 9 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 83" keyCode="57" altKey="true" id="shortcut38"/>
+
+		<!-- Utiliser item 10 dans la barre de raccourcis -->
+		<shortcut category="shortcutCategory.shortcutBar" consoleCommand="!/common/useShortcutItem 93" keyCode="48" altKey="true" id="shortcut39"/>
+
+		<!-- Afficher le chat, aller dans la zone de saisie -->
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/chat" id="chat" keyCode="10"/>
+
+		<!--zoom in/out-->
+		<shortcut category="shortcutCategory.display" consoleCommand="!/common/zoomIn" id="zoomIn" keyCode="107"/>
+
+		<shortcut category="shortcutCategory.display" consoleCommand="!/common/zoomOut" id="zoomOut" keyCode="109"/>
+
+		<shortcut category="shortcutCategory.display" consoleCommand="!/common/closeWindows" id="closeWindows" shiftKey="true" ctrlKey="true" keyCode="32" alwaysValid="true"/>
+
+		<shortcut category="shortcutCategory.interface" consoleCommand="!/display/enableMiniMap" id="minimap" shiftKey="true" keyCode="77"/>
+
+		<shortcut category="shortcutCategory.display" consoleCommand="!/display/setLODLevel" id="setLODLevel" shiftKey="true" keyCode="68"/>
+		<shortcut category="shortcutCategory.display" consoleCommand="!/display/setFightLODLevel" id="setFightLODLevel" shiftKey="true" ctrlKey="true" keyCode="68"/>
+
+		<shortcut category="shortcutCategory.chat" id="lastContact" consoleCommand="!/common/getPrivateContact 0" keyCode="38" ctrlKey="true"/>
+		<shortcut category="shortcutCategory.chat" id="firstContact" consoleCommand="!/common/getPrivateContact 1" keyCode="40" ctrlKey="true"/>
+		<shortcut category="shortcutCategory.chat" id="autoCompletePlayerName" consoleCommand="!/common/autoCompletePlayerName" keyCode="32" ctrlKey="true"/>
+
+		<shortcut category="shortcutCategory.interface" id="contactList" consoleCommand="!/common/contactList" keyCode="67"/>
+		<shortcut category="shortcutCategory.interface" id="guild" consoleCommand="!/common/guild" keyCode="71"/>
+		<shortcut category="shortcutCategory.interface" id="craft" consoleCommand="!/common/craft" keyCode="74"/>
+		<shortcut category="shortcutCategory.interface" id="dungeonList" consoleCommand="!/common/dungeonList" keyCode="68"/>
+		<shortcut category="shortcutCategory.interface" id="achievements" consoleCommand="!/common/achievements" keyCode="76"/>
+		<shortcut category="shortcutCategory.interface" id="quests" consoleCommand="!/common/quests" keyCode="81"/>
+		<shortcut category="shortcutCategory.interface" id="emotes" consoleCommand="!/common/emotes" keyCode="69"/>
+		<shortcut category="shortcutCategory.interface" id="ecosystem" consoleCommand="!/common/ecosystem" keyCode="87"/>
+		<shortcut category="shortcutCategory.interface" id="climate" consoleCommand="!/common/climate" keyCode="88"/>
+		<shortcut category="shortcutCategory.interface" id="nation" consoleCommand="!/common/nation" keyCode="78"/>
+		<shortcut category="shortcutCategory.interface" id="passport" consoleCommand="!/common/passport" keyCode="80" shiftKey="true"/>
+		<shortcut category="shortcutCategory.interface" id="almanax" consoleCommand="!/common/almanax" keyCode="90"/>
+		<shortcut category="shortcutCategory.interface" id="tutorialBook" consoleCommand="!/common/tutorialBook" keyCode="84" shiftKey="true"/>
+		<shortcut category="shortcutCategory.interface" id="switchToDirectAttackCommand" consoleCommand="!/common/switchToDirectAttackCommand" keyCode="85"/>
+
+
+		<!--pivoter le personnage-->
+		<shortcut consoleCommand="!/common/turnCharacter 5" keyCode="37"/>
+
+		<shortcut consoleCommand="!/common/turnCharacter 7" keyCode="38"/>
+
+		<shortcut consoleCommand="!/common/turnCharacter 1" keyCode="39"/>
+
+		<shortcut consoleCommand="!/common/turnCharacter 3" keyCode="40"/>
+	</group>
+
+	<!--groupe bindable-->
+	<group name="fight">
+
+		<!-- Switch des Apparances de Timeline -->
+		<shortcut category="shortcutCategory.fight" consoleCommand="!/fight/switchFighterTransparency" id="fighterTransparency" keyCode="84"/>
+
+		<!-- Fin d'activation -->
+		<shortcut category="shortcutCategory.fight" consoleCommand="!/fight/endPlacementAndTurn" id="endPlacementAndTurn" keyCode="35"/>
+
+		<!-- Abandonner -->
+		<shortcut category="shortcutCategory.fight" consoleCommand="!/fight/giveUp" id="giveUp" keyCode="127"/>
+
+		<!-- Utiliser l'arme (main gauche / main droite) -->
+		<shortcut category="shortcutCategory.fight" id="closeCombatRight" keyCode="70" consoleCommand="!/fight/closeCombat r"/>
+		<shortcut category="shortcutCategory.fight" id="closeCombatLeft" ctrlKey="true" keyCode="70" consoleCommand="!/fight/closeCombat l"/>
+
+		<!--locker le combat-->
+		<shortcut category="shortcutCategory.fight" id="lockFight" ctrlKey="true" keyCode="76" consoleCommand="!/fight/lockFight"/>
+
+		<!--montrer une case à l'équipe-->
+		<shortcut category="shortcutCategory.fight" id="reportCell" keyCode="82" consoleCommand="!/fight/reportCell"/>
+
+		<!--appeler à l'aide-->
+		<shortcut category="shortcutCategory.fight" id="callHelp" keyCode="72" consoleCommand="!/fight/callHelp"/>
+
+		<!--Afficher les barres de vie-->
+		<shortcut category="shortcutCategory.fight" id="displayHpBar" ctrlKey="true" keyCode="72" consoleCommand="!/fight/displayHpBar"/>
+
+	</group>
+
+	<!--groupe bindable-->
+	<group name="binding">
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind1" keyCode="97"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind2" keyCode="98"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind3" keyCode="99"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind4" keyCode="100"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind5" keyCode="101"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind6" keyCode="102"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind7" keyCode="103"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind8" keyCode="104"/>
+
+		<shortcut category="shortcutCategory.chat" consoleCommand="!/common/bind " id="bind9" keyCode="105"/>
+
+	</group>
+
+</shortcuts>

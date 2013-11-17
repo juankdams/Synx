@@ -16,6 +16,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Synaw"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Synod"/>
 	<classpathentry kind="var" path="ZLIBS/netty-4.0.0.CR2/jar/all-in-one/netty-all-4.0.0.CR2.jar" sourcepath="/ZLIBS/netty-4.0.0.CR2/jar/all-in-one/netty-all-4.0.0.CR2-sources.jar"/>
-	<classpathentry kind="var" path="Synx/Syn/Syn_plugins/JWakfu.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,9 +1,8 @@
 package parsers.wakfu;
 
-import com.velocity.jwakfu.util.DataUtils;
-
 import io.netty.buffer.ByteBuf;
 import Core.Syn;
+import JWakfu.DataUtils;
 import Login.WakfuLoginClient;
 import Plugins.Abstractions.AbstractPacketParser;
 
@@ -11,10 +10,6 @@ public class VersionParser extends AbstractPacketParser<WakfuLoginClient, ByteBu
 
 	@Override
 	public boolean parse(WakfuLoginClient c, ByteBuf buffer) {
-		//buffer.readByte(); //Always 1
-		//int protocolVersion = buffer.readShort();
-		//String buildVersion = DataUtils.readString(buffer);
-		
 		int version = buffer.readByte();//"Version"
 		short protocolVersion = buffer.readShort();//"Revision");
 		int change = buffer.readByte();//"Change");
@@ -27,8 +22,8 @@ public class VersionParser extends AbstractPacketParser<WakfuLoginClient, ByteBu
 		.append(protocolVersion).append('.')
 		.append(change).append('.')
 		.append(buildVersion);
-		
 		Syn.d(sb.toString());
+		
 		//c.getChannel().write(new Packet1032RSAKey().encode());
 		c.getChannel().write(WakfuPackets.Approach.getRsaKeyPacket());
 		return true;

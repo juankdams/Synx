@@ -2,16 +2,10 @@ package parsers.wakfu;
 
 import java.io.File;
 
-import com.velocity.jwakfu.crypto.RSACertificateManager;
-import com.velocity.jwakfu.model.Player;
-import com.velocity.jwakfu.net.packets.out.Packet1024LoginResponse;
-import com.velocity.jwakfu.net.packets.out.Packet1032RSAKey;
-import com.velocity.jwakfu.net.packets.out.Packet1200ListWorlds;
-import com.velocity.jwakfu.net.packets.out.enums.LoginResponseCode;
-import com.velocity.jwakfu.util.DataUtils;
-
 import io.netty.buffer.ByteBuf;
 import Core.Syn;
+import JWakfu.DataUtils;
+import JWakfu.RSACertificateManager;
 import Login.WakfuLoginClient;
 import LoginObjects.LAccount;
 import Plugins.Abstractions.AbstractPacketParser;
@@ -31,13 +25,14 @@ public class LoginParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf>
 		String username = DataUtils.readString(decbuffer);
 		String password = DataUtils.readString(decbuffer);
 
-		if (rsaVerification != Packet1032RSAKey.RSA_VERIFICATION_LONG) {
+		Syn.d("Login packet: " + username + ", " + password);
+		
+
+	/*	if (rsaVerification != Packet1032RSAKey.RSA_VERIFICATION_LONG) {
 			Syn.d("Error decoding RSA data: invalid verification long!");
 			return false;
 		}
 
-		Syn.d("Login packet: " + username + ", " + password);
-		
 		if (!userExists(username)) {
 			c.getChannel().write(new Packet1024LoginResponse(LoginResponseCode.INVALID_LOGIN));
 			//session.write(new Packet1024LoginResponse(LoginResponseCode.INVALID_LOGIN));
@@ -54,7 +49,7 @@ public class LoginParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf>
 				//session.write(new Packet1024LoginResponse(LoginResponseCode.INVALID_LOGIN));
 			}
 			//player.save(); dafuq ? pas besoin de save ça ._.
-		}
+		}*/
 		return true;
 	}
 	

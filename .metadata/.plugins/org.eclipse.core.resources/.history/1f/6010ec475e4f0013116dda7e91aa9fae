@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chat>
+	<window id="0" selectedView="0">
+
+		<view id="0" name="general" channel="/l" opennedPipes="1,2,3,4,5,6,7,8,9,10,11,12" isDefault="true"/>
+
+	</window>
+</chat>

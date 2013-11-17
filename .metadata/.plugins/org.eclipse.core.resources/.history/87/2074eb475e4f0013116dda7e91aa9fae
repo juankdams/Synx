@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2010. Ankama.com Tous droits réservés.
+  -->
+
+<graphics>
+	<engine>
+		<pools>
+			<texture_pools>
+				<texture width="1" height="1" bpp="32" count="8"/>
+				<texture width="2" height="1" bpp="32" count="8"/>
+				<texture width="2" height="2" bpp="32" count="8"/>
+				<texture width="4" height="2" bpp="32" count="8"/>
+				<texture width="4" height="4" bpp="32" count="8"/>
+				<texture width="8" height="4" bpp="32" count="8"/>
+				<texture width="8" height="8" bpp="32" count="8"/>
+				<!-- 1KB for one texture-->
+				<texture width="16" height="8" bpp="32" count="8"/>
+				<texture width="16" height="16" bpp="32" count="32"/>
+				<texture width="32" height="16" bpp="32" count="8"/>
+				<texture width="32" height="32" bpp="32" count="32"/>
+				<texture width="64" height="32" bpp="32" count="32"/>
+				<texture width="48" height="48" bpp="32" count="64"/>
+				<texture width="64" height="64" bpp="32" count="128"/>
+				<texture width="128" height="64" bpp="32" count="192"/>
+				<texture width="128" height="128" bpp="32" count="192"/>
+				<texture width="256" height="128" bpp="32" count="64"/>
+				<texture width="256" height="256" bpp="32" count="32"/>
+				<texture width="512" height="256" bpp="32" count="144"/>
+				<texture width="512" height="512" bpp="32" count="64"/>
+				<texture width="1024" height="512" bpp="32" count="8"/>
+				<texture width="1024" height="1024" bpp="32" count="4"/>
+				<texture width="2048" height="1024" bpp="32" count="1"/>
+
+
+			</texture_pools>
+			<vertex_buffer_pools>
+				<vertex_buffer vertex_size="32" num_vertices="4" count="16384"/>
+				<vertex_buffer vertex_size="32" num_vertices="8" count="1024"/>
+				<vertex_buffer vertex_size="32" num_vertices="16" count="1024"/>
+				<vertex_buffer vertex_size="32" num_vertices="24" count="512"/>
+				<vertex_buffer vertex_size="32" num_vertices="32" count="512"/>
+				<vertex_buffer vertex_size="32" num_vertices="48" count="512"/>
+				<vertex_buffer vertex_size="32" num_vertices="64" count="512"/>
+				<vertex_buffer vertex_size="32" num_vertices="128" count="32"/>
+				<vertex_buffer vertex_size="32" num_vertices="256" count="32"/>
+				<vertex_buffer vertex_size="32" num_vertices="512" count="16"/>
+				<!-- particle systems -->
+				<vertex_buffer vertex_size="32" num_vertices="1024" count="8"/>
+				<vertex_buffer vertex_size="32" num_vertices="2048" count="8"/>
+				<vertex_buffer vertex_size="32" num_vertices="4096" count="4"/>
+				<vertex_buffer vertex_size="32" num_vertices="8192" count="2"/>
+				<vertex_buffer vertex_size="32" num_vertices="16384" count="2"/>
+			</vertex_buffer_pools>
+			<index_buffer_pools>
+				<index_buffer size="8" count="4"/>
+				<index_buffer size="32" count="8"/>
+				<index_buffer size="64" count="16"/>
+				<index_buffer size="128" count="4"/>
+				<index_buffer size="256" count="4"/>
+				<index_buffer size="65535" count="1"/>
+			</index_buffer_pools>
+		</pools>
+		<effects>
+			<effect name="transform" file="transform.cgfx"/>
+			<effect name="gui" file="gui.cgfx"/>
+			<!--	<effect name="postprocess" file="postprocess.cgfx"/> -->
+		</effects>
+	</engine>
+	<memoryObjectPools>
+
+		<pool class="com.ankamagames.framework.graphics.engine.Anm2.Anm" size="256"/>
+
+		<pool class="com.ankamagames.framework.kernel.core.maths.Matrix44" size="15000"/>
+		<pool class="com.ankamagames.framework.graphics.engine.transformer.BatchTransformer" size="15000"/>
+
+		<pool class="com.ankamagames.framework.graphics.engine.material.Material" size="15000"/>
+
+		<pool class="com.ankamagames.framework.graphics.engine.entity.Entity3D" size="5000"/>
+		<pool class="com.ankamagames.framework.graphics.engine.entity.EntitySprite" size="10000"/>
+		<pool class="com.ankamagames.framework.graphics.engine.entity.EntityGroup" size="8000"/>
+		<pool class="com.ankamagames.framework.graphics.engine.text.EntityText" size="1"/>
+
+		<pool class="com.ankamagames.baseImpl.graphics.alea.display.ScreenElement" size="20000"/>
+		<pool class="com.ankamagames.baseImpl.graphics.alea.display.DisplayedScreenElement" size="15000"/>
+
+		<pool class="com.ankamagames.framework.graphics.engine.opengl.GLGeometrySprite" size="15000"/>
+		<pool class="com.ankamagames.framework.graphics.engine.opengl.GLGeometryMesh" size="2000"/>
+		<pool class="com.ankamagames.framework.graphics.engine.opengl.text.GLGeometryText" size="1"/>
+		<pool class="com.ankamagames.framework.graphics.engine.opengl.text.GLGeometryBackground" size="1"/>
+
+		<pool class="com.ankamagames.framework.graphics.engine.particleSystem.Emitter" size="1024"/>
+		<pool class="com.ankamagames.framework.graphics.engine.particleSystem.Particle" size="4096"/>
+
+		<pool class="com.ankamagames.baseImpl.graphics.isometric.highlight.HighLightEntity" size="128"/>
+
+		<pool class="com.ankamagames.framework.graphics.engine.VertexBufferPCT" size="20000"/>
+
+	</memoryObjectPools>
+</graphics>

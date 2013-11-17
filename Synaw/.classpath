@@ -9,7 +9,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/LibPiou"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/LibUtils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PluginzLib"/>
-	<classpathentry kind="var" path="Synx/Syn/Syn_plugins/JWakfu.jar"/>
 	<classpathentry kind="var" path="ZLIBS/jansi-1.9.jar"/>
 	<classpathentry kind="var" path="ZLIBS/slf4j-api-1.6.1.jar"/>
 	<classpathentry kind="var" path="ZLIBS/slf4j-jdk14-1.6.4.jar"/>

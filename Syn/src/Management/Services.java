@@ -59,7 +59,6 @@ public class Services implements IService {
 		configService.reboot();
 		
 		sqlSynService.reboot();
-		//sqlGlobalService.reboot();
 		sqlZenService.reboot();
 		
 		wakfuClientStrategy.reboot();
@@ -87,30 +86,13 @@ public class Services implements IService {
 						Config.synDBPass
 						);
 				//this.TIMER(false);
-				c.setAutoCommit(true);
+				if(c != null) c.setAutoCommit(true);
 			}
 		};
 		sqlSynService.boot();
 		p.stopTiming("Booted Syn SQL");
 		p.restartTiming();
 		
-		/*sqlGlobalService = new SqlServiceMySql(){
-			@Override
-			public void boot() throws Exception{
-				c = createConnection(
-						Config.globalDBIP,
-						Config.globalDBName,
-						Config.globalDBUser,
-						Config.globalDBPass
-						);
-				//this.TIMER(false);
-				c.setAutoCommit(true);
-			}
-		};
-		sqlGlobalService.boot();
-		p.stopTiming("Booted Global SQL");
-		p.restartTiming();*/
-
 		sqlZenService = new SqlServiceMySql(){
 			@Override
 			public void boot() throws Exception{
@@ -121,7 +103,7 @@ public class Services implements IService {
 						Config.zenDBPass
 						);
 				//this.TIMER(false);
-				c.setAutoCommit(true);
+				if(c != null) c.setAutoCommit(true);
 			}
 		};
 		sqlZenService.boot();
