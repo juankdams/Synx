@@ -1,5 +1,0 @@
-[Known Client -> Server opcodes]
-
-    7: Send build version (request login server) 
- 1201: Request character list
- 1025: Send login information

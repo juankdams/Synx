@@ -1,3 +1,0 @@
-Game: Recv << Gp107
-[Send] >> GIC|35;107;1
-[Send] >> BN

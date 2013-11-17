@@ -1,7 +1,0 @@
-"Name","Time (ms)","Avg. Time (ms)","Own Time (ms)","Invocation Count"
-"<All threads>","662","","",""
-"java.lang.Thread.run()","661","66","58","10"
-"NewThreads.Task.call()","471","157","138","3"
-"Handlers.GHandler.messageReceived(IoSession, Object)","101","8","0","12"
-"Handlers.LHandler.messageReceived(IoSession, Object)","15","3","0","5"
-"Handlers.GHandler.sessionClosed(IoSession)","15","7","0","2"

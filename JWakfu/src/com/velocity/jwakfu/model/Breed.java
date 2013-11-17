@@ -1,8 +1,0 @@
-package com.velocity.jwakfu.model;
-
-public enum Breed {
-	
-	FECA, OSAMODAS, ENUTROF, SRAM, XELOR, ECAFLIP, ENIRIPSA, IOP, CRA, SADIDA, 
-	SACRIER, PANDAWA, ROGUE, MASQUERAIDER, UNKNOWN, FOGGERNAUT;
-
-}
