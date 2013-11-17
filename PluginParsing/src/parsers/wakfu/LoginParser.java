@@ -1,13 +1,13 @@
 package parsers.wakfu;
 
+import io.netty.buffer.ByteBuf;
+
 import java.io.File;
 
-import io.netty.buffer.ByteBuf;
 import Core.Syn;
 import JWakfu.DataUtils;
 import JWakfu.RSACertificateManager;
 import Login.WakfuLoginClient;
-import LoginObjects.LAccount;
 import Plugins.Abstractions.AbstractPacketParser;
 
 public class LoginParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf> {

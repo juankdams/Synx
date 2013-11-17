@@ -1,0 +1,52 @@
+package parsers.wakfu;
+
+import com.velocity.jwakfu.crypto.RSACertificateManager;
+
+import io.netty.buffer.ByteBuf;
+import Core.Syn;
+import JWakfu.DataUtils;
+import Login.WakfuLoginClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class VersionParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf> {
+
+	String clientVersion = "1.28.2";
+	
+	@Override
+	public boolean parse(WakfuLoginClient c, ByteBuf buffer) {
+		int version = buffer.readByte();//"Version"
+		short protocolVersion = buffer.readShort();//"Revision");
+		int change = buffer.readByte();//"Change");
+		String buildVersion = DataUtils.readString(buffer);
+		
+		buffer.readerIndex(0);
+		
+		byte[] b = new byte[buffer.writerIndex() - buffer.readerIndex()]; // - 5 is due to the fact that the size includes the type/opcode/size bytes.
+		buffer.readBytes(b);
+
+		byte[] decoded = RSACertificateManager.INSTANCE.decode(b);
+		ByteBuf decbuffer = DataUtils.bufferFromBytes(decoded);
+
+		long rsaVerification = decbuffer.readLong();
+		String username = DataUtils.readString(decbuffer);
+		String password = DataUtils.readString(decbuffer);
+
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("Received version packet: ")
+		.append(version).append('.')
+		.append(protocolVersion).append('.')
+		.append(change).append('.')
+		.append(buildVersion);
+		Syn.d(sb.toString());
+		
+		if(){
+			
+		}
+		
+		//c.getChannel().write(new Packet1032RSAKey().encode());
+		c.getChannel().write(WakfuPackets.Approach.getRsaKeyPacket());
+		return true;
+	}
+
+}

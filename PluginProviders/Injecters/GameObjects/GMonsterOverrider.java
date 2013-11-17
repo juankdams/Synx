@@ -1,6 +1,5 @@
 package GameObjects;
 
-import GameObjects.GMonster;
 import Interfaces.IOverrider;
 
 public class GMonsterOverrider extends GMonster implements IOverrider {

@@ -12,7 +12,6 @@ public class Approach {
 			getRsaKeyPacket().writeLong(OutPacketsEnum.RSA_VERIFICATION_LONG);
 			getRsaKeyPacket().writeBytes(RSACertificateManager.INSTANCE.getPublicKey());
 		}
-		
 	}
 	
 	

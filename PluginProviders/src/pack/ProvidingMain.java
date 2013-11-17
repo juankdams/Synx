@@ -4,7 +4,6 @@ import plugin.Plugin;
 import plugin.event.Event;
 import plugin.event.PluginListener;
 import Core.Syn;
-import Game.DofusGameServer;
 import Game.GameServer;
 import GameClientStrategies.GameClientStrategies;
 import Plugins.Managers.PluginsManager;
@@ -20,14 +19,14 @@ import Providers.GMonsterProvider;
 import Providers.GMountProvider;
 import Providers.GPersonnageProvider;
 import Providers.GSpellProvider;
-import Providers.IAProvider;
-import Providers.ItemSetProvider;
-import ZPlug.MiscEvent;
-import ZPlug.Vars;
-import Providers.LoginServerProvider.DofusLServerProvider;
-import Providers.LoginServerProvider.WakfuLServerProvider;
 import Providers.GameServerProvider.DofusGameServerProvider;
 import Providers.GameServerProvider.WakfuGameServerProvider;
+import Providers.IAProvider;
+import Providers.ItemSetProvider;
+import Providers.LoginServerProvider.DofusLServerProvider;
+import Providers.LoginServerProvider.WakfuLServerProvider;
+import ZPlug.MiscEvent;
+import ZPlug.Vars;
 
 public class ProvidingMain extends Plugin implements PluginListener {
 	

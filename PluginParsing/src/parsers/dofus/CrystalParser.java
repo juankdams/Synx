@@ -3,7 +3,6 @@ package parsers.dofus;
 import Core.Syn;
 import Game.DofusGameClient;
 import Game.GameServer;
-import Interfaces.IClient;
 import Login.LoginServer;
 import Management.Users.User;
 import Plugins.Abstractions.AbstractPacketParser;

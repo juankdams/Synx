@@ -1,0 +1,134 @@
+package Plugins.Managers;
+
+import io.netty.buffer.ByteBuf;
+
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.fusesource.jansi.Ansi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Core.Syn;
+import Game.DofusGameClient;
+import Interfaces.IClient;
+import Interfaces.IWakfuClient;
+import Plugins.Abstractions.AbstractPacketParser;
+import Tool.TClient;
+import Login.WakfuLoginClient;
+
+/**
+ * @author Robyn
+ * 
+ * Takes a Client and a packet as inputs 
+ * and parses the packet with the right parser for the right type of client.
+ * Clients are : GameClients (GClient), ToolClients (TClient), LoginClients (LClient).
+ */
+public class ParsingManager {
+	public Logger log = LoggerFactory.getLogger(ParsingManager.class);
+
+
+	private final String[] packetsToIgnore = {"Ir742;556;2", "CWJ", "CWV"};
+	private final String[] delimitersToIgnore = {"Ir", "@"};
+	private final Byte[] opcodesToIgnore = {};
+	private HashMap<Integer, AbstractPacketParser<? extends IClient, ?>> parsers = new HashMap<Integer, AbstractPacketParser<? extends IClient, ?>>();
+	
+	
+	
+	public boolean parse(TClient c, String packet){
+		Syn.w("T [RECV] << "+packet, Ansi.Color.GREEN);
+		AbstractPacketParser<TClient, String> ip = cast(parsers.get(packet.charAt(0)));
+		if(ip == null){
+			log.warn("T Parser non-available for the character ("+packet.charAt(0)+")");
+			return false;
+		}
+		return ip.parse(c, packet);
+	}
+	
+	public boolean parse(DofusGameClient c, String packet){
+		Syn.w("DG [RECV] << "+packet, Ansi.Color.GREEN);
+		//AbstractPacketParser<IClient> ip = parsers.get(packet.charAt(0));
+		AbstractPacketParser<DofusGameClient, String> ip = cast(parsers.get(packet.charAt(0)));
+		for(String s : packetsToIgnore){
+			if(packet.equals(s)){
+				log.info("Packet ignored by the ParsingManager :"+packet+"..");
+				return true;
+			}
+		}
+		for(String s : delimitersToIgnore){
+			if(packet.startsWith(s)){
+				log.info("Packet delimiter ignored by the ParsingManager :"+packet+"..");
+				return true;
+			}
+		}
+		if(ip == null){
+			log.warn("DG Parser non-available for the character ("+packet.charAt(0)+")");
+			//for(Entry<Integer, AbstractPacketParser<? extends IClient, ?>> e : parsers.entrySet()){
+			//	Syn.d("parserID = "+e.getKey());
+			//}
+			return false;
+		}
+		return ip.parse(c, packet);
+	}
+
+	@SuppressWarnings("unused")
+	public boolean parse(WakfuLoginClient c, ByteBuf packet){
+		//Syn.w("WG [RECV] << "+packet, Ansi.Color.GREEN);
+		//ByteBuf header = packet.readSlice(5);
+		int size = packet.readUnsignedShort();  // 2 bytes / 16 bits
+		byte type = packet.readByte();			// 1 byte  / 8  bits
+		int opcode = packet.readUnsignedShort();// 2 bytes / 16 bits
+		
+		Syn.wD("[w] Incoming packet. Size: " + size + ", Type: " + type + ", Opcode: " + opcode);
+		
+		AbstractPacketParser<WakfuLoginClient, ByteBuf> ip = cast(parsers.get(opcode));
+		
+		for(String s : packetsToIgnore){
+			if(packet.equals(s)){
+				log.info("Packet ignored by the ParsingManager :"+packet+"..");
+				return true;
+			}
+		}
+		for(Byte b : opcodesToIgnore){
+			if(b.equals(opcode)){
+				log.info("Packet delimiter ignored by the ParsingManager :"+packet+"..");
+				return true;
+			}
+		}
+		if(ip == null){
+			log.warn("WG Parser non-available for the opcode ("+opcode+")");
+			//for(Entry<Integer, AbstractPacketParser<? extends IClient, ?>> e : parsers.entrySet()){
+			//	Syn.d("parserID = "+e.getKey());
+			//}
+			return false;
+		}
+		return ip.parse(c, packet);
+	}
+	
+	
+	public HashMap<Integer, AbstractPacketParser<? extends IClient, ?>> getParsers(){
+		return parsers;
+	}
+	public AbstractPacketParser<? extends IClient, ?> getParser(int a){
+		return parsers.get(a);
+	}
+	public ParsingManager setParser(int a, AbstractPacketParser<? extends IClient, ?> iparser){
+		parsers.put(a, iparser);
+		return this;
+	}
+	public void unload() {
+		parsers.clear();
+		parsers = new HashMap<Integer, AbstractPacketParser<? extends IClient, ?>>();
+	}
+	
+	
+	/**
+	* Warning! Using this method is a sin against the gods of programming!
+	*/
+	@SuppressWarnings("unchecked")
+	private static <T> T cast(Object o){
+		return (T)o;
+	}
+	
+}

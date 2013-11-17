@@ -23,7 +23,6 @@ import Login.WakfuLoginClient;
  * 
  * Takes a Client and a packet as inputs 
  * and parses the packet with the right parser for the right type of client.
- * Clients are : GameClients (GClient), ToolClients (TClient), LoginClients (LClient).
  */
 public class ParsingManager {
 	public Logger log = LoggerFactory.getLogger(ParsingManager.class);
@@ -72,7 +71,6 @@ public class ParsingManager {
 		return ip.parse(c, packet);
 	}
 
-	@SuppressWarnings("unused")
 	public boolean parse(WakfuLoginClient c, ByteBuf packet){
 		//Syn.w("WG [RECV] << "+packet, Ansi.Color.GREEN);
 		//ByteBuf header = packet.readSlice(5);
@@ -84,12 +82,6 @@ public class ParsingManager {
 		
 		AbstractPacketParser<WakfuLoginClient, ByteBuf> ip = cast(parsers.get(opcode));
 		
-		for(String s : packetsToIgnore){
-			if(packet.equals(s)){
-				log.info("Packet ignored by the ParsingManager :"+packet+"..");
-				return true;
-			}
-		}
 		for(Byte b : opcodesToIgnore){
 			if(b.equals(opcode)){
 				log.info("Packet delimiter ignored by the ParsingManager :"+packet+"..");
