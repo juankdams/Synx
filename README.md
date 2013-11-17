@@ -26,12 +26,12 @@ Sorry for all the stuff that is left undone by now.
 I don't have much time nor much money and time is money so yeah, but at the moment, 
 I'm excited about coding the Wakfu part of the emulator so the dofus part 
 is gonna have to wait a little longer unless someone wants to throw some help in.
-Also sorry if you see some retard comments or other stupidities of the genre.
+Also sorry if you see some retard comments or other stupidities of the genre (like myself telling my life story in my changelog)
 It's not supposed to be the cleanest, I'm a human, please.
 The Java JDK version used is 1.6.0_45
 
 ## Also also:
-The threading packages under "NewThreads" suck, like many other things I've coded, no need to bash me about it.
+The threading packages under "NewThreads" suck, like many other things I've coded (database management..), no need to bash me about it.
 Criticize as much as you want as long as it is constructive, otherwise you can stfu.
 It would be nice to have some feedback, although I'm almost 99% sure I won't, but anyways.
 

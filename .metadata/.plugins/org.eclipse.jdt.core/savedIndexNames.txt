@@ -78,7 +78,6 @@ INDEX VERSION 1.126+Z:\Dropbox\Private\Synx\.metadata\.plugins\org.eclipse.jdt.c
 1298059135.index
 4286677913.index
 2420224983.index
-4205602535.index
 3959951610.index
 105035021.index
 2187333126.index

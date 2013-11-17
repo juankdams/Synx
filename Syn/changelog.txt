@@ -3095,15 +3095,6 @@ De plus, les cibles d’un sort de zone sont désormais affectées toujours dans
 		- ajouté des points d'events (voir son changelog) 
 - Là faut faire les putains de timers man, ca fait plus d'un mois que j'ai commencé u_U
 - Go tester ça en mode debug et ajotuer les putains de packets qu'il manque.
-- Au pire Tenkei peut leech les packets des combats sur l'offi.
-- Parlé avec John sur wizpert.com, IL EST FUCKING AWESOME CE GARS OMG <3 
-	- Il m'a montré les shared memory segments que j'pourrai utiliser pour séparer mes JVMs
-	- et avoir un clustered cache sans même avoir à sérializer ni replicate.
-	- Tout ce que j'vais .get() du cache sera une référence à celui-ci ! 
-	- Donc toute modifications dedans se fait dans les autres nodes aussi !!!! HAAA CEST FOU <3
-	- Et même pas besoin de refaire une tonne de .get(), on a déjà la bonne référence au cache !!!
-	- J'ai c/c toute la conversation dans un .txt que j'ai c/c un peu partout dans mon dropbox:)
-	-  Awesome awesomeness of fucking awesome, this is awesome, i love it <3
 - 
 
 0.0.95.8 [9 Juillet 2013]
@@ -3761,155 +3752,28 @@ De plus, les cibles d’un sort de zone sont désormais affectées toujours dans
 			
 	
 	
-Alors les todo: 
-				- Remplir la table classes_config de défaut avec toutes les classes officielles [manque les rates de capital/points)
-				- Faire les formules de calculs de paliers de stats
-				- Finir les Classe et Command  (+ booster les possibilités des paramètres pour les commandes, check dans l'apply, c'pourri)
- 				- perso.spellsLists(+bouger+booster spell+packets+saves), [FAIT, manque juste spellForget]
- 				- Gifts (GiftList, GiftAssign, Save, Delete)
-				- map.actionsListeners,  
-				- Régénération auto vie persos,
-				- effects(coder les application),	
- 				- system de cache distribué entre ++ JVMs pour pouvoir séparer le login et les games 
- 					- sans avoir a charger les données de l'officiel sur chaque game
- 					- Ainsi les plugins doivent être chargés par les game et non le login (y peut yavoir des modifications dans chaque plugin de chaque serveur comme les commandes dispos en chat)
- 					- 
- 				- gbuff (rendu à mettre en application/tester)
- 				- gclient.ban();
- 				- Note: Les Syn.w/.d/.wD, Ansi, System.out.println et cie prennent bcp de temps CPU lorsque c'est dans une méthod souvent répétée (Comme le SM.send)
- 				- Intrareboot
- 				- Profile sur le GInventory.(un)equip, GStats.boostEquipmentStats
- 				- Faire ma propre lib de systeme de plugins pour plus de performances qu'avec celle de mathias
- 				- Faire le saveAll/cleanAll/rebuildAll dans GWorld et le Login/GameServer.off()
- 				- Refaire les Queue (surtout le truc de numberOf(non)PremiumClients dans LServer
-				- J'ai fait du profiling principalement sur GInventory.(un)equip, GStats.boostEquipmentStats, Account.As, 
-					- Faut booster ça :P, c'est intéréssant (genre moyenne 25ms par boostEquipmentStats, moy.10ms par As, 2X pour .equip) 
-					- (J'ai prit des screenshot) Les method.invoke aussi sont trop lent (comme dans gghandler et CodeInput.callMethod)
-				- Faire le systeme de relations (Amis/ennemis/ignorés, principalement les packets, j'pense que le reste est déjà là)
-	
-
-- TODO : Faire plusieurs instances de maps si elles deviennt trop pleines de joueurs (genre +80 joueurs sur une map)
-@  mathias52	:	(18 janvier 2013 - 06:25 )pour les maps, tu limites le nbr de joueur par map ? (MapTemplate / MapInstance)
-@  Crystal	:	(18 janvier 2013 - 06:26 )non pas encore, j'ai déjà fait ça sur Zen par contre mais seulement pour map shop/pvp x)
-@  mathias52	:	(18 janvier 2013 - 06:26 )MapTemplate : MapInstance.getInstance(); <- Instance ou il y a moins de x joueurs, s'il n'y a pas d'instance dispo, on en créé une nouvelle
-  Ca pourrait être style un MapsManager avec une HashMap<mapID, ArrayList<Map>> maps = null;
-  	avec une instance de map par entrée d'Arraylist
-  	Donc pour le MapsManager.getMapInstance(mapID){
-  		for(Map m : maps.get(mapID))
-  		{
-  			if(m.getSprites.size() < GConfig.maxSpritesOnMap){
-  				return m;  //Si on trouve une instance de la map avec un nombre correct de sprites
-  			} 
-  		}
-  		//Si on trouve pas de bonne instance de map: créé une nouvelle et ajoute à l'arrayList
-  		Map m = new Map(mapID, blabla);
-  		maps.get(mapID).add(m); 
-		return m;
-	}	
-		
-		
-		
-		CORRECTION PACKET AXK / AYK
-On envoi au joueur le packet AYK ou AXK, selon les cas :
-Si le joueur peut se connecter :
-• Si l’hôte est sous le format d’une adresse IP, il sera possible d’encrypter l’IP et le port (encryptedHost), dans ce cas on utilise le packet AXK, formé comme suivant : AXK + encryptedHost + TicketKey
-Exemple :
-• Si HostAdress n’est pas sous forme d’IP (nom de domaine par exemple), il est nécessaire d’utiliser le packet AYK, formé comme suivant : AYK + HostAdress + ‘:’ + port + ‘;’ + TicketKey AXK7?0@0@01bw8Rj8I-fxeiV
-
-		
-		
-		
-	
-
-PLAN D'ACTION: Bon là faut compléter les items et les statistiques avant même de pouvoir bouger sur la map.
-	- C-a-d: 
-		- Créer la table ItemTemplate dans le Login ET dans les Worlds et la remplir! [FAIT]
-			-> Faut : ID, stats, conditions, parametres. [FAIT]
-		- Créer un item (commande/action), [FAIT]
-		- Afficher l'item dans l'inventaire [FAIT]
-		- Équiper un item [FAIT]
-		- Déséquiper un item [FAIT]
-		- Updater les stats quand on équipe/déséquipe un item [FAIT]
-		- Détruire un item [FAIT]
-		- Placer un item dans la barre rapide en bas à droite [FAIT]
-		- Utiliser un item (Bonbons, pains, potions, ) [FAIT, manque juste qq item spéciaux like bonbons]
-		- Jeter un item par terre [FAIT]
-		- Interdire de jeter un item sur une case occupée ou nulle (ex il y a déjà un item)  [FAIT]
-		- Prendre un objet qui était par terre [FAIT]
-		- Modifier les pods en boostant charac ou par un objet. [FAIT]
-		- Gérer les pods style: impossible de bouger si pods>podsMax. 
-		- Équiper un item par dessus un autre (Enlever l'ancien d'abord et ensuite mettre le nouveau) [FAIT]
-		- Avoir des jets aléatoires sur les stats des items [FAIT]
-		- Gérer les conditions d'équipement (Align, Grade, Stats, pods, classe, etc) [FAIT]
-		- Enlever le bouclier si on équipe une arme à deux mains [FAIT]
-		- Bloquer l'équipement de bouclier avec une arme à deux mains [FAIT]
-		- Revérifier les conditions de chaque item équipé quand on en déséquipe un. [FAIT]
-		- Interdire l'équipement de deux items identiques de la même panoplie (Anneaux) [FAIT]
-		- Gérer les items d'incarnations (Morphs, sorts, xp, lvl, etc)
-		- Gérer les familiers/dragodindes
-		
-		- Augmenter des charactéritiques de base (Vitalite, Sagesse, Intel, Force, Agi, Chance) [FAIT]
-			- Ce qui augmente aussi l'esquive pa/pm, les pods, les soins, les cc, la prospec    [TOFINISH]
-		- Calculer l'initiative en fonction de toutes les autres characs gagnées par les items [TOFIX]
-		- Caculer les taux de coups critiques (agi + cc)
-		- Calculer la prospection (chance + prospec)  [FAIT]
-		- Calculer les pods (force + pods)  [TOFIX]
-		- Calculer les taux d'esquives PA/PM (sagesse + %d'esquives) [FAIT]
-		- http://forums.jeuxonline.info/showthread.php?t=801243  (Pour les formules de calculs)
-		- 
-
-	PROCHAINES ÉTAPES:
-		- Enlever les if(template == null)return 0 dans GItem.java [FAIT]
-		- Aller voir le chargement des itemTemplate dans SQL.Items.loadTemplate [FAIT]
-		- Ajouter une vérification pour ne pas créer de new GItem() si le template est null [FAIT]
-		- Vérifier que le packet pour afficher les accessoires est bon et si y'a dautres packets en relation avec les items aussi [FAIT]
-		- Optimiser les colonnes SQL: leurs types et leur length pour de meilleurs performances CPU ET RAM
-		- Remettre mapID(ds ICharacter) et itemTemplateID en short et interdire aux créateurs d'utiliser des ID < 15000 et > 32000
-
-
-
-PLAN D'ACTION POUR ENSUITE: 
-	- Terminer les gifts: 
-		- Commande pour ajouter un gift à un account, 
-	 	- Ajouter les items aux inventaires des persos quand on prend les gifts en se connectant.
-	 	- 
-	- Faire les banques (En passant, il pourrait y'avoir des bugs d'indexage avec la variable curPerso si metons euh la banque est pas au meme index que le perso, metons que cest mélangé...on sait jamais, faut controler ça)
-	- Faire les poubelles 
-		(useless, mais c'est juste des banques sans owner, banque que tout le monde peut accéder. 
-		On pourrait faire une interface Storage implémentée 
-			par GInventory, Bank, TrashBin, DragoInventory, Coffre(Chest/Safe/Trunk)...)
-	- Updater le premiumTime chaque dans SQL.Accounts.save et chaque fois qu'on arrive aux écrans PersoList et ServerList (Packet SM.Accounts.ALK et AxK) [FAIT]
-	- Échanges !	
-	- 
-
-
-
-IDÉES:
-[15:48:25] Wendy (Graph): tu peux mettre comme dofus 2.9?
-		 par exemple : si on tape avec une sort feu sa met couleur rouge
-		 
-
-
+				
 
 TODO:
-- Quand on entre en combat et que le perso est assis/couché, on doit le mettre debout et l'enlevé du LifeRegenerator
-- Lister les emotes que le personnage a apprit pour controler s'il a le droit de les faire. (Implenter du même coup l'emote Champion qui fait applaudir tout le monde sur la map qui est pas en cbt)
-- Ajouter des ((GPersonnnage)z).getFight == null dans les itérations de character sur les map quand on envoie (ex) un packet de message général ou d'emote ou de smiley etc
 - TODO : les nouvelles commandes consoles et chat (Avec GM, VIP, etc configurable en fou)
-- Fixme: un peu de termination à ajouter/corriger dans LBank, GItem, LAccount.
 - TODO : Faire les banques.
-- TODO : Mettre un champs config pour niveau minimum pour demander le panel avec la question/réponse secrete pour delete un perso
 - TODO : ajouter le vrai logging dans des files
-- Monitorer le nombre d'objets GServ/GConf/GPersos/etc sur le profiler pour quand on en supprime ou off un pour voir si tout se supprime bien de la RAM.
-- Continuer la finalization
-- Faire la table des Maps(Cartes)
-- Faire la table de ItemTemplate
-- Trouver le meilleur compromit pour le stock dans les L/GWorlds (HashMaps/ArrayList/AtomicblablaArray/..)
-- Continuer le onSelected
 - Migration de serveur
-- Pathfinding avec A*
-- Chercher les formules de pathfinding de l'officiel dans le client (Exemple quand on bouge la souris en combat et qu'on voit le chemin qui s'offre à nous pour bouger, bah avoir la formule pour savoir comment cr er ce chemin)
-
+- Pathfinding avec A* ?
+- Faire les formules de calculs de paliers de stats
+- Finir les Classe et Command  (+ booster les possibilités des paramètres pour les commandes, check dans l'apply, c'pourri)
+- Gifts (GiftList, GiftAssign, Save, Delete)
+- map.actionsListeners,  
+- Régénération auto vie persos,
+- effects(coder les application),	
+- Intrareboot
+- Profile sur le GInventory.(un)equip, GStats.boostEquipmentStats
+- Refaire les Queue (surtout le truc de numberOf(non)PremiumClients dans LServer
+- J'ai fait du profiling principalement sur GInventory.(un)equip, GStats.boostEquipmentStats, Account.As, 
+- Faut booster ça :P, c'est intéréssant (genre moyenne 25ms par boostEquipmentStats, moy.10ms par As, 2X pour .equip) 
+- (J'ai prit des screenshot) Les method.invoke aussi sont trop lent (comme dans gghandler et CodeInput.callMethod)
+- Faire le systeme de relations (Amis/ennemis/ignorés, principalement les packets, j'pense que le reste est déjà là)
+	
 
 BUGS:
 - 

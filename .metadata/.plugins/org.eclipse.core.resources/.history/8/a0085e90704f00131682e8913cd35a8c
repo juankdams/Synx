@@ -1,0 +1,173 @@
+package Core;
+
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.Ansi.Color;
+import org.fusesource.jansi.AnsiConsole;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Game.GameServer;
+import Login.LoginServer;
+import Management.Services;
+import NewThreads.Task;
+import XML.Config;
+
+public class Syn {
+
+	public static Logger log = LoggerFactory.getLogger(Syn.class);
+	
+	
+	public static final Services Services = new Services();
+	public static boolean isRunning = false;
+	
+	public static long time = 0;
+	  
+	
+	public static void main(final String[] args) throws Exception
+	{ 
+		setExceptionHandler();
+		AnsiConsole.systemInstall();
+		Syn.w("Syn  Emulator by Crystal", null);
+		Syn.w("|^^^^^^^^^^^^^^^^^^| ||				", Ansi.Color.CYAN);
+		Syn.w("|BeerTruck....| ||''|; ___.			", Ansi.Color.CYAN);
+		Syn.w("|.._..________===|=||_|__|..,,]	 	", Ansi.Color.CYAN);
+		Syn.w("(@)'(@)''''**|(@)(@)*****''(@)]		", Ansi.Color.CYAN);
+		
+		long i = System.currentTimeMillis(), o = i;
+		time = o;
+		
+		Services.boot();
+		
+		Task<Object> excepsRead = Services.globalThreadsManagerService.getTaskFactory().newEvaluateTask("Core.Exceptions.read()");
+		Task<Object> worldsRead = Services.globalThreadsManagerService.getTaskFactory().newEvaluateTask("XML.WorldsConfig.read()");
+		Task<Object> langsRead  = Services.globalThreadsManagerService.getTaskFactory().newEvaluateTask("XML.LangConfig.read()");
+		Services.globalThreadsManagerService.executeDirectTask(excepsRead);
+		Services.globalThreadsManagerService.executeDirectTask(worldsRead);
+		Services.globalThreadsManagerService.executeDirectTask(langsRead);
+
+		
+		Thread shutDown = new Thread(new Runnable(){
+			public void run() {
+				Syn.d("Serveur en shutdown", Ansi.Color.RED);
+				isRunning = false;
+				closeAll(true);
+				final Thread t = Thread.currentThread();
+				//truc();
+				Thread runagain = new Thread(new Runnable(){
+					public void run() {
+						try {
+							main(args);
+							Runtime.getRuntime().removeShutdownHook(t);
+						}catch (Exception e) { e.printStackTrace(); }
+					}
+				});
+				Syn.d("Serveur fini de shutdown, rebooté.", Ansi.Color.RED);
+			}
+		});
+		
+		shutDown.setName("ShutDownHookThread");
+		Runtime.getRuntime().addShutdownHook(shutDown);
+		i = perfTick("Temps de lancement du ShutDownHook :", i);
+
+		System.runFinalization();		
+		System.gc();
+		i = perfTick("Temps de finalization et du passe GC :", i);
+		
+		o = perfTick("Temps d'execution total du lancement", o);
+	}
+
+
+	public static void setExceptionHandler(){
+		Thread.setDefaultUncaughtExceptionHandler( new Thread.UncaughtExceptionHandler(){
+    		public void uncaughtException(Thread t, Throwable e) {
+    			Syn.w("UncaughtException");
+    			e.printStackTrace(); // you can use e.printStackTrace ( printstream ps )
+    			//UIFactory.newMessageBoxError("Exception", e.getMessage(), mainUI.frame);
+    		}
+    	});		
+	}
+
+	
+	/**
+	 * //TODO: methode CloseAll dans le shutDownHook pour quand on ferme l'emu: save et tout <br>
+	 * Actuellement ça save + ferme tous les LoginServer et leurs GameServers
+	 */
+	public static void closeAll(boolean terminate){
+		for(LoginServer s : Services.serversService.loginServers.values()){
+			for(GameServer gs : s.gameServers){
+				gs.save();
+				gs.off(terminate);
+			}
+			s.save();
+			s.off(terminate);
+		}
+	}
+
+
+	public static long perfTickNano(String task, long i){
+		System.out.println(Ansi.ansi().fg(Color.YELLOW).a(task+" = "+(System.nanoTime() - i)+" ns").reset());
+		return System.nanoTime();
+	}
+	
+	public static long perfTick(String task, long i){
+		System.out.println(Ansi.ansi().fg(Color.YELLOW).a(task+" = "+(System.currentTimeMillis() - i)+" ms").reset());
+		return System.currentTimeMillis();
+	}
+	
+	public static void d(String str, Color color){
+		if(Config.debugMode){
+			if(color != null){
+				//AnsiConsole.system_out.print("truc");
+				//AnsiConsole.out.print(color);
+				System.out.println(Ansi.ansi().fg(color).a("[DEBUG]: "+str).reset());
+			}else{
+				System.out.println("[DEBUG]: "+str);
+			}
+		}
+		str = null;
+	}
+	
+	public static void w(String str, Color color){
+		if(color != null){
+			//AnsiConsole.system_out.print("truc");
+			//AnsiConsole.out.print(color);
+			System.out.println(Ansi.ansi().fg(color).a(str).reset());
+		}else{
+			System.out.println(str);
+		}
+		str = null;
+	}
+	
+	public static void wD(String str, Color color){
+		if(Config.debugMode){
+			if(color != null){
+				//AnsiConsole.system_out.print("truc");
+				//AnsiConsole.out.print(color);
+				System.out.println(Ansi.ansi().fg(color).a(str).reset());
+			}else{
+				System.out.println(str);
+			}
+		}
+		str = null;
+	}
+	
+	public static void d(String str){
+		if(Config.debugMode){
+			System.out.println("[DEBUG]: "+str);
+		}
+		str = null;
+	}
+	public static void w(String str){
+		System.out.println(str);
+		str = null;
+	}
+	
+	public static void wD(String str){
+		if(Config.debugMode){
+			System.out.println(str);
+		}
+		str = null;
+	}
+	
+	
+}

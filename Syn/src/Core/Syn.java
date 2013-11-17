@@ -25,7 +25,6 @@ public class Syn {
 	
 	public static void main(final String[] args) throws Exception
 	{ 
-		//ProxySelector.setDefault(null);
 		setExceptionHandler();
 		AnsiConsole.systemInstall();
 		Syn.w("Syn  Emulator by Crystal", null);
@@ -33,8 +32,6 @@ public class Syn {
 		Syn.w("|BeerTruck....| ||''|; ___.			", Ansi.Color.CYAN);
 		Syn.w("|.._..________===|=||_|__|..,,]	 	", Ansi.Color.CYAN);
 		Syn.w("(@)'(@)''''**|(@)(@)*****''(@)]		", Ansi.Color.CYAN);
-		
-		//Object a = GameClientStrategies.DofusClientStrategy;
 		
 		long i = System.currentTimeMillis(), o = i;
 		time = o;
@@ -49,13 +46,12 @@ public class Syn {
 		Services.globalThreadsManagerService.executeDirectTask(langsRead);
 
 		
-		Thread shutDown = new Thread(new Runnable(){
+		Thread shutDown = new Thread(new Runnable(){ //Message à vous qui me lisez : lol quel merdier, parresse d'arranger ça.
 			public void run() {
 				Syn.d("Serveur en shutdown", Ansi.Color.RED);
 				isRunning = false;
 				closeAll(true);
 				final Thread t = Thread.currentThread();
-				//truc();
 				Thread runagain = new Thread(new Runnable(){
 					public void run() {
 						try {
@@ -66,11 +62,8 @@ public class Syn {
 				});
 				Syn.d("Serveur fini de shutdown, rebooté.", Ansi.Color.RED);
 			}
-		}){
-			//public void truc(){
-			//	Runtime.getRuntime().removeShutdownHook(this);
-			//}
-		};
+		});
+		
 		shutDown.setName("ShutDownHookThread");
 		Runtime.getRuntime().addShutdownHook(shutDown);
 		i = perfTick("Temps de lancement du ShutDownHook :", i);
@@ -80,79 +73,6 @@ public class Syn {
 		i = perfTick("Temps de finalization et du passe GC :", i);
 		
 		o = perfTick("Temps d'execution total du lancement", o);
-		
-		/*
-		try {
-			SQL.getConnexionSetupFuture().get();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		//Monsters.transferZenMonstersToSyn();
-		//Monsters.transferZenMonstersGroupsToSyn();
-//		Maps.tansferZenMapsSubareas();
-		
-		
-		//SWF.Reader.getSubAreaAreas("Syn_data/Lang/maps_fr_360.txt");
-		/*try {
-			sqlFuture.get();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		Spells.updateAllSpellAnimationsParameters(null);
-		Syn.d("done");
-		//Items.transferItemTemplateNamesFromZenToSyn();
-		/*
-		for(ConfigurationObjects.Config c : GConfig.configs){
-			SConfig.createAllClasses(c);
-		}
-
-		/*
-		try {
-			ScriptEngineManager manager = new ScriptEngineManager();
-			ScriptEngine engine = manager.getEngineByName("JQuery");
-			engine.eval(new java.io.FileReader("Syn_scripts/jquerynotif.js"));
-			Invocable inv = (Invocable) engine;
-	        inv.invokeFunction("$", "allo");
-	        engine = null;
-		}catch (FileNotFoundException e1) {e1.printStackTrace();} catch (ScriptException e1) {e1.printStackTrace();} catch (NoSuchMethodException e1) {e1.printStackTrace();}
-		
-		//Perfs p = new Perfs();
-		/*
-		Temps d'exécution de countFromTwoSides: 925ms
-		Temps d'exécution de count: 665ms
-		Temps d'exécution de countUntilIndexFromTwoSides: 844ms
-		Temps d'exécution de countUntilIndex: 610ms
-		Temps d'exécution de indexOf: 29ms
-		Temps d'exécution de lastIndexOf: 79ms
-		 */
-		/*for(int c = 10000000; c >= 0; c--){
-			//"@lol@papa@p@o@r@t@".indexOf("@");
-			//StringUtils.countFromTwoSides("@lol@papa@p@o@r@t@", "@");
-			StringUtils.countUntilIndexFromTwoSides("a@lol@papa@p@o@r@t@e", "@", 15);
-		}
-		p.stopTiming("countUntilIndexFromTwoSides"); p.restartTiming();
-		for(int c = 10000000; c >= 0; c--){
-			//"@lol@papa@p@o@r@t@".lastIndexOf("@");
-			//StringUtils.count("@lol@papa@p@o@r@t@", "@");
-			StringUtils.countUntilIndex("a@lol@papa@p@o@r@t@e", "@", 15);
-		}
-		p.stopTiming("countUntilIndex"); p.restartTiming();
-		w("count = "+StringUtils.countFromTwoSides("@lol@papa@p@o@r@t@", "@"));//Pour avoir le nombre de "@" trouvé jusqu'à l'index 15
-		*///w("index = "+Misc.StringUtils.indexOf("troll;pop;cat;jut;riot", ";", 8));//Pour avoir l'index du 8ieme ";"
-		//SWF.Reader.getSpellsRequiredStates();
-		//SWF.Reader.getSpellsForbiddenStates();
-		//PaliersStats.Palier1c((short)40, (short)63);
-		//SWF.Reader.getCursedItems("Syn_data/Lang/items_fr_432.txt");
-		//SWF.Reader.getUsableAndTargetableItems("Syn_data/Lang/items_fr_432.txt");
-		//SWF.Reader.getTwoHandsWeapons("items_fr_432.txt");
-		//Items.transferItemTemplateFromZenToSyn();
-		//Tests.testCastIntToShort();
-		//Maps.loadZenMaps();
-		//*/
 	}
 
 
@@ -160,8 +80,7 @@ public class Syn {
 		Thread.setDefaultUncaughtExceptionHandler( new Thread.UncaughtExceptionHandler(){
     		public void uncaughtException(Thread t, Throwable e) {
     			Syn.w("UncaughtException");
-    			e.printStackTrace(); // you can use e.printStackTrace ( printstream ps )
-    			//UIFactory.newMessageBoxError("Exception", e.getMessage(), mainUI.frame);
+    			e.printStackTrace(); 
     		}
     	});		
 	}

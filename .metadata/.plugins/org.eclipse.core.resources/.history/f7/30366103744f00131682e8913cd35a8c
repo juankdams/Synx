@@ -1,0 +1,42 @@
+package parsers.wakfu;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import Core.Syn;
+import JWakfu.DataUtils;
+import JWakfu.RSACertificateManager;
+import Login.WakfuLoginClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class VersionParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf> {
+
+	private static final String clientVersion = "1.28.2";
+	
+	@Override
+	public boolean parse(WakfuLoginClient c, ByteBuf buffer) {
+		int version = buffer.readByte();//"Version"
+		short protocolVersion = buffer.readShort();//"Revision");
+		int change = buffer.readByte();//"Change");
+		String buildVersion = DataUtils.readString(buffer);
+
+		String clietnVersion = version+"."+protocolVersion+"."+change;
+		Syn.d("Received version packet: ["+s+"]");
+		
+		if(clientVersion.equals(s) == false ){
+			Syn.d("wrong version");
+			return true;
+		}
+		
+		ByteBuf data = Unpooled.buffer();
+		data.writeShort(0); //Size placeholder
+		data.writeShort(1032);
+		data.writeLong(0x8000000000000000L);
+		data.writeBytes(RSACertificateManager.INSTANCE.getPublicKey());
+		data.setShort(0, data.writerIndex());
+		
+		//c.getChannel().write(new Packet1032RSAKey().encode());
+		c.getChannel().write(data);//WakfuPackets.Approach.getRsaKeyPacket());
+		return true;
+	}
+
+}

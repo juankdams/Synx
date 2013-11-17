@@ -1,0 +1,36 @@
+package Handlers;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.handler.codec.MessageToByteEncoder;
+
+import Core.Syn;
+
+
+@Sharable
+public class WakfuEncoder extends MessageToByteEncoder<ByteBuf> {
+	
+	public WakfuEncoder() {
+		super(ByteBuf.class);
+	}
+	
+	@Override
+	protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
+		msg.setShort(0, msg.writerIndex());
+		
+		Syn.d("[w] Sending Opcode: "+msg.getUnsignedShort(2)+"");
+		
+		out.writeBytes(msg);
+		
+		/*msg.getData().readerIndex(0);
+		int size = msg.getData().readUnsignedShort();  // 2 bytes / 16 bits
+		byte type = msg.getData().readByte();			// 1 byte  / 8  bits
+		int opcode = msg.getData().readUnsignedShort();// 2 bytes / 16 bits
+		Syn.d("[w] Sending Size: "+size+", Type: "+type+", Opcode: "+opcode+"");
+		msg.getData().readerIndex(0);*/ //thats no how it works ;p
+		//msg.finish();
+		//out.writeBytes(msg.getData());
+	}
+    
+}

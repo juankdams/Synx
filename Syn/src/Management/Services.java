@@ -34,10 +34,8 @@ public class Services implements IService {
 		bootSqlService();
 
 		bootGameClientStrategies();
-		//boot scripts + pluginsmanager
 		
 		bootUsersService();
-		
 		bootServersService();
 
 	}

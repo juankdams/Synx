@@ -1,0 +1,4 @@
+ enum Ru
+{
+  duv cqZ;
+}
