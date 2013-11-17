@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workingSetManager>
 <workingSet editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1374531466388_1" label="Plugins" name="Plugins">
-<item elementID="=PluginParsing" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=PluginProviders" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=PluginParsing" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=PluginActions" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=PluginzLib" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=PluginQueries" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=PluginFormuling" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/PluginData" type="4"/>
-<item elementID="=PluginSystems" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/PluginAspectJ" type="4"/>
 <item elementID="=PluginConsole" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=PluginChat" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/PluginAspectJ" type="4"/>
+<item elementID="=PluginSystems" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=PluginEffects" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=PluginChat" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 </workingSet>
 <workingSet editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1374531592660_2" label="Main" name="Main">
 <item elementID="=Syn" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
@@ -30,14 +30,10 @@
 <item elementID="=LibUtils" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 </workingSet>
 <workingSet editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1374531685600_6" label="Tests" name="Tests">
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/Tools" type="4"/>
+<item elementID="=Tools" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=NewTests" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/WakfuSandboxClient" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/DofusClientReplication" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/HelloC+" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/ClusterMom" type="4"/>
+<item elementID="=WakfuClient" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/Tests" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/Proxy" type="4"/>
 <item elementID="=JWakfu" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 </workingSet>
 <workingSet editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1384219416261_8" label="WakfuPlugins" name="WakfuPlugins"/>
