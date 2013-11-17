@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <qualifiedTypeNameHistroy>
-<fullyQualifiedTypeName name="Providers.GMountProvider"/>
-<fullyQualifiedTypeName name="Core.Exceptions"/>
-<fullyQualifiedTypeName name="Game.GServer"/>
-<fullyQualifiedTypeName name="Servers.Server"/>
 <fullyQualifiedTypeName name="Servers.MinaServer"/>
 <fullyQualifiedTypeName name="Interfaces.IWorld"/>
 <fullyQualifiedTypeName name="GameClientStrategies.WakfuClientStrategy"/>
@@ -60,4 +56,8 @@
 <fullyQualifiedTypeName name="Core.Syn"/>
 <fullyQualifiedTypeName name="Handlers.LHandler"/>
 <fullyQualifiedTypeName name="Game.GameClient"/>
+<fullyQualifiedTypeName name="com.ankamagames.wakfu.client.WakfuClient"/>
+<fullyQualifiedTypeName name="Wakfu.RSACertificateManager"/>
+<fullyQualifiedTypeName name="JWakfu.RSACertificateManager"/>
+<fullyQualifiedTypeName name="JWakfu.DataUtils"/>
 </qualifiedTypeNameHistroy>

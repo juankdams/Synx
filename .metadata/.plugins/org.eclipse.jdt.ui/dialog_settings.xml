@@ -2,10 +2,11 @@
 <section name="Workbench">
 	<item value="2" key="TypeHierarchyViewPart.hierarchyview"/>
 	<item value="filter_imports;" key="filters_last_used"/>
-	<item value="Z:\Dropbox\Private\Synx\Syn" key="org.eclipse.jdt.ui.lastextjar"/>
-	<item value="false" key="TypeHierarchyViewPart.qualifiednames"/>
+	<item value="C:\Program Files (x86)\Wakfu\game\contents\data" key="org.eclipse.jdt.ui.lastextjar"/>
 	<item value="3" key="TypeHierarchyViewPart.orientation"/>
+	<item value="false" key="TypeHierarchyViewPart.qualifiednames"/>
 	<item value="false" key="TypeHierarchyViewPart.linkeditors"/>
+	<item value="C:\Program Files (x86)\Wakfu\game\contents\data" key="org.eclipse.jdt.ui.last.external.project"/>
 	<list key="workingset_selection_history">
 		<item value="Plugins"/>
 		<item value="Main"/>
@@ -20,8 +21,8 @@
 	<section name="org.eclipse.jdt.internal.ui.wizards.buildpaths.NewVariableEntryDialog">
 		<item value="577" key="DIALOG_WIDTH"/>
 		<item value="158" key="DIALOG_Y_ORIGIN"/>
-		<item value="69" key="DIALOG_X_ORIGIN"/>
 		<item value="397" key="DIALOG_HEIGHT"/>
+		<item value="69" key="DIALOG_X_ORIGIN"/>
 		<item value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="JarPackageWizard">
@@ -44,15 +45,15 @@
 		<item value="false" key="jarOptionsWizardPage.STORE_USE_SRC_FOLDERS"/>
 		<item value="" key="jarOptionsWizardPage.DESCRIPTION_LOCATION"/>
 		<list key="JarPackageWizardPage.DESTINATION_NAMES_ID">
-			<item value="Syn\Syn_plugins\UtilsLib.jar"/>
 			<item value="Syn\Syn_plugins\ParsingPlugin.jar"/>
+			<item value="Syn\Syn_plugins\UtilsLib.jar"/>
 			<item value="Syn\Syn_plugins\JWakfu.jar"/>
 			<item value="Syn\Syn_plugins\ProvidersPlugin.jar"/>
 			<item value="Syn/Syn_plugins/ParsingPlugin.jar"/>
 		</list>
 	</section>
 	<section name="BuildPathsPropertyPage">
-		<item value="2" key="pageIndex"/>
+		<item value="1" key="pageIndex"/>
 	</section>
 	<section name="JavaSearchPage">
 		<item value="false" key="CASE_SENSITIVE"/>
@@ -62,10 +63,10 @@
 			<item value="11" key="includeMask"/>
 			<item value="2" key="limitTo"/>
 			<item value="0" key="scope"/>
-			<item value="SM.Game.GTM(GPersonnage, GFight, boolean)" key="pattern"/>
 			<item value="" key="javaElement"/>
-			<item value="1" key="searchFor"/>
+			<item value="SM.Game.GTM(GPersonnage, GFight, boolean)" key="pattern"/>
 			<item value="0" key="matchLocations"/>
+			<item value="1" key="searchFor"/>
 			<item value="true" key="isCaseSensitive"/>
 			<list key="workingSets">
 			</list>
@@ -74,10 +75,10 @@
 			<item value="11" key="includeMask"/>
 			<item value="2" key="limitTo"/>
 			<item value="3" key="scope"/>
-			<item value="GameResult" key="pattern"/>
 			<item value="" key="javaElement"/>
-			<item value="0" key="searchFor"/>
+			<item value="GameResult" key="pattern"/>
 			<item value="0" key="matchLocations"/>
+			<item value="0" key="searchFor"/>
 			<item value="false" key="isCaseSensitive"/>
 			<list key="workingSets">
 			</list>
@@ -86,10 +87,10 @@
 			<item value="11" key="includeMask"/>
 			<item value="2" key="limitTo"/>
 			<item value="2" key="scope"/>
-			<item value="GlobalObjects.Map.baseLayer" key="pattern"/>
 			<item value="=Syn/Objects&lt;GlobalObjects{Map.java[Map^baseLayer" key="javaElement"/>
-			<item value="4" key="searchFor"/>
+			<item value="GlobalObjects.Map.baseLayer" key="pattern"/>
 			<item value="0" key="matchLocations"/>
+			<item value="4" key="searchFor"/>
 			<item value="true" key="isCaseSensitive"/>
 			<list key="workingSets">
 				<item value="Libraries"/>
@@ -119,8 +120,8 @@
 		</list>
 	</section>
 	<section name="SourceActionDialog.methods">
-		<item value="false" key="Comments"/>
 		<item value="1" key="VisibilityModifier"/>
+		<item value="false" key="Comments"/>
 		<item value="2" key="InsertPosition.v2"/>
 		<item value="false" key="SynchronizedModifier"/>
 		<item value="false" key="FinalModifier"/>
@@ -140,8 +141,8 @@
 		<section name="DialogBoundsSettings">
 			<item value="600" key="DIALOG_WIDTH"/>
 			<item value="67" key="DIALOG_Y_ORIGIN"/>
-			<item value="500" key="DIALOG_HEIGHT"/>
 			<item value="318" key="DIALOG_X_ORIGIN"/>
+			<item value="500" key="DIALOG_HEIGHT"/>
 			<item value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI" key="DIALOG_FONT_NAME"/>
 		</section>
 	</section>
@@ -150,7 +151,7 @@
 		<item value="false" key="linkWithEditor"/>
 		<item value="2" key="layout"/>
 		<item value="2" key="rootMode"/>
-		<item value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#x0D;&#x0A;&lt;packageExplorer configured=&quot;true&quot; group_libraries=&quot;1&quot; layout=&quot;2&quot; linkWithEditor=&quot;0&quot; rootMode=&quot;2&quot; sortWorkingSets=&quot;false&quot; workingSetName=&quot;&quot;&gt;&#x0D;&#x0A;&lt;localWorkingSetManager&gt;&#x0D;&#x0A;&lt;workingSet editPageId=&quot;org.eclipse.jdt.internal.ui.OthersWorkingSet&quot; factoryID=&quot;org.eclipse.ui.internal.WorkingSetFactory&quot; id=&quot;1374531596843_3&quot; label=&quot;Other Projects&quot; name=&quot;Other Projects&quot;&gt;&#x0D;&#x0A;&lt;item elementID=&quot;=DofusClient&quot; factoryID=&quot;org.eclipse.jdt.ui.PersistableJavaElementFactory&quot;/&gt;&#x0D;&#x0A;&lt;item elementID=&quot;=WakfuClient&quot; factoryID=&quot;org.eclipse.jdt.ui.PersistableJavaElementFactory&quot;/&gt;&#x0D;&#x0A;&lt;item elementID=&quot;=atomium&quot; factoryID=&quot;org.eclipse.jdt.ui.PersistableJavaElementFactory&quot;/&gt;&#x0D;&#x0A;&lt;/workingSet&gt;&#x0D;&#x0A;&lt;/localWorkingSetManager&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Other Projects&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;MacroSDK&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Libraries&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Plugins&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Main&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Tests&quot;/&gt;&#x0D;&#x0A;&lt;customFilters userDefinedPatternsEnabled=&quot;false&quot;&gt;&#x0D;&#x0A;&lt;xmlDefinedFilters&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.LibraryFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.javamodel.CompilationUnitFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.CuAndClassFileFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.pde.ui.ExternalPluginLibrariesFilter1&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.PointcutFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;_patternFilterId_*.ajsym&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.FieldsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.IntroductionFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.internal.ui.PackageExplorer.HideInnerClassFilesFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonPublicFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.AdviceFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.pde.ui.BinaryProjectFilter1&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.mylyn.java.ui.MembersFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.LocalTypesFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.StaticsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.ContainedLibraryFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonJavaElementFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonSharedProjectsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.ClosedProjectsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonJavaProjectsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.PackageDeclarationFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.internal.ui.PackageExplorer.EmptyInnerPackageFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.DeclarationFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.internal.ui.PackageExplorer.EmptyPackageFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.ImportDeclarationFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer_patternFilterId_.*&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.EmptyLibraryContainerFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.SyntheticMembersFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;/xmlDefinedFilters&gt;&#x0D;&#x0A;&lt;/customFilters&gt;&#x0D;&#x0A;&lt;/packageExplorer&gt;" key="memento"/>
+		<item value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#x0D;&#x0A;&lt;packageExplorer configured=&quot;true&quot; group_libraries=&quot;1&quot; layout=&quot;2&quot; linkWithEditor=&quot;0&quot; rootMode=&quot;2&quot; sortWorkingSets=&quot;false&quot; workingSetName=&quot;&quot;&gt;&#x0D;&#x0A;&lt;localWorkingSetManager&gt;&#x0D;&#x0A;&lt;workingSet editPageId=&quot;org.eclipse.jdt.internal.ui.OthersWorkingSet&quot; factoryID=&quot;org.eclipse.ui.internal.WorkingSetFactory&quot; id=&quot;1374531596843_3&quot; label=&quot;Other Projects&quot; name=&quot;Other Projects&quot;&gt;&#x0D;&#x0A;&lt;item elementID=&quot;=WakfuClientSources&quot; factoryID=&quot;org.eclipse.jdt.ui.PersistableJavaElementFactory&quot;/&gt;&#x0D;&#x0A;&lt;item elementID=&quot;=DofusClientSources&quot; factoryID=&quot;org.eclipse.jdt.ui.PersistableJavaElementFactory&quot;/&gt;&#x0D;&#x0A;&lt;/workingSet&gt;&#x0D;&#x0A;&lt;/localWorkingSetManager&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Other Projects&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;MacroSDK&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Libraries&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Plugins&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Main&quot;/&gt;&#x0D;&#x0A;&lt;activeWorkingSet workingSetName=&quot;Tests&quot;/&gt;&#x0D;&#x0A;&lt;customFilters userDefinedPatternsEnabled=&quot;false&quot;&gt;&#x0D;&#x0A;&lt;xmlDefinedFilters&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.LibraryFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.javamodel.CompilationUnitFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.CuAndClassFileFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.pde.ui.ExternalPluginLibrariesFilter1&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.PointcutFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;_patternFilterId_*.ajsym&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.FieldsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.IntroductionFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.internal.ui.PackageExplorer.HideInnerClassFilesFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonPublicFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.AdviceFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.pde.ui.BinaryProjectFilter1&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.mylyn.java.ui.MembersFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.LocalTypesFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.StaticsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.ContainedLibraryFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonJavaElementFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonSharedProjectsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.ClosedProjectsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.NonJavaProjectsFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.PackageDeclarationFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.internal.ui.PackageExplorer.EmptyInnerPackageFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.ajdt.ui.editor.outline.DeclarationFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.internal.ui.PackageExplorer.EmptyPackageFilter&quot; isEnabled=&quot;false&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.ImportDeclarationFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer_patternFilterId_.*&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.EmptyLibraryContainerFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;child filterId=&quot;org.eclipse.jdt.ui.PackageExplorer.SyntheticMembersFilter&quot; isEnabled=&quot;true&quot;/&gt;&#x0D;&#x0A;&lt;/xmlDefinedFilters&gt;&#x0D;&#x0A;&lt;/customFilters&gt;&#x0D;&#x0A;&lt;/packageExplorer&gt;" key="memento"/>
 	</section>
 	<section name="completion_proposal_size">
 		<item value="561" key="size.x"/>
@@ -165,15 +166,15 @@
 			<item value="Tests"/>
 		</list>
 	</section>
-	<section name="RenameInformationPopup">
-	</section>
 	<section name="org.eclipse.ltk.ui.refactoring.settings">
-		<item value="false" key="renameSubpackages"/>
-		<item value="false" key="updateQualifiedNames"/>
 		<item value="*" key="patterns"/>
+		<item value="false" key="updateQualifiedNames"/>
+		<item value="false" key="renameSubpackages"/>
 		<item value="1" key="updateSimilarElementsMatchStrategy"/>
 		<item value="false" key="updateTextualMatches"/>
 		<item value="false" key="updateSimilarElements"/>
+	</section>
+	<section name="RenameInformationPopup">
 	</section>
 	<section name="AddGetterSetterDialog">
 		<item value="false" key="RemoveFinal"/>
