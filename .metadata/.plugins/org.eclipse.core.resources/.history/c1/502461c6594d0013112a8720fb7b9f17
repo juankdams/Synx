@@ -1,0 +1,29 @@
+package Login;
+
+import io.netty.channel.Channel;
+
+public class WakfuLoginClient extends LoginClient {
+
+	private Channel channel; //L'équivalent d'une IoSession chez Mina
+	
+	
+	@Override
+	public void kick() {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void terminate() {
+		// TODO Auto-generated method stub
+	}
+
+	public void setChannel(Channel channel) {
+		this.channel = channel;
+	}
+
+	public Channel getChannel() {
+		return channel;
+	}
+	
+
+}

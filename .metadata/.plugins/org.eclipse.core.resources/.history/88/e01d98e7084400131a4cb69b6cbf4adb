@@ -1,0 +1,163 @@
+package Management;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import Abstractions.AbstractSqlService;
+import Core.ConsoleScanner;
+import Interfaces.IService;
+import Misc.Tests.Perfs;
+import NewThreads.ThreadsManager;
+import Plugins.Managers.PluginsManager;
+import SQL.SConfig;
+import SQL.SqlServiceMySql;
+import XML.Config;
+
+public class Services implements IService {
+
+	
+	public AbstractSqlService sqlSynService;//Management
+	public AbstractSqlService sqlGlobalService;//Données de l'officiel
+	public AbstractSqlService sqlZenService;//Données de Zen
+	public ThreadsManager globalThreadsManagerService;
+	public ConsoleScanner consoleService;
+	public Servers serversService;
+	public Users users;
+	public Config configService;
+	public PluginsManager defaultPluginsManager;
+	public ScriptsService<ExecutableScript> scripts;
+	
+	@Override
+	public void boot() throws Exception{
+		bootThreadManagingService();
+		bootConsoleService();
+		
+		bootConfigService();
+		bootSqlService();
+		bootPluginsManager();
+		bootScripts();
+		bootUsersService();
+		
+		bootServersService();
+
+	}
+	
+	private void bootScripts()  throws Exception {
+		this.scripts = new ScriptsService<ExecutableScript>(){
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void boot() throws Exception {
+				SQL.SConfig.loadScripts(null, null);
+			}
+		};
+		scripts.boot();
+	}
+
+	private void bootPluginsManager() throws Exception {
+		this.defaultPluginsManager = new PluginsManager(){
+			@Override
+			public void loadPlugins() {
+				SConfig.loadPlugins(null, null);
+				SConfig.loadMacros(null, null);
+			}
+		};
+		defaultPluginsManager.boot();
+	}
+
+	@Override
+	public void reboot() throws Exception {
+		globalThreadsManagerService.reboot();
+		consoleService.reboot();
+
+		configService.reboot();
+		
+		sqlSynService.reboot();
+		sqlGlobalService.reboot();
+		sqlZenService.reboot();
+		
+		defaultPluginsManager.reboot();
+		
+		serversService.reboot();
+
+	}
+	
+	
+	private void bootConfigService() throws Exception {
+		configService = new Config();
+		configService.boot();
+	}
+	
+	private void bootSqlService() throws Exception {
+		Perfs p = new Perfs();
+		sqlSynService = new SqlServiceMySql(){
+			@Override
+			public void boot() throws Exception{
+				c = createConnection(
+						Config.synDBIP,
+						Config.synDBName,
+						Config.synDBUser,
+						Config.synDBPass
+						);
+				//this.TIMER(false);
+				c.setAutoCommit(true);
+			}
+		};
+		sqlSynService.boot();
+		p.stopTiming("Booted Syn SQL");
+		p.restartTiming();
+		
+		sqlGlobalService = new SqlServiceMySql(){
+			@Override
+			public void boot() throws Exception{
+				c = createConnection(
+						Config.globalDBIP,
+						Config.globalDBName,
+						Config.globalDBUser,
+						Config.globalDBPass
+						);
+				//this.TIMER(false);
+				c.setAutoCommit(true);
+			}
+		};
+		sqlGlobalService.boot();
+		p.stopTiming("Booted Global SQL");
+		p.restartTiming();
+
+		sqlZenService = new SqlServiceMySql(){
+			@Override
+			public void boot() throws Exception{
+				c = createConnection(
+						Config.zenDBIP,
+						Config.zenDBName,
+						Config.zenDBUser,
+						Config.zenDBPass
+						);
+				//this.TIMER(false);
+				c.setAutoCommit(true);
+			}
+		};
+		sqlZenService.boot();
+		p.stopTiming("Booted Zen SQL");
+		p.restartTiming();
+	}
+	
+	private void bootThreadManagingService() throws Exception {
+		globalThreadsManagerService = new ThreadsManager();
+		globalThreadsManagerService.boot();
+	}
+	
+	private void bootConsoleService() throws Exception {
+		consoleService = new ConsoleScanner();
+		consoleService.boot();
+	}
+	
+	private void bootServersService() throws Exception {
+		serversService = new Servers();
+		serversService.boot();
+	}
+	private void bootUsersService() throws Exception {
+		users = new Users();
+		users.boot();
+	}
+	
+	
+}

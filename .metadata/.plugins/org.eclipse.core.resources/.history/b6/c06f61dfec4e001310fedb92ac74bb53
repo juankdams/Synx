@@ -1,0 +1,22 @@
+package WakfuPackets;
+
+public enum OutPacketsEnum {
+	
+	
+	
+	RsaKey(1032),
+	
+	;
+	
+	private int id = 0;
+	private OutPacketsEnum(int id){
+		this.id = id;
+	}
+	public int get(){
+		return id;
+	}
+	
+	
+	
+	
+}

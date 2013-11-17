@@ -1,0 +1,20 @@
+package tests;
+
+import tests.Handlers.WakfuHandler;
+import Servers.NettyServer;
+
+public class dmain {
+
+	public static NettyServer s = new NettyServer();
+	
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		s.setHandler(new WakfuHandler());
+		s.on();
+		Misc.Utils.w("on");
+	}
+
+}

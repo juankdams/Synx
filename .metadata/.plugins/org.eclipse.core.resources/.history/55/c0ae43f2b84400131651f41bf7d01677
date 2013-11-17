@@ -1,0 +1,25 @@
+package Game;
+
+import java.util.ArrayList;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Interfaces.IService;
+import Login.LServer;
+import Misc.LifeRegenerator;
+import NewThreads.ThreadsManager;
+import Plugins.Managers.PluginsManager;
+
+public interface GServer extends IService {
+	
+
+	
+	
+	
+
+}

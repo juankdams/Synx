@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item value="376" key="DIALOG_WIDTH"/>
+		<item value="529" key="DIALOG_Y_ORIGIN"/>
+		<item value="845" key="DIALOG_X_ORIGIN"/>
+		<item value="386" key="DIALOG_HEIGHT"/>
+		<item value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI" key="DIALOG_FONT_NAME"/>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item value="true" key="wrap"/>
+		<item value="false" key="casesensitive"/>
+		<item value="false" key="isRegEx"/>
+		<item value="false" key="incremental"/>
+		<item value="false" key="wholeword"/>
+		<item value="NettyServer shut down" key="selection"/>
+		<list key="findhistory">
+			<item value="NettyServer shut down"/>
+			<item value="packetId"/>
+			<item value="initiateParsers"/>
+			<item value="initiateWakfuParsers"/>
+			<item value="initiateActionListenersAlias"/>
+			<item value="WakfuLoginServer"/>
+			<item value="Login"/>
+			<item value="gameClientStrategy"/>
+		</list>
+		<list key="replacehistory">
+			<item value="Game"/>
+			<item value=""/>
+			<item value="rootNode"/>
+			<item value="configNode.getAttributeValue(&quot;"/>
+			<item value="getGlobalWorld()"/>
+			<item value=" "/>
+			<item value="GameServer"/>
+			<item value="is."/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.GotoLineAction$GotoLineDialog_dialogBounds">
+		<item value="318" key="DIALOG_Y_ORIGIN"/>
+		<item value="344" key="DIALOG_X_ORIGIN"/>
+	</section>
+</section>

@@ -1,0 +1,14 @@
+package GameObjects.Fights;
+
+public class FightTeamOptions {
+	
+	
+	
+	private boolean isClosed = false;//si complètement barré (icone de cadedans)
+	private boolean isClosedGroup = false;//si 
+	private boolean isClosedSpectators = false;
+	private boolean isAskingHelp = false;
+	
+	
+
+}

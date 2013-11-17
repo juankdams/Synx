@@ -1,0 +1,54 @@
+package Plugins.Abstractions;
+
+import java.util.ArrayList;
+
+import plugin.event.PluginListener;
+import Abstractions.AbstractCharacter;
+import Abstractions.CombativeCharacter;
+import GameObjects.GEffect;
+import Misc.ParameterHolder;
+import Plugins.Interfaces.IEffectType;
+
+public abstract class AbstractEffectPluginListener implements PluginListener {
+
+	public abstract IEffectType getEffect(short effectID);
+	public abstract IEffectType[] getEffects();
+	
+	public abstract IEffectType getDamagingEffect(short damagingEffectID);
+	public abstract IEffectType[] getDamagingEffects();
+
+	public abstract IEffectType getHealingEffect(short healingEffectID);
+	public abstract IEffectType[] getHealingEffects();
+	
+	public abstract IEffectType getAddPAEffect();
+	public abstract IEffectType getAddPMEffect();
+	public abstract IEffectType getAddPOEffect();
+	public abstract IEffectType getAddPdvEffect();
+	public abstract IEffectType getAddPdvMaxEffect();
+
+	public abstract boolean isPodsEffect(GEffect e);
+	public abstract boolean isSummonsEffect(GEffect e);
+	public abstract boolean isTrapEffect(GEffect e);
+	public abstract boolean isGlyphEffect(GEffect e);
+	public abstract boolean isIncarnationEffect(GEffect e);
+	public abstract boolean isElementalArmorEffect(GEffect e);
+	public abstract boolean isNormalArmorEffect(GEffect e);
+
+	public abstract IEffectType getCooldownEffect();
+	public abstract IEffectType getMaxLaunchByTurnEffect();
+	public abstract IEffectType getMaxLaunchByTurnByTargetEffect();
+	public abstract boolean hasBrokle(CombativeCharacter c);
+	public abstract boolean hasPoisse(CombativeCharacter c);
+	public abstract boolean containsDurability(ArrayList<GEffect> effects);
+	public abstract boolean containsEffectObjetEnclos(ArrayList<GEffect> effects);
+	public abstract GEffect getDurabilityEffect(ArrayList<GEffect> effects);
+	
+	@Deprecated
+	public abstract boolean isFixEffectBonus(GEffect ge);
+	public abstract boolean isFixEffectBonus(short effectTypeID);
+
+	//public abstract void apply(GEffect e, ICharacter caster, ISprite target, Object... other);
+	public abstract void apply(GEffect e, AbstractCharacter caster, AbstractCharacter target, ParameterHolder eap);
+	
+
+}

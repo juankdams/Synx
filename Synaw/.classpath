@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="External"/>
+	<classpathentry kind="src" path="Objects"/>
+	<classpathentry excluding="Handlers/WakfuDecoder.java" kind="src" path="Servers"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="var" path="ZLIBS/netty-4.0.0.CR2/jar/all-in-one/netty-all-4.0.0.CR2.jar" sourcepath="/ZLIBS/netty-4.0.0.CR2/jar/all-in-one/netty-all-4.0.0.CR2-sources.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/LibPiou"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/LibUtils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/PluginzLib"/>
+	<classpathentry kind="var" path="Synx/Syn/Syn_plugins/JWakfu.jar"/>
+	<classpathentry kind="var" path="ZLIBS/jansi-1.9.jar"/>
+	<classpathentry kind="var" path="ZLIBS/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="var" path="ZLIBS/slf4j-jdk14-1.6.4.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Syn"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

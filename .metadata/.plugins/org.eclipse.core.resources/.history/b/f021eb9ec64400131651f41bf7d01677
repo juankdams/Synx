@@ -1,0 +1,19 @@
+package Game;
+
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Login.LServer;
+
+public class WakfuGameServer extends GameServer {
+
+	
+	
+	public WakfuGameServer(LServer s, GConfig config, CWorld cworld) {
+		super(s, config, cworld);
+		// Les ConstantWorld ne sont pas les mêmes dans Dofus et dans Wakfu, 
+		//faudrait ptete les surclasser en abstract et faire deux implémentations !
+	}
+
+
+
+}

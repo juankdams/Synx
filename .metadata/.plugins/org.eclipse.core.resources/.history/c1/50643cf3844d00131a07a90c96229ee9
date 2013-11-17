@@ -1,0 +1,6 @@
+package Game;
+import Wakfu.IWakfuClient;
+
+public class WakfuGameClient implements IWakfuClient {
+
+}

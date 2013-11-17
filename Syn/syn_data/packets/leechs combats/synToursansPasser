@@ -1,0 +1,42 @@
+GFight.getDelay = 23455597499 ns
+GFight.getDelay = -142767 ns
+[DEBUG]: in GFight.endTurn
+[Send] >> cs<font color='#0019FF'>end  Leo</font>
+[Send] >> GTF37
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  36</font>
+[Send] >> GTS-12|30000
+DelayingFights added fight GameObjects.Fights.FightPvm@67c354e6
+G [RECV] << qping
+[Send] >> qping
+[DEBUG]: in GFight.endTurn
+[Send] >> cs<font color='#0019FF'>end  36</font>
+[Send] >> GTF-12
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  36</font>
+[Send] >> GTS-9|30000
+DelayingFights added fight GameObjects.Fights.FightPvm@67c354e6
+[DEBUG]: in GFight.endTurn
+[Send] >> cs<font color='#0019FF'>end  36</font>
+[Send] >> GTF-9
+[DEBUG]: in GFight.endRound
+[DEBUG]: in GFight.startRound
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  34</font>
+[Send] >> GTS-11|30000
+DelayingFights added fight GameObjects.Fights.FightPvm@67c354e6
+[DEBUG]: in GFight.endTurn
+[Send] >> cs<font color='#0019FF'>end  34</font>
+[Send] >> GTF-11
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  34</font>
+[Send] >> GTS-10|30000
+DelayingFights added fight GameObjects.Fights.FightPvm@67c354e6
+[DEBUG]: in GFight.endTurn
+[Send] >> cs<font color='#0019FF'>end  34</font>
+[Send] >> GTF-10
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  Leo</font>
+[Send] >> GTS37|30000
+DelayingFights added fight GameObjects.Fights.FightPvm@67c354e6
+GFight.getDelay = 29999842316 ns

@@ -1,0 +1,16 @@
+package Tests;
+
+public class GlobalObjectSpace {
+	
+	private GlobalObjectSpace(){
+		
+	}
+	
+	
+	public static GlobalObjectSpace make(){
+		return new GlobalObjectSpace();
+	}
+	
+	
+
+}

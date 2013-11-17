@@ -1,0 +1,122 @@
+package Handlers;
+
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+
+import Constants.Constants;
+import Core.Exceptions;
+import Core.Syn;
+import Login.DofusLoginClient;
+import Login.LoginServer;
+import SM.Supplements;
+
+public class LHandler extends MinaHandler{
+	
+	public LoginServer serv = null;
+	
+	public LHandler(LoginServer serv){
+		this.serv = serv;
+	}
+	
+	@Override
+	public void exceptionCaught(IoSession session, Throwable arg1)
+			throws Exception {
+		// TODO Auto-generated method stub
+		if(session.getAttribute("client") != null){
+			((DofusLoginClient)session.getAttribute("client")).kick();
+		}
+		Syn.wD("L exceptionCaught kicked LClient: ");
+		arg1.printStackTrace();
+		//Syn.w("exceptionCaught : "+arg1.fillInStackTrace(), Ansi.Color.RED);
+	}
+
+	@Override
+	public void messageReceived(IoSession session, Object mess) throws Exception {
+		Syn.wD("L[RECV] << "+mess);
+		if (!(mess instanceof String)) {
+			Exceptions.throwException("LHandler.[RECV] : le message recu n'est pas une string.");
+			return;
+		}
+		// TODO Auto-generated method stub
+		DofusLoginClient c = ((DofusLoginClient)session.getAttribute("client"));
+		if(c.getHandler() == null){
+			c.kick();
+        	c = null;
+        	return;
+		}
+		String packet = mess.toString();
+		if(c.getHandler().getClass() != this.getClass()){
+			c.getHandler().parse(c, packet);
+		}else{
+			Syn.wD("L[RECV] << "+packet);
+			if(packet.equals(Constants.CLIENT_VERSION)){
+				c.setHandler(new LAuthentificationHandler(serv));//ok
+			}else{//mauvais packet
+				Syn.w("le parse 1.29.1 a FAIL");
+    			SM.Account.errorVersion(session);
+    			c.kick();
+            	c = null;
+			}
+		}
+		
+		
+	}
+
+	public void parse(DofusLoginClient c, String packet) throws Exception{
+		//,... to Override
+	}
+	
+	@Override
+	public void messageSent(IoSession session, Object mess) throws Exception {
+		//Syn.w("messageSent :"+mess.toString());
+	}
+
+	@Override
+	public void sessionClosed(IoSession session) throws Exception {
+		Syn.wD("sessionClosed");
+		if(((DofusLoginClient)session.getAttribute("client")) != null){
+			((DofusLoginClient)session.getAttribute("client")).kick();
+		}
+	}
+
+	//@Override
+	//public void sessionCreated(IoSession arg0) throws Exception {
+		// TODO Auto-generated method stub
+	//	Syn.w("sessionCreated");
+	//}
+
+	@Override
+	public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
+		Syn.wD("l sessionIdle id:"+session.getId());
+		//session.close(false);
+		if(((DofusLoginClient)session.getAttribute("client")) != null){
+			((DofusLoginClient)session.getAttribute("client")).kick();
+		}
+	}
+
+	@Override
+	public void sessionOpened(IoSession session) throws Exception {
+		Syn.wD("l sessionOpened id:"+session.getId());
+		String ip = session.getRemoteAddress().toString().split(":")[0];
+		if(serv.world.getNbrCoPerIP(ip) > serv.MAX_CO_PER_IP){
+			SM.Account.errorTooMany(session);
+			session.close(true);
+		}else
+		if(serv.bannedIPs.contains(ip)){
+			SM.Account.errorBanned(session);
+			session.close(true);
+		}else
+		{
+			DofusLoginClient c = new DofusLoginClient(session);
+			session.setAttribute("client", c);
+			c.setHandler(new LHandler(serv));
+			c.setHashKey(Supplements.HC()); //c.setHashKey(SM.Realm.HC(session));
+			
+			serv.clients.add(c);
+		}
+		
+		
+	}
+
+	
+}

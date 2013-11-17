@@ -1,0 +1,11 @@
+package GameClientStrategies;
+
+public class DofusClientStrategy implements GameClientStrategy {
+
+	
+	
+	DofusClientStrategy(){
+		
+	}
+
+}

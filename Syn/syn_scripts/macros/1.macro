@@ -1,0 +1,15 @@
+
+
+#1:
+	$CHAT:".all allo j'suis un pnj =O";
+	$EMOTE:4;
+	$DIRECTION:5;
+	$MOVEMENT:311;
+;
+
+
+#2:
+	$CHAT:".all allo j'suis un coq =O";
+;
+
+

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename enum constant &apos;BLOCKED_DAMAGE&apos; of &apos;pack.GameActionType&apos; to &apos;REDUCE_DAMAGE&apos;&#x0D;&#x0A;- Original project: &apos;PluginActions&apos;&#x0D;&#x0A;- Original element: &apos;pack.GameActionType.BLOCKED_DAMAGE&apos;&#x0D;&#x0A;- Renamed element: &apos;pack.GameActionType.REDUCE_DAMAGE&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" delegate="false" deprecate="false" description="Rename enum constant &apos;BLOCKED_DAMAGE&apos;" flags="589830" getter="false" id="org.eclipse.jdt.ui.rename.enum.constant" input="/src&lt;pack{GameActionType.java[GameActionType^BLOCKED_DAMAGE" name="REDUCE_DAMAGE" references="true" setter="false" stamp="1376232808940" textual="false" version="1.0"/>
+</session>

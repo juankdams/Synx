@@ -1,0 +1,27 @@
+package Handlers;
+
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+
+import Servers.ServerClient;
+
+public interface Handler {
+
+
+	public  void exceptionCaught(ServerClient arg0, Throwable arg1) throws Exception;
+
+	public  void messageReceived(ServerClient arg0, Object arg1) throws Exception;
+
+	public  void messageSent(ServerClient arg0, Object arg1) throws Exception;
+
+	public  void sessionClosed(ServerClient arg0) throws Exception;
+
+	public  void sessionCreated(ServerClient arg0) throws Exception;
+
+	public  void sessionIdle(ServerClient arg0, IdleStatus arg1) throws Exception ;
+
+	public  void sessionOpened(ServerClient arg0) throws Exception;
+
+
+
+}

@@ -1,0 +1,607 @@
+
+package GameObjects;
+
+import static Constants.Constants.prefixGM;
+import static GameObjects.GMonsterGroup.MonsterGroupType.HEROIC_INSTANCE;
+import static GameObjects.GMonsterGroup.MonsterGroupType.SUBAREA_GENERATED;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import Abstractions.AbstractCharacter;
+import Abstractions.CombativeCharacter;
+import ConfigurationObjects.Classe;
+import Enums.CharacterType;
+import Enums.Orientation;
+import Game.GServer;
+import GameObjects.Fights.GFight;
+import GlobalObjects.GlobalWorld;
+import GlobalObjects.Map;
+import Interfaces.IProvider;
+import Misc.StringUtils;
+import Plugins.Managers.FormulingManager;
+import Plugins.Managers.PluginsManager;
+
+
+public class GMonsterGroup extends AbstractCharacter{
+	
+	public static enum MonsterGroupShape{
+		CIRCLE(','),
+		LINE(':');
+		public char delimiterForSpritePacket = ' ';
+		private MonsterGroupShape(char deli){
+			delimiterForSpritePacket = deli;
+		}
+	}
+	public static enum MonsterGroupType{
+		SUBAREA_GENERATED,//Groupes générés aléatoirement dans les possibleMobs de la subArea.
+		STATIC_INSTANCE,//Boss et cie. C'les mobGroups_fix dans Ancestra ! :O
+		HEROIC_INSTANCE;//Bah instances de groupes de monstres qui ont droppés des trucs sur l'héroique
+							//et qu'on sauvegarde en bdd pour reload et redonner les items aux gens :)
+		
+	}
+	
+	public static GMonsterGroupProvider provide(GServer s){
+		return s.getProviders().provideMonsterGroup();
+	}
+	public static class GMonsterGroupProvider implements IProvider {
+		/**
+		 * Créé un nouveau groupe de monstres avec grades aléatoires contenant des templates de monstres. <br>
+		 * Se fait au chargement de la map, quand on génère des groupes aléatoires aec les possibleMobs de la subArea :) */
+		public GMonsterGroup createNew(GWorld w, short size){
+			GMonsterGroup mg = new GMonsterGroup(size);
+			mg.setType(SUBAREA_GENERATED);
+			mg.setID(w.getNextCharacterID());
+			mg.setServer(w.getServer());
+			mg.setStars(Constants.Constants.ZERO_SHORT);
+			
+			/*if(mobTemplateIDs != null && mobTemplateIDs.length > 0 && mobTemplateIDs[0].equals("") == false){
+				mg.setmonsters(new ArrayList<GMonster>());
+				for(String str : mobTemplateIDs){
+					short id = Short.parseShort(str);
+					GMonster[] monsterGrades = GlobalWorld.getMonsterTemplate(s.getWorld(), id);
+					mg.getmonsters().add(  monsterGrades[ Randomizer.rand(0, monsterGrades.length-1) ]  );
+				}
+			}*/
+			return mg;
+		}
+		
+		/**
+		 * Créé un nouveau groupe de monstre contenant des instances de monstres à la fin d'un combat.
+		 * (Ex les monstres qui droppent les items des joueurs sur l'héroique) */
+		public GMonsterGroup createNewInstance(ArrayList<GMonster> monsters, String[] drops, GServer s){
+			GMonsterGroup mg = new GMonsterGroup();
+			mg.setType(HEROIC_INSTANCE);
+			mg.setID(s.getWorld().getNextCharacterID());
+			mg.setServer(s);
+			mg.setMonsters(monsters);
+			mg.setStars(Constants.Constants.ZERO_SHORT);
+			mg.setDrops(drops);
+			return mg;
+		}
+
+		/**
+		 * Recharge une instance de groupe déjà existante ainsi que ses instances de monstres déjà existants.
+		 * (Ex les monstres qui droppent les items des joueurs sur l'héroique) <br>
+		 * Utilisé seulement par SQL.loadGroupsInstances qui lui même est utilisé pas SQL.Maps.load, <br>
+		 * ce qui est la source de la chaîne pour le chargement des instances de groupes monstres */
+		public GMonsterGroup loadInstance(short groupID, String monstersIDs, String type, GWorld w){
+			GMonsterGroup mg = new GMonsterGroup((short) StringUtils.count(monstersIDs, ','));
+			mg.setType(MonsterGroupType.valueOf(type));
+			mg.setID(groupID > 0 ? -groupID : groupID);
+			mg.setStars(Constants.Constants.ZERO_SHORT);
+			if(w != null){
+				mg.setServer(w.getServer());
+			}
+			//Syn.d("mobGroup.loadInstance, getServerID="+mg.getServerID());
+			if(monstersIDs != null && monstersIDs.length() > 0){
+				for(String str : monstersIDs.split(",")){
+					int total = Short.parseShort(str);
+					short templateid = (short) Math.floor(total / 10);
+					int grade = total - (templateid * 10);
+					//Syn.d("searched templateid:"+templateid);
+					//Syn.d("searched grade:"+grade);
+					GMonster m = GlobalWorld.getMonsterTemplate(w, templateid)[grade];
+					mg.add( m );
+				}
+				//ArrayList<GMonster> monsters = SQL.Monsters.loadInstance(mobInstancesIDs, w);
+				//mg.setmonsters( monsters );
+			}
+			return mg;
+		}
+		
+	}
+	
+	
+/*
+ 
+[07:44:17] Robyn: hey j'voulais savoir, c'est quoi la différence quand vous dites un monstre fixe ou normal ?
+[07:44:47] Keldy: un monstre normal il est généré par groupe aléatoirement, il peut y en avoir 5 comme 8
+[07:45:07 | Modifié (07:45:10)] Keldy: le mob fixe lui il est toujours le nombre que tu lui dis
+[07:45:08] Robyn: haaa ok.
+[07:45:22] Robyn: c'est ou qu'il y a ça sur offi ?
+[07:45:30] Keldy: dans les donjons
+[07:45:51] Robyn: les niveaux restent aléatoires
+[07:46:04] Keldy: oui mais ça tu peux le paramétrer dans mobgroup_fix
+[07:46:13] Keldy: c'est id,lvlmin,lvlmax;
+[07:46:15] Keldy: etc
+[07:46:18] Keldy: tu fais ta liste
+[07:46:20] Robyn: ouais
+[07:46:34] Robyn: ok merci
+[07:47:42] Robyn: j'pense que j'ferai juste une table de groups de mobs "fixes"
+[07:48:03] Robyn: et que, par area j'irai chercher des groups aléatoirement
+[07:48:12] Robyn: et par map sera fixe
+[07:48:31] Robyn: j'sais pas trop, j,vais vor
+[07:50:05] Robyn: genre créer une douzaines de possibilités des groupes d emonstres et les assignés à une area
+[07:50:48] Robyn: et en avoir aussi assignés dans une colonne dans la table map qui fait que ce sont ces groupes là (de la map) qui sont toujours spawns au lieu de ceux de l'area
+[07:51:35] Robyn: vite comme ça, ça fait 4000 groups à créer
+[07:51:52] Robyn: bon ok y'a certainement mieux  >.>
+[07:52:14] Keldy: j'pense que tu devrais faire une table monstres
+[07:52:20] Keldy: sauf que dans maps
+[07:52:26] Keldy: tu mets pas "monsters"
+[07:52:30] Keldy: mais "groupmonsters"
+[07:52:34] Keldy: et tu fais une table éponyme
+[07:52:43] Keldy: id du groupe + compo du groupe
+[07:52:47] Keldy: puis ça te fera des reférences
+[07:53:26] Keldy: tu sauras que par exemple 1 piou jaune 1 piou rouge et foudugland l'écureuil sera le groupe 1
+[07:53:31] Keldy: et t'auras qu'à le reporter
+[07:53:33] Robyn: j'peux faire une ligne de monstergroup par area
+[07:53:41] Robyn: avec tous les monstres possibles dedans
+[07:53:47] Keldy: puis ça génere au hasard
+[07:53:52] Keldy: c'est bien aussi
+
+ */
+	
+	
+	
+	/**
+	 * Normalement, un GMonsterGroup contient seulement des Templates 
+	 * 		de Monstre dont on fait des copies pour entrer en combat.
+	 * Par contre, lorsque les joueurs perdent contre eux sur le serveur héroique, 
+	 * 		les monstres droppent les items des joueurs 
+	 * 		et les instances doivent être respawn avec ces items 
+	 * 		pour que les joueurs puissent aller les recombattre pour ravoir leurs items.
+	 * Donc j'ai mit boolean instance pour savoir si ça contient des templates ou des instances.
+	 * (En d'autres mots, si c'est un template de groupe ou une instance de groupe) 
+	 */
+	private ArrayList<GMonster> monsters = null;
+	private MonsterGroupType type = null;
+	private short stars = 0;
+	private GDrop[] specialDrops = null;
+	private GFight fight = null;
+	//private int groupTemplateID = 0;
+	
+	
+	public GMonsterGroup(){
+		
+	}
+	public GMonsterGroup(short size){
+		monsters = new ArrayList<GMonster>(size);
+	}
+	
+
+	
+	@Override
+	public CharacterType getCharacterType() {
+		return CharacterType.MONSTER_GROUP;
+	}
+
+	@Override
+	public Classe getClasse() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public byte getAlignementSpecialization() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public String getAccessoriesPacket() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getSpritePacket(PluginsManager pm, String prefix) {
+		return getSpritePacket(prefix);
+	}
+	@Override
+	public String getSpritePacket(String prefix) {
+		//Syn.d("GMonsterGroup.getSpritePacket.  id("+getID()+")");
+		if(prefix.indexOf(prefixGM) == -1){
+			return "";
+		}
+		/*
+		 case "-3":
+                    {
+                        var _loc28 = new Object();
+                        _loc28.spriteType = _loc16;
+                        _loc28.level = _loc10[7];
+                        _loc28.scaleX = _loc21;
+                        _loc28.scaleY = _loc22;
+                        _loc28.noFlip = _loc18;
+                        _loc28.cell = Number(_loc11);
+                        _loc28.dir = _loc12;
+                        var _loc29 = _loc10[8].split(",");
+                        _loc28.color1 = _loc29[0];
+                        _loc28.color2 = _loc29[1];
+                        _loc28.color3 = _loc29[2];
+                        _loc28.accessories = _loc10[9];
+                        _loc28.bonusValue = _loc13;
+                        var _loc30 = this.sliptGfxData(_loc17);
+                        var _loc31 = _loc30.gfx;
+                        this.splitGfxForScale(_loc31[0], _loc28);
+                        _loc25 = this.api.kernel.CharactersManager.createMonsterGroup(_loc14, _loc15, _loc28);
+                        if (this.api.kernel.OptionsManager.getOption("ViewAllMonsterInGroup") == true)
+                        {
+                            var _loc32 = _loc14;
+                            var _loc33 = 1;
+                            
+                            while (++_loc33, _loc33 < _loc31.length)
+                            {
+                                if (_loc31[_loc5] == "")
+                                {
+                                    continue;
+                                } // end if
+                                this.splitGfxForScale(_loc31[_loc33], _loc28);
+                                _loc29 = _loc10[8 + 2 * _loc33].split(",");
+                                _loc28.color1 = _loc29[0];
+                                _loc28.color2 = _loc29[1];
+                                _loc28.color3 = _loc29[2];
+                                _loc28.dir = random(4) * 2 + 1;
+                                _loc28.accessories = _loc10[9 + 2 * _loc33];
+                                var _loc34 = _loc14 + "_" + _loc33;
+                                var _loc35 = this.api.kernel.CharactersManager.createMonsterGroup(_loc34, undefined, _loc28);
+                                var _loc36 = _loc32;
+                                if (random(3) != 0 && _loc33 != 1)
+                                {
+                                    _loc36 = _loc14 + "_" + (random(_loc33 - 1) + 1);
+                                } // end if
+                                var _loc37 = random(8);
+                                this.api.gfx.addLinkedSprite(_loc34, _loc36, _loc37, _loc35);
+                                if (!_global.isNaN(_loc35.scaleX))
+                                {
+                                    this.api.gfx.setSpriteScale(_loc35.id, _loc35.scaleX, _loc35.scaleY);
+                                } // end if
+                                switch (_loc30.shape)
+                                {
+                                    case "circle":
+                                    {
+                                        _loc37 = _loc33;
+                                        break;
+                                    } 
+                                    case "line":
+                                    {
+                                        _loc36 = _loc34;
+                                        _loc37 = 2;
+                                        break;
+                                    } 
+                                } // End of switch
+                            } // end while
+                        } // end if
+                        break;
+                    }
+		 */
+		
+		
+		//Exemple de packet: GM|+369;2;1000;2;36,34;-3;11^150,1154^100;999,145;150,-1,-1;,2bf,,1d62,;-1,-1,-1;,,,,;
+		/*
+		   GM|+369;  //cellid
+		   2;		//orientation
+		   1000;	//bonus d'étoiles
+		   2;		//id unique du groupesprite
+		   36,34;	//templateID des monstres pour afficher leurs noms
+		   -3;		//type de character: MONSTER_GROUP = -3
+		   11^150,  1154^100;	//gfx1^size1 , gfx2^size2
+		   999,145;  			//level1, level2
+		   150,-1,-1;  ,2bf,,1d62,;	//colorsEnHex ; accessories (arme,coiffe,cape,familier,bouclier)->les ID des itemTemplates en Hex
+		   -1,-1,-1;   ,,,,;  //colors et accessories du deuxieme monstre du groupe..
+		 */
+		
+		StringBuilder sb = new StringBuilder(prefix)
+		
+		.append(this.getCellID())					.append(';')
+		.append(this.getOrientation())				.append(';')
+		.append(getStars())							.append(';')
+		.append(this.getID())						.append(';')
+		.append(this.getName())						.append(';')
+		.append(this.getCharacterType().getType())	.append(';')
+		.append(this.getGfxIDs())					.append(';')
+		//.append(this.getSizeX() != DefaultCharacterSize ? "^"+this.getSizeX()+"x" : "")	.append(';')//scaleX
+		//.append(this.getSizeY() != DefaultCharacterSize ? "^"+this.getSizeY() : "")		.append(';')//scaleY
+		
+		//.append(this.isNoFlip() ? "*" : "")			.append(';')
+		
+		.append(getLevels()).append(';')
+		.append(getColorsAndAccessories())//.append(';')
+		;
+		
+		//for(GMonster m : this.getmonsters()){
+			
+		//}
+		
+		
+		return sb.toString();
+	}
+
+
+	@Override
+	public String getName() {
+		String str = "";
+		for(GMonster m : this.monsters){
+			if(str.length() > 0){
+				str += ",";
+			}
+			str += m.getTemplateID();
+		}
+		return str;
+	}
+	
+	public String getGfxIDs() {
+		String str = "";
+		for(GMonster m : this.monsters){
+			if(str.length() > 0){
+				str += ",";
+			}
+			str += m.getGfxID() + "^" + m.getSize();
+		}
+		return str;
+	}
+	
+	public String getLevels() {
+		String str = "";
+		for(GMonster m : this.monsters){
+			if(str.length() > 0){
+				str += ",";
+			}
+			str += m.getLevel();
+		}
+		return str;
+	}
+	
+	public String getColorsAndAccessories(){
+		String str = "";
+		for(GMonster m : this.monsters){
+			if(str.length() > 0){
+				str += ",";
+			}
+			str += (getColor1() == -1 ? "-1" : Integer.toHexString(getColor1()));
+			str += ",";
+			str += (getColor2() == -1 ? "-1" : Integer.toHexString(getColor2()));
+			str += ",";
+			str += (getColor3() == -1 ? "-1" : Integer.toHexString(getColor3()));
+			str += ";";
+			str += m.getAccessoriesPacket();
+			str += ";";
+		}
+		return str;
+	}
+	
+	@Override
+	public void onAddedToMap(Map m) {
+		SM.Game.GM_ADD(this, m);
+	}
+
+	@Override
+	public void onRemovedFromMap(Map m) {
+		SM.Game.GM_REMOVE(m, this);
+	}
+
+	public void setMonsters(ArrayList<GMonster> monsters) {
+		this.monsters = monsters;
+	}
+
+	public ArrayList<GMonster> getMonsters() {
+		return monsters;
+	}
+
+
+	/**
+	 * Copy tous les monstres du groupe en nouvelles instances (.copy) dans une nouvelle ArrayList <br>
+	 * Appelé au lancement d'un combat pour mettre les copies des monstres dans les combattants.
+	 */
+	public ArrayList<CombativeCharacter> getMonstersInstancesCopy() {
+		ArrayList<CombativeCharacter> monstersIntances = new ArrayList<CombativeCharacter>();
+		for(GMonster m : monsters){
+			GMonster copy = m.copy(server);
+			monstersIntances.add(copy);
+		}
+		return monstersIntances;
+	}
+
+
+	@Override
+	public void terminate() throws Throwable{
+		// TODO Auto-generated method stub
+		if(type == HEROIC_INSTANCE){
+			SQL.Monsters.saveInstance(this, getServer());
+		}
+		for(GMonster m : monsters){
+			m.terminate();
+		}
+		monsters.clear();
+		monsters = null;
+		this.finalize();
+	}
+
+	/**
+	 * Sert à sauvegarder les monstres instanciés d'un groupe qui est isInstance()
+	 */
+	public String getMonstersInstancesIDs() {
+		String s = "";
+		for(GMonster m : monsters){
+			s += "," + ( (m.getTemplateID() * 10 ) + m.getGrade() );
+		}
+		return s.substring(1);
+	}
+
+	/**
+	 * 
+	 * @param drops - String 
+	 */
+	public void setDrops(String[] drops) {
+		if(drops != null && drops.length > 0 && drops[0].equals("") == false){
+			specialDrops = new GDrop[drops.length];
+			for(int i = drops.length-1; i >= 0; i--){// New .... Old
+				specialDrops[i] = GDrop.createNew(drops[i], true);
+			}
+		}else if(drops == null){
+			specialDrops = null;
+		}
+	}
+	/**
+	 * Transfert les specialDrops du groupe dans les drops du premier monstre (this.monsters.get(0))<br>
+	 * Fait juste return si la liste de monstres est vide.
+	 */
+	public void tranferDropsToMonsters(){
+		if(monsters == null || monsters.size() == 0){
+			return;
+		}
+		if(specialDrops != null && specialDrops.length > 0 && specialDrops[0].equals("") == false){
+			if(monsters.get(0).getDrops() == null || monsters.get(0).getDrops().length == 0){
+				GDrop[] olddrops = monsters.get(0).getDrops();
+				GDrop[] newdrops = new GDrop[specialDrops.length + olddrops.length];
+				for(int i = 0; i <= olddrops.length-1; i++){// 0 .... Old
+					newdrops[i] = olddrops[i];
+				}
+				monsters.get(0).setDrops( newdrops );
+			}else{
+				monsters.get(0).setDrops( new GDrop[specialDrops.length] );
+			}
+			
+			for(int i = specialDrops.length-1; i >= 0; i--){// New .... Old
+				monsters.get(0).getDrops()[i] = specialDrops[i];
+			}
+		}
+	}
+
+	public void setStars(short stars) {
+		this.stars = stars;
+	}
+
+	public short getStars() {
+		return stars;
+	}
+	
+	
+	/**
+	 * Copie toutes les variables du groupe, sauf ne créé PAS de copies des instances de gmonsters. <br>
+	 * Juste l'arrayList est copiée pour avoir les mêmes exactement objets de templates de monstres.
+	 */
+	public GMonsterGroup copy(GServer newServ){
+		GMonsterGroup mg = (GMonsterGroup) super.copy(newServ);
+		mg.setID(this.getID());
+		mg.setStars(stars);
+		mg.setMonsters(monsters);
+		return mg;
+	}
+
+	
+	public boolean compareWithFightTeam(ArrayList<CombativeCharacter> team){
+		for(CombativeCharacter cc : team){
+			if(cc instanceof GInvocation){
+				continue;
+			}
+			if(cc instanceof GMonster == false){
+				return false;
+			}
+			GMonster m = (GMonster) cc;
+			for(GMonster mons : monsters){
+				if(mons.compare(m) == false){
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	
+	
+	
+	
+	
+	// ==============     LIST   METHODS    ======================================================================
+	
+
+	public ArrayList<GMonster> get(){
+		return monsters;
+	}
+	public GMonster getFirst(int ID, int grade){
+		for(GMonster m : monsters){
+			if(m.getTemplateID() == ID && m.getGrade() == grade){
+				return m;
+			}
+		}
+		return null;
+	}
+	public int indexOfFirst(int ID, int grade){
+		for(int i = monsters.size()-1; i>=0; i--){
+			if(monsters.get(i).getTemplateID() == ID && monsters.get(i).getGrade() == grade){
+				return i;
+			}
+		}
+		return -1;
+	}
+	public int indexOf(GMonster m){
+		for(int i = monsters.size()-1; i>=0; i--){
+			if(monsters.get(i).equals(m)){
+				return i;
+			}
+		}
+		return -1;
+	}
+	public ArrayList<GMonster> add(GMonster m){
+		monsters.add(m);
+		return monsters;
+	}
+	public ArrayList<GMonster> addAll(List<GMonster> m){
+		monsters.addAll(m);
+		return monsters;
+	}
+	public void clear(){
+		monsters.clear();
+	}
+	public ArrayList<GMonster> set(List<GMonster> m){
+		clear();
+		addAll(m);
+		return monsters;
+	}
+	public int size(){
+		return monsters.size();
+	}
+	public GMonster remove(GMonster m){
+		return monsters.remove( indexOf(m) );
+	}
+	public GMonster remove(int index){
+		return monsters.remove( index );
+	}
+	
+	
+	public void attachToMap(Map map, FormulingManager fm) {
+		this.setCellID(fm.getFreeCellRandom(map));
+		this.setMap(map);
+		this.setOrientation(Orientation.getRandom());
+	}
+	public void setType(MonsterGroupType type) {
+		this.type = type;
+	}
+	public MonsterGroupType getType() {
+		return type;
+	}
+	public void setFight(GFight fight) {
+		this.fight = fight;
+	}
+	public GFight getFight() {
+		return fight;
+	}
+	
+	// ===================  FIN LIST METHODS ====================================================================
+	
+	
+	
+	
+}

@@ -1,0 +1,32 @@
+package Plugins.Managers;
+
+import io.netty.buffer.ByteBuf;
+import Game.WakfuGameClient;
+import Login.WakfuLoginClient;
+
+import java.util.HashMap;
+
+import org.fusesource.jansi.Ansi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Core.Syn;
+import Interfaces.IClient;
+import Interfaces.IWakfuClient;
+import Plugins.Abstractions.AbstractPacketParser;
+import Tool.TClient;
+
+/**
+ * Juste un modèle de ParsingManager pour montrer que cette method parse(wakfu)
+ * est disponible pour Synaw.
+ * Sans ça, Synaw se réfèrait au ParsingManager de Syn qui lui contient des référence à Synod
+ * donc y'aurait fallu import Synod dans Synaw et vice-versa sans ce modèle.
+ */
+public class ParsingManager {
+	public boolean parse(WakfuGameClient c, ByteBuf packet){
+		return false;
+	}
+	public boolean parse(WakfuLoginClient c, ByteBuf packet){
+		return false;
+	}
+}

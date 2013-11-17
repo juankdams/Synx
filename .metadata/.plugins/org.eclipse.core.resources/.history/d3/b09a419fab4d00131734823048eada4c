@@ -1,0 +1,40 @@
+package Handlers;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
+
+
+import com.velocity.jwakfu.io.OutPacket;
+import com.velocity.jwakfu.util.LoggingUtil;
+
+import Servers.Netty.*;
+
+//public class WakfuEncoder extends Encoder {
+
+//}
+
+public class WakfuEncoder extends MessageToByteEncoder<OutPacket> {
+	
+	
+	public WakfuEncoder() {
+		super(OutPacket.class);
+	}
+	
+    @Override
+    public ByteBuf encode(ChannelHandlerContext ctx, OutPacket msg) throws Exception {
+    	ByteBuf buf = Unpooled.buffer();
+    	msg.finish();
+    	buf.writeBytes(msg.getData());
+        return buf;
+    }
+
+	@Override
+	protected void encode(ChannelHandlerContext ctx, OutPacket msg, ByteBuf out) throws Exception {
+		msg.finish();
+		out.writeBytes(msg.getData());
+	}
+    
+}

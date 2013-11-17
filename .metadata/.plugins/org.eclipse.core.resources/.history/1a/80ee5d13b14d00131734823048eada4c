@@ -1,0 +1,10 @@
+package Providers;
+
+public class ClientProvider {
+	
+	
+	public WakfuGameClient createNew(){
+		
+	}
+
+}

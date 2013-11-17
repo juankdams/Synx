@@ -1,0 +1,201 @@
+package Servers;
+
+/*
+ * Copyright 2012 The Netty Project
+ *
+ * The Netty Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+
+import Handlers.NettyHandler;
+ 
+
+public class NettyServer implements Server, InvocationHandler {
+
+	//Handlers
+	//private ChannelHandler decoder;
+	private ChannelHandler encoder;
+	private NettyHandler handler;
+	
+	private EventLoopGroup bossGroup = new NioEventLoopGroup();
+	private EventLoopGroup workerGroup = new NioEventLoopGroup();
+	private ServerBootstrap b = new ServerBootstrap();
+	private ChannelFuture f = null;
+	protected short port = 666;
+
+	
+	public NettyServer() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void start() {
+		// Configure the server.
+		Misc.Utils.wD("NettyServer start");
+	    try {
+	        b.group(bossGroup, workerGroup)
+	         .channel(NioServerSocketChannel.class)
+	         //.option(ChannelOption.SO_BACKLOG, 100)
+	         //.handler(new LoggingHandler(LogLevel.INFO))
+	         .childHandler(new ChannelInitializer<SocketChannel>() {
+	        	 @Override
+	             public void initChannel(SocketChannel ch) throws Exception {
+	        		Misc.Utils.wD("NettyServer initChannel");
+		            ChannelPipeline pl = ch.pipeline();
+	             	//pl.addLast("logger", new LoggingHandler(LogLevel.INFO));
+	                
+	                //pl.addLast("framer", new MessageDecoder());
+	                //pl.addLast("decoder", decoder);
+	               
+		            //pl.addLast("encoder", encoder);
+	                pl.addLast("handler", handler);
+	             }
+	        });
+
+	       f = b.bind( getPort() ).sync();
+	       Misc.Utils.wD("NettyServer binded "+port);
+	    } catch (InterruptedException e) { e.printStackTrace();
+		} //finally {
+	    	// Shut down all event loops to terminate all threads.
+	    //    bossGroup.shutdownGracefully();
+	    //    workerGroup.shutdownGracefully();
+	    //    Misc.Utils.wD("NettyServer shut down");
+	    //}
+	}
+
+	@Override
+	public void stop() {
+        try {
+        	//Déconnecte
+	    	// Shut down all event loops to terminate all threads.
+			bossGroup.shutdownGracefully();
+		    workerGroup.shutdownGracefully();
+			f = f.channel().closeFuture().sync();
+		    Misc.Utils.wD("NettyServer shut down");
+		} catch (InterruptedException e) { e.printStackTrace(); }
+	}
+
+	@Override
+	public void restart() {
+		try {
+			stop();
+		    //Reconnecte
+			f = b.bind( getPort() ).sync();
+		} catch (InterruptedException e) { e.printStackTrace(); }
+	}
+
+	//public abstract short getPort();
+	//public abstract void setPort(short port);
+
+	@Override
+	public void on() {
+		start();
+	}
+
+	@Override
+	public void off(boolean terminate) {
+		stop();
+		if(terminate){
+			terminate();
+		}
+	}
+
+
+	@Override
+	public void terminate(){
+		// TODO Auto-generated method stub
+		if(f.channel().isActive()){
+			stop();
+		}
+		bossGroup = null;
+		workerGroup = null;
+		b = null;
+		f = null;
+		handler = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) { e.printStackTrace(); }
+	}
+
+	@Override
+	public short getPort() {
+		return port;
+	}
+	@Override
+	public void setPort(short port) {
+		this.port = port;
+	}
+
+	@Override
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		//if(proxy instanceof Server){
+		//	Server s = (Server) proxy;
+		//	for(Method m : s.getClass().getMethods()){
+		//		if(m.equals(method)){
+		//			return m.invoke(proxy, args);
+		//		}
+		//	}
+		//}
+		//return null;
+		return method.invoke(proxy, args);
+	}
+
+
+	public void setHandler(NettyHandler handler){
+		this.handler = handler;
+	}
+	public NettyHandler getHandler(){
+		return handler;
+	}
+	//public ChannelHandler getDecoder() {
+	//	return decoder;
+	//}
+	//public void setDecoder(ChannelHandler decoder) {
+	//	this.decoder = decoder;
+	//}
+	public ChannelHandler getEncoder() {
+		return encoder;
+	}
+	public void setEncoder(ChannelHandler encoder) {
+		this.encoder = encoder;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}

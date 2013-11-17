@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>.org.eclipse.jdt.core.external.folders</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>.link1</name>
+			<type>2</type>
+			<location>Z:/Dropbox/Private/zLIBS/quartz-2.1.7/quartz</location>
+		</link>
+		<link>
+			<name>.link2</name>
+			<type>2</type>
+			<location>C:/Program Files/Java/jdk1.6.0_45/include</location>
+		</link>
+		<link>
+			<name>.link3</name>
+			<type>2</type>
+			<location>C:/Users/Robyn/Desktop/ehcache-2.7.5/src</location>
+		</link>
+		<link>
+			<name>.link4</name>
+			<type>2</type>
+			<location>Z:/Dropbox/Private/Synx/Synaw/bin</location>
+		</link>
+		<link>
+			<name>.link6</name>
+			<type>2</type>
+			<location>Z:/Dropbox/Private/Synx/Synod/bin</location>
+		</link>
+		<link>
+			<name>.link7</name>
+			<type>2</type>
+			<location>Z:/Dropbox/Private/Synx/Synaw</location>
+		</link>
+		<link>
+			<name>.link8</name>
+			<type>2</type>
+			<location>Z:/Dropbox/Private/zLIBS/javassist-3.18.0-GA/src</location>
+		</link>
+		<link>
+			<name>.link9</name>
+			<type>2</type>
+			<location>Z:/Dropbox/Private/Synx/Synod</location>
+		</link>
+	</linkedResources>
+</projectDescription>

@@ -1,0 +1,99 @@
+package Handlers;
+
+import java.util.concurrent.TimeUnit;
+
+import org.fusesource.jansi.Ansi;
+
+import Core.Syn;
+import Enums.SynActions.CommonAction;
+import Game.GameServer;
+import Login.DofusLoginClient;
+import Login.LoginServer;
+import NewThreads.Task;
+import SM.Account;
+
+public class LServerSelectHandler extends LHandler{
+
+	int pos = serv.clients.size();
+	
+	public LServerSelectHandler(LoginServer serv, int queuePosition){
+		super(serv);
+		pos = queuePosition;
+	}
+	
+	@Override
+	public void parse(DofusLoginClient c, String packet) throws Exception{
+		// TODO Auto-generated method stub
+		if(packet.equals("Af")){//FIXME - Fais la Queue - Corriger/Vérifier la validité du systeme des int numberOfPremiumClients dans LServer
+			Account.Af(c.getSession(), pos, serv.numberOfPremiumClients, serv.numberOfNonPremiumClients, c.getAccount().isPremium(), -1);
+			Syn.w("[INFOS]: Packet Af in LServerSelectHandler");
+			if(c.getAccount().isPremium()){
+    			Syn.d("LServer.numberOfPremiumClients--;");
+				if(serv.numberOfPremiumClients >= 1){
+					serv.numberOfPremiumClients--;
+				}
+			}else{
+				if(serv.numberOfNonPremiumClients >= 1){
+					serv.numberOfNonPremiumClients--;
+				}
+			}
+			return;
+		}
+		Syn.w("[RECV] in [LServerSelectHandler] << " + packet, Ansi.Color.GREEN);
+		switch(packet.charAt(1)){
+			case 'F'://XXX Rechercher un personnage ami dans la liste des serveurs (Attention ca peut être très lourd en requete sql si qqn se met à flood ce packet.)
+				//Ex de RECV: << AFHalla
+				if(packet.length() <= 2){
+					return;
+				}
+				String accountPseudo = packet.substring(2);
+				String persoList = SQL.Accounts.findAccountPersoList(serv, accountPseudo);
+				//Ex de SEND: >> AF602,1
+				SM.Account.AF(c.getSession(), persoList);
+			break;
+			case 'x':
+				SM.Account.AxK(c);
+			break;
+			case 'X':
+				byte idSelected = Byte.parseByte(packet.substring(2));
+				for(GameServer serv : this.serv.gameServers){
+					if(serv.getWorld().getID() == idSelected){
+						if(serv.getClients().size() >= serv.getConfig().getMaximumClients() ||serv.getRequiredGM() > c.getAccount().getGM()){
+							SM.Account.errorTooMany(c.getSession());
+							c.kick();
+						}else{
+
+							//Ajoute le compte à la queue
+							serv.queue.updateQueuedAccounts(CommonAction.ADD, c.getAccount(), c.getAccount().getID());//.accountsToRemoveIfUnused.put(c.getAccount().getID(), c.getAccount());
+							//Fait une scheduledTask qui va enlever le compte de la Queue dans une minute
+							Task<Object> task = serv.threadsManager.getTaskFactory().newRemoveWaitingAccount(c, serv);
+							serv.threadsManager.executeScheduledTask(task, 1, TimeUnit.MINUTES);
+							
+							/*
+							//Fait une schedule pour enlever le compte de la queue à uncertain moment
+							ScheduledTask st = new ScheduledTask(SchedulingA.REMOVE_WAITING_ACCOUNT, c, serv.queue);
+							
+							//Ajoute la schedule à un SchedulingBuffer d'une minute. 
+							//Le compte sera donc enlevé de la queue apres 1 minute
+							SchedulingBuffer.getBuffer(SchedulingBuffer.tick1minute).modifyBuffer(CommonAction.ADD, st);
+							*/
+							
+							if(serv.getConfig().ConnexionQueue == false){
+								SM.Account.AYK(c.getSession(), c.getAccount().getID(), serv);
+							}else{
+								if(c.getAccount().isPremium()){
+									serv.connexionQueue.updatePremiumWaitingClientList(CommonAction.ADD, c, 0);
+								}else{
+									serv.connexionQueue.updateWaitingClientList(CommonAction.ADD, c, 0);
+								}
+								serv.connexionQueue.tick(serv, c);
+							}
+							
+						}
+					}
+				}
+			break;
+		}
+	}
+	
+}

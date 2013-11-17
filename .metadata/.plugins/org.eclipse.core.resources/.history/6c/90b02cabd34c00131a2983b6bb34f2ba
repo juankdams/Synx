@@ -1,0 +1,33 @@
+package Plugins.Managers;
+
+public class PluginsManagerBuilder {
+	
+	private PluginsManager pm = null;
+
+	public ActionsManager getActionsManagerDirect(){
+		return am;
+	}
+	public AspectJManager getAspectJManagerDirect(){
+		return ajm;
+	}
+	public EffectsManager getEffectsManagerDirect(){
+		return em;
+	}
+	public FormulingManager getFormulingManagerDirect(){
+		return fm;
+	}
+	public MacroManager getMacroManagerDirect(){
+		return mm;
+	}
+	public ParsingManager getParsingManagerDirect(){
+		return pm;
+	}
+	public SystemsManager getSystemsManagerDirect(){
+		return sm;
+	}
+	public ProvidersManager getProvidersDirect(){
+		//v juste prit un des providers au hasard pour vérifier que le manager soit instancié
+		return p;
+	}
+
+}

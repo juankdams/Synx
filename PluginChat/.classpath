@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="var" path="ZLIBS/apache-mina-2.0.7/dist/mina-core-2.0.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/media/Synz/Dropbox/Private/zLIBS/mina/docs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="ZLIBS/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="var" path="ZLIBS/slf4j-jdk14-1.6.4.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/LibPiou"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/LibUtils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/PluginzLib"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Syn"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Synaw"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Synod"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

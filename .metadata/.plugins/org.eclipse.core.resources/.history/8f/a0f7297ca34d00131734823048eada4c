@@ -1,0 +1,235 @@
+package parsers;
+
+import static Enums.ChannelEnum.ALIGNMENT;
+import static Enums.ChannelEnum.GENERAL;
+import static Enums.ChannelEnum.RECRUITMENT;
+import static Enums.ChannelEnum.TRADING;
+import static Handlers.GHandler.packetCantParse;
+
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import plugin.PluginManager;
+import plugin.event.EventInformation;
+import ConfigurationObjects.Command;
+import ConfigurationObjects.GConfig;
+import Constants.CPerso;
+import Constants.Constants;
+import Core.Syn;
+import Enums.ChannelEnum;
+import Enums.ImPackets;
+import Enums.ImPackets.ImType;
+import Enums.SynActions.ChatBufferA;
+import Enums.SynActions.SchedulingA;
+import Game.DofusGameClient;
+import GameObjects.GPersonnage;
+import Plugins.Abstractions.AbstractPacketParser;
+import ZPlug.ChatEvent;
+
+public class ChatParser extends AbstractPacketParser<DofusGameClient, String> {
+	public static Logger log = LoggerFactory.getLogger(ChatParser.class);
+
+	//private static final char GENERAL = '*';
+	//private static final char PRIVATE = '*';
+	//private static final char COMMERCE = ':';
+	///private static final char RECRUTEMENT = '?';
+	//private static final char INCARNAM = '^';
+	//private static final char ALIGNEMENT = '*';
+	//private static final char GUILD = '*';
+	//private static final char INFOS = '*';
+	/**Temps d'interval entre 2 message sur le canal general*/
+	private static final int generalFlood = 1000;
+	/**Temps d'interval entre 2 message sur les canaux recrutement,alignement...*/
+	private static final int bigChannelFlood = 60000;
+	/**Temps d'interval entre 2 message sur les canaux commerce et global...*/
+	private static final int bigBigChannelFlood = 120000;
+	
+	@Override
+	public boolean parse(DofusGameClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'C'://Chat Channels management.
+				String chan = packet.charAt(3)+"";
+				//Pour le canal bleu:
+				//doit inclure les canaux d'équipe (en cbt), de groupe et de message privé:
+				if(packet.substring(3).equals(""+ChannelEnum.TEAM.getValue()+ChannelEnum.PARTY.getValue()+ChannelEnum.PRIVATE.getValue())){
+					chan = packet.substring(3);
+				}
+				if(packet.charAt(2) == '+'){
+					c.getAccount().getCurPerso().addChanel(chan);
+					//SQL.Personnages.updateChannels(c.getAccount().getCurPerso());
+				}else 
+				if(packet.charAt(2) == '-'){
+					c.getAccount().getCurPerso().removeChanel(chan);
+					//SQL.Personnages.updateChannels(c.getAccount().getCurPerso());
+				}else{
+					packetCantParse(c, packet, "Opérateur invalide. Devrait etre + ou -");
+					c.kick();
+				}
+				return true;
+		}
+		return false;
+	}
+	
+	
+	/**
+	 * Callé par le BasicParser (packet BM)
+	 */
+	public static boolean parseMessage(DofusGameClient c, String msg){
+		GPersonnage p = c.getAccount().getCurPerso();
+		if(containsForbiddenWords(c.getHandler().gServ.getConfig(), msg) == 1){
+			SM.Messages.M(p, "Attention, la pub est strictement interdite. Ne recommences pas ou tu pourrais te faire bannir.", Constants.COLOR_RED2);
+			SM.Basics.BN(c.getSession());//SocketManager.GAME_SEND_BN(_perso);
+			return true;
+		}
+		if(p.getChannels().indexOf(msg.charAt(2)) == -1 || msg.length() <= 4){
+			msg = null;
+			return true;
+		}
+		ChannelEnum CE = ChannelEnum.getChannel(msg.charAt(2));
+		switch(CE){
+			case GENERAL://Canal General
+				msg = msg.substring(4, msg.length()-1).trim();
+				Syn.w("chatMess = "+msg);
+				if(msg.length() <= 0){
+					return true;
+				}
+				if(verifyFlood(CE, p)){
+					//Mon nouveau systeme de commandes :)
+					Command co = p.getWorld().getCommand(msg.substring(1));
+					PluginManager pm = p.getServer().getPlugins().getPluginManager();
+					if(pm.getPlugin("Chat") == null && c.getServer().getConfig().isUseDefaultPlugins()){
+						pm = p.getWorld().getStrategy().defaultPluginsManager.plugins.getPluginManager();
+					}
+					if((msg.startsWith("!") || msg.startsWith(".")) && co != null && msg.length() >= 2){
+						co.apply(p, msg.substring(1));
+					}else
+					if(pm.getPlugin("Chat") != null && msg.length() >= 2 && (msg.startsWith("!") || msg.startsWith(".")) ){
+						//msg = msg.substring(1, msg.length()-1);
+						EventInformation information = new EventInformation();
+						if(msg.indexOf(" ") != -1){
+							information.set("command", msg.substring(1, msg.indexOf(" ")) );
+							information.set("msg", msg.substring(msg.indexOf(" ")+1, msg.length()));
+						}else{
+							information.set("command", msg.substring(1, msg.length()));
+							information.set("msg", "nullmsg");
+						}
+					    information.set("perso", p);
+					    pm.callEvent(ChatEvent.GENERAL_TALK, ChatParser.class, information);
+					    information = null;
+					}else{
+						Syn.d("Go pour envoyer message cMK_Black");
+						SM.chat.cMK_Black(p, msg);
+					}
+					//Task<Object>
+					ScheduledFuture<Object> sf = p.getServer().threadsManager.executeScheduledTask(SchedulingA.REMOVE_FLOODER, generalFlood, TimeUnit.MILLISECONDS, CE.getValue(), p);
+					
+					//Ajoute le gars dans la bonne flooList
+					p.getWorld().modifyFloodLists(CE, ChatBufferA.ADD_FLOODER, p, sf);
+					
+					/*//Une seconde d'interval entre chaque message
+					SchedulingBuffer.getBuffer(generalFlood).modifyBuffer(
+							CommonAction.ADD, 
+							//Une seconde d'interval entre chaque message
+							new ScheduledTask(SchedulingA.REMOVE_FLOODER, CE.getValue()+p.getName(), p.getWorld())
+							);*/
+					
+				}else{
+					//0115 = message de flood. 
+					//1 = une seconde d'attente avant de pouvoir récrire
+					long time = p.getWorld().getGeneralFlooders().get(p).getDelay(TimeUnit.MILLISECONDS);
+					SM.Infos.Im(p, ImType.INFOS, ImPackets.CanalRestreintTemps, ""+(time/1000));
+					//SM.Messages.M(p, "Flood interdit.", Constants.COLOR_RED2);
+				}
+				break;
+			case INCARNAM:
+				//TODO Gérer les multiples instances d'Incarnams en maps, monstres et chats ...
+				break;
+			case TRADING:
+				if(verifyFlood(CE, p)){
+					SM.chat.cMK_ALL(p, msg.charAt(2), msg.substring(4));
+					ScheduledFuture<Object> sf = p.getServer().threadsManager.executeScheduledTask(SchedulingA.REMOVE_FLOODER, bigBigChannelFlood, TimeUnit.MILLISECONDS, CE.getValue(), p);
+					//Ajoute le gars dans la bonne flooList
+					p.getWorld().modifyFloodLists(CE, ChatBufferA.ADD_FLOODER, p, sf);
+				}else{
+					long time = p.getWorld().getCommerceFlooders().get(p).getDelay(TimeUnit.MILLISECONDS);
+					SM.Infos.Im(p, ImType.INFOS, ImPackets.CanalRestreintTemps, ";"+(time/1000));
+					//SM.Messages.M(p, "Flood interdit.", Constants.COLOR_RED2);
+				}
+				break;
+			//case GLOBAL:
+			case ALIGNMENT:
+				if(p.getStatistique().getGrade(p.getWorld()) < CPerso.minimalLevelForAlignmentChat){
+					SM.Messages.M(p, "Ton grade d'alignement n'est pas assez élevé.", Constants.COLOR_GREEN);
+					return true;
+				}
+			case RECRUITMENT:
+				//todo verify flood.
+				if(verifyFlood(CE, p)){
+					SM.chat.cMK_ALL(p, msg.charAt(2), msg.substring(4));
+					ScheduledFuture<Object> sf = p.getServer().threadsManager.executeScheduledTask(SchedulingA.REMOVE_FLOODER, bigChannelFlood, TimeUnit.MILLISECONDS, CE.getValue(), p);
+					//Ajoute le gars dans la bonne flooList
+					p.getWorld().modifyFloodLists(CE, ChatBufferA.ADD_FLOODER, p, sf);
+					/*SchedulingBuffer.getBuffer(bigChannelFlood).modifyBuffer(
+							CommonAction.ADD, 
+							new ScheduledTask(SchedulingA.REMOVE_FLOODER, CE.getValue()+p.getName(), p.getWorld())
+							);*/
+				}else{
+					long time = 0;
+					if(CE == ALIGNMENT){
+						time = p.getWorld().getAlignementFlooders().get(p).getDelay(TimeUnit.MILLISECONDS);
+					}else{
+						time = p.getWorld().getRecrutementFlooders().get(p).getDelay(TimeUnit.MILLISECONDS);
+					}
+					SM.Infos.Im(p, ImType.INFOS, ImPackets.CanalRestreintTemps, ";"+(time/1000));
+					//SM.Messages.M(p, "Flood interdit.", Constants.COLOR_RED2);
+				}
+				break;
+		}
+		return true;
+	}
+	
+	
+	
+	
+	/**
+	 * Vérifie si le perso est dans une des listes de flood pour savoir s'il a le droit de parler
+	 */
+	public static boolean verifyFlood(ChannelEnum ce, GPersonnage p){
+		if(ce == TRADING){
+			return !p.getWorld().getCommerceFlooders().containsKey(p);
+			//return (p.getWorld().getChatParser().commerceFlooders.indexOf(p.getName()) == -1);//Return true si contient pas
+		}else if(ce == RECRUITMENT){
+			return !p.getWorld().getRecrutementFlooders().containsKey(p);
+			//return (p.getWorld().getChatParser().recrutementFlooders.indexOf(p.getName()) == -1);//Return true si contient pas
+		}else if(ce == GENERAL){
+			return !p.getWorld().getGeneralFlooders().containsKey(p);
+			//return (p.getWorld().getChatParser().generalFlooders.indexOf(p.getName()) == -1);//Return true si contient pas
+		}else if(ce == ALIGNMENT){
+			return !p.getWorld().getAlignementFlooders().containsKey(p);
+		}
+		return true;
+	}
+	
+	
+	/**
+	 * Vérifie si le message contient des mots interdits avant de l'envoyer.
+	 */
+	public static int containsForbiddenWords(GConfig c,String msg){
+		for(int i = 0; i < c.getForbiddenWords().length; i++){
+			if(msg.toLowerCase().contains(c.getForbiddenWords()[i])){
+				return 1;
+			}
+		}
+		if(msg.contains("°") && msg.contains("|") && msg.contains("#") && msg.contains("!")){
+			//quand on insere des items dans le canal all.  ex: v
+			//°0|71807!6f#1#0#0#0d0+1,73#a#0#0#0d0+10,75#2#0#0#0d0+2,79#19#0#0#0d0+25,7b#4b#0#0#0d0+75,7d#c8#0#0#0d0+200,7e#4b#0#0#0d0+75
+			return 2;
+		}
+		return 0;
+	}
+	
+	
+}

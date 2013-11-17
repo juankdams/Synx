@@ -1,0 +1,14 @@
+package Parsers;
+
+import Game.DofusGameClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class GuildsParser extends AbstractPacketParser<DofusGameClient, String> {
+
+	
+	public boolean parse(DofusGameClient c, String packet){
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring accessors="true" comment="Delete 3 elements from project &apos;PluginParsing&apos;&#x0D;&#x0A;- Original project: &apos;PluginParsing&apos;&#x0D;&#x0A;- Original elements:&#x0D;&#x0A;     ParsingMain (Copie en conflit de Robyn-PC 2013-11-02).java&#x0D;&#x0A;     AccountParser (Copie en conflit de Robyn-PC 2013-11-02).java&#x0D;&#x0A;     ObjectsParser (Copie en conflit de Robyn-PC 2013-11-02).java" description="Delete elements" element1="src/pack/ParsingMain (Copie en conflit de Robyn-PC 2013-11-02).java" element2="src/Parsers/AccountParser (Copie en conflit de Robyn-PC 2013-11-02).java" element3="src/Parsers/ObjectsParser (Copie en conflit de Robyn-PC 2013-11-02).java" elements="0" flags="589830" id="org.eclipse.jdt.ui.delete" resources="3" stamp="1383430681760" subPackages="false" version="1.0"/>
+</session>

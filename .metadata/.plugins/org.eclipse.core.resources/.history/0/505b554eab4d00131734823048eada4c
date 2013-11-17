@@ -1,0 +1,21 @@
+package Servers.Netty;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.MessageBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageEncoder;
+
+
+public class Encoder extends MessageToMessageEncoder<Object, ByteBuf> {
+	
+	public Encoder() {
+		super(ByteBuf.class);
+	}
+
+	@Override
+	protected void encode(ChannelHandlerContext ctx, ByteBuf msg, MessageBuf<Object> out) throws Exception {
+		
+		
+	}
+    
+}

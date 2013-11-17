@@ -1,0 +1,213 @@
+package Providers;
+
+import java.util.ArrayList;
+
+import Abstractions.AbstractWorld;
+import Constants.CSpells;
+import Constants.Constants;
+import Core.Syn;
+import Game.DofusGameServer;
+import Game.GameServer;
+import GameObjects.GEffect;
+import GameObjects.GSpell;
+import Misc.StringUtils;
+import Plugins.Managers.EffectsManager;
+
+public class GSpellProvider {
+
+
+	
+	/**
+	 * TODO GSpell.createNew PAS FINI Pour créer un niveau de un sort à partir de la string contenant ses paramètres et effets.
+	 */
+	public GSpell createNew(short ID, String params, short spellSprite, byte characterSprite, byte displayType, boolean showInFrontOfCharacter, AbstractWorld w) {
+		EffectsManager em = w.getServer() == null ? Syn.Services.defaultPluginsManager.getEffectsManager() : serv.getEffectsManager();
+		
+		GSpell s = new GSpell(ID);
+		params = org.apache.commons.lang3.StringUtils.replace(params, " ", "");
+		String[] str = StringUtils.split2(params, ",");//params.split(",");
+		//for(int i = str.length-1; i >= 0; i--){
+		//	str[i] = str[i].trim();
+		//}
+		s.setSpellSprite(spellSprite);
+		s.setSpriteAnimationID(characterSprite);
+		s.setDisplayType(displayType);
+		s.setShowInFrontOf(showInFrontOfCharacter);
+		
+		//Création des listes d'effets normaux et en CoupCritique.
+		String[] effects = StringUtils.split2(str[0], "|");//str[0].split("\\|");
+		String[] cceffects = StringUtils.split2(str[1], "|");//str[1].split("\\|");
+		s.setEffects(new ArrayList<GEffect>(effects.length));
+		s.setEffectsCC(new ArrayList<GEffect>(cceffects.length));
+		for(String effect : effects){
+			if(effect.equals("-1")){
+				//S'il n'a pas d'effets en coup critique.(Et le TauxCC sera alors 0)
+				// (donc impossible de faire cc puisque ca sera chance/taux -> chance/0 = 0)
+				s.setEffects(null);
+				break;
+			}
+			//if(effect.indexOf(";") == -1){
+			//	Syn.d("effect.indexOf(;) == -1 -- effect=("+effect+")");
+			//}
+			if(effect.length() > 0){
+				s.getEffects().add(GEffect.provide(serv).createNewForSpell(effect, em));
+				if(ID < 100 && !s.getEffects().get(s.getEffects().size()-1).getStringForSpell(em).equals(effect)){
+					Syn.d("Création d'effet de sort ("+ID+") ne fonctionne pas parfaitement: " +
+							"\n "+effect+
+							"\n "+s.getEffects().get(s.getEffects().size()-1).getStringForSpell(em)
+							);
+				}
+			}
+		}
+		for(String cceffect : cceffects){
+			if(cceffect.equals("-1")){
+				//S'il n'a pas d'effets en coup critique.(Et le TauxCC sera alors 0)
+				// (donc impossible de faire cc puisque ca sera chance/taux -> chance/0 = 0)
+				s.setEffectsCC(null);
+				break;
+			}
+			if(cceffect.length() > 0){
+				s.getEffectsCC().add(GEffect.provide(serv).createNewForSpell(cceffect, em));
+			}
+		}
+		//morph;duréetours;probabilite à mettre dans le specialArg du GEffect [FAIT] (dans le GEffect.createNewForSpell)
+		
+		if(str[2].length() == 0){
+			//Syn.d("str[2].length() == 0 -- sortID ("+ID+") params = ("+params+").");
+			s.setPA(Constants.ZERO_BYTE);
+		}else{
+			s.setPA(Byte.parseByte(str[2]));
+		}
+		s.setRangeMin(Byte.parseByte(str[3]));
+		s.setRangeMax(Byte.parseByte(str[4]));
+		s.setRateCC(Short.parseShort(str[5]));
+		s.setRateEC(Short.parseShort(str[6]));
+		s.setLineLaunch(str[7].equalsIgnoreCase("TRUE"));
+		s.setLineOfSight(str[8].equalsIgnoreCase("TRUE"));
+		s.setEmptyCell(str[9].equalsIgnoreCase("TRUE"));
+		s.setModifPO(str[10].equalsIgnoreCase("TRUE"));
+		s.setClassID(Byte.parseByte(str[11]));
+		
+		s.setMaxLaunchByTurn(Byte.parseByte(str[12]));
+		s.setMaxLaunchByTurnByTarget(Byte.parseByte(str[13]));
+		s.setCooldown(Byte.parseByte(str[14]));
+		
+		
+		//Ex. de zones pour un sort :   Pa;Mol;Cc|Ru$Cc|Pa;Had
+		//-> $ sépare les normaux des CC
+		//-> | sépare les effet
+		//-> ; sépare les zoneTypes de chaque effets
+		String [] zoneTypeEffects = null;
+		if(s.getEffectsCC() == null){
+			zoneTypeEffects = str[15].split("(?<=\\G..)");//1 Split / 2 char.
+			s.setZoneType(new String[zoneTypeEffects.length][]);
+			for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+				s.setZoneType(i, new String[]{zoneTypeEffects[i]});
+			}
+		}else{
+			zoneTypeEffects = str[15].substring(0, str[15].length()/2).split("(?<=\\G..)");//1 Split / 2 char.
+			s.setZoneType(new String[zoneTypeEffects.length][]);
+			for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+				s.setZoneType(i, new String[]{zoneTypeEffects[i]});
+			}
+			String[] zoneTypeEffectsCC = str[15].substring(str[15].length()/2).split("(?<=\\G..)");//1 Split / 2 char.
+			s.setZoneTypeCC(new String[zoneTypeEffectsCC.length][]);
+			for(int i = zoneTypeEffectsCC.length-1; i >= 0; i--){
+				s.setZoneTypeCC(i, new String[]{zoneTypeEffects[i]});
+			}
+		}
+		/*
+		if(s.effectsCC == null){
+			zoneTypeEffects = str[15].split("\\|");
+			s.setZoneType(new String[zoneTypeEffects.length][]);
+			for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+				String[] zoneTypes = zoneTypeEffects[i].split(";");
+				s.setZoneType(i, zoneTypes);
+			}
+		}else{
+			zoneTypeEffects = str[15].substring(0, str[15].indexOf("$")).split("\\|");
+			String[] zoneTypeEffectsCC = str[15].substring(str[15].indexOf("$")+1).split("\\|");
+			//s.setZoneType(str[15].substring(0, str[15].indexOf("$")).split("\\|"));
+			//s.setZoneTypeCC(str[15].substring(str[15].indexOf("$")+1).split("\\|"));
+			s.setZoneTypeCC(new String[zoneTypeEffectsCC.length][]);
+			for(int i = zoneTypeEffectsCC.length-1; i >= 0; i--){
+				String[] zoneTypesCC = zoneTypeEffectsCC[i].split(";");
+				s.setZoneTypeCC(i, zoneTypesCC);
+			}
+			
+		}
+		s.setZoneType(new String[zoneTypeEffects.length][]);
+		for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+			String[] zoneTypes = zoneTypeEffects[i].split(";");
+			s.setZoneType(i, zoneTypes);
+		}
+		*/
+		//String requiredstates = org.apache.commons.lang3.StringUtils.replace(str[16], " ", "");
+		String requiredstates = org.apache.commons.lang3.StringUtils.replace(str[16], ";", ",");
+		//String requiredstates = str[16].replace(" ", "").replace(";", ",");
+		for(int i = CSpells.requiredStates.length-1; i >= 0; i--){
+			if(("["+requiredstates+"]").equals(CSpells.requiredStates[i])){
+				s.setRequiredStates(CSpells.requiredStatesBytes[i]);
+				break;
+			}
+		}
+		//String forbidsts = org.apache.commons.lang3.StringUtils.replace(str[17], " ", "");
+		String forbidsts = org.apache.commons.lang3.StringUtils.replace(str[17], ";", ",");
+		//String forbidsts = str[17].replace(" ", "").replace(";", ",");
+		for(int i = CSpells.forbiddenStates.length-1; i >= 0; i--){
+			if(forbidsts.equals(CSpells.forbiddenStates[i])){
+				s.setForbiddenStates(CSpells.forbiddenStatesBytes[i]);
+				break;
+			}
+		}
+		try{
+			s.setLearnLevel(Short.parseShort(str[18]));
+		}catch(Exception e){
+			Syn.d("s.setLearnLevel(Short.parseShort(str[18])); -- sortID ("+ID+") params = ("+params+").");
+		}
+		s.setEcEndTurn(str[19].equalsIgnoreCase("TRUE"));
+		
+		/*En venant du lang, c'est: n: "Armure Incandescente"   (ID = 1)
+		 l6: [[[265, 14, null, null, 4, 0, "0d0+14"]], [[265, 15, null, null, 4, 0, "0d0+15"]], 2, 0, 0, 50, 100, false, false, false, false, 0, 0, 0, 5, "CcCc", [], [18, 19, 3, 1, 41], 109, false]
+ 
+		En ordre :
+		 
+		 
+		l6 = level 6 du sort
+		[[265, 14, null, null, 4, 0, "0d0+14"]] = Effets
+		    |- [265, 14, null, null, 4, 0, "0d0+14"] = Premier effet (Remarquez le nombre de [])
+		             |- ID d'effet 265, jet mini 14, jet max null. morph null, durée de leffet en tours 4, probabilité de réussite 0 (=à tous les coups),  jet en dés "0d0+14"
+		 
+		[[265, 15, null, null, 4, 0, "0d0+15"]] = Effets en coup critique
+		 
+		  |- [265, 15, null, null, 4, 0, "0d0+15"] = Premier effet (Remarquez le nombre de [])
+		             |- ID d'effet 265, jet mini 15, jet max null. morph null, durée de leffet en tours 4, probabilité de réussite 0 (=à tous les coups),  jet en dés "0d0+15"
+		 
+		2 = Cout en PA
+		0 = Portée min
+		0 = Portée max
+		50 = Taux de CC
+		100 = Taux d'EC
+		false = Si le lancé se fait en ligne seulement
+		false = Si une ligne de vue est obligatoire
+		fase = Si la cellule visée doit être vide
+		false = Si la portée du sort est modifiable
+		0 = ClassID (0 = n'importe quelle classe me semble)
+		0 = Maximum de lancers par tour (0 = infini)
+		0 = Maximum de lancers par tour par cible (0 = infini)
+		5 = Cooldown
+		"CcCc" = Type de zone d'effet
+		[] = États du joueur requit pour lancer le sort
+		[18, 19, 3, 1, 41] = États du joueur interdits pour lancer le sort (Il ne pourra pas lancer le sort tant qu'il un des effets interdits)
+		109 = Niveau pour débloquer le niveau du sort 
+		false = Si l'echec critique fait passer le tour.
+ 
+		 */
+		
+		
+		return s;
+	}
+	
+	
+	
+}

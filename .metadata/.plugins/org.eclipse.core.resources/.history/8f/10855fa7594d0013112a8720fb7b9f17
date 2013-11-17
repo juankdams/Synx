@@ -1,0 +1,21 @@
+package Login;
+
+import io.netty.channel.Channel;
+
+public class WakfuLoginClient extends LoginClient {
+
+
+	private Channel channel;
+	
+	@Override
+	public void kick() {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void terminate() {
+		// TODO Auto-generated method stub
+	}
+	
+
+}

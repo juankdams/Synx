@@ -1,0 +1,10 @@
+1382413619007	Rename enum constant 'POS_DRAGODINDE'
+1382413635348	Rename enum constant 'POS_FAMILIER'
+1382413659446	Rename enum constant 'POS_CAPE'
+1382413665606	Rename enum constant 'POS_COIFFE'
+1382413672386	Rename enum constant 'POS_BOTTES'
+1382413679022	Rename enum constant 'POS_CEINTURE'
+1382413686984	Rename enum constant 'POS_ARME'
+1382413693592	Rename enum constant 'POS_AMULETTE'
+1382413803618	Rename method 'getValue'
+1382855863136	Delete element

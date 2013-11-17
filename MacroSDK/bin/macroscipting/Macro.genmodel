@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/macroSDK/src-gen"
+    editDirectory="/macroSDK.edit/src" editorDirectory="/macroSDK.editor/src" modelPluginID="macroSDK"
+    forceOverwrite="true" modelName="Macro" updateClasspath="false" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    complianceLevel="5.0" copyrightFields="false" editPluginID="macroSDK.edit" editorPluginID="macroSDK.editor"
+    runtimeVersion="2.6">
+  <genPackages prefix="Macro" basePackage="macroscipting" disposableProviderFactory="true"
+      fileExtensions="macro" ecorePackage="Macro.ecore#/">
+    <genClasses ecoreClass="Macro.ecore#//Domain">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Macro.ecore#//Domain/elements"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//Class">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//Class/name"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Macro.ecore#//Class/superType"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//onLoadBloc">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//onLoadBloc/filePath"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//onLoadBloc/fileName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//onLoadBloc/characterID"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//onLoadBloc/scope"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//onLoadBloc/compactMicro"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//Bloc">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//Bloc/name"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Macro.ecore#//Bloc/directives"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//Directive">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//Directive/name"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//conditionnalDirective"/>
+    <genClasses ecoreClass="Macro.ecore#//strDirective">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//strDirective/value"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//intDirective">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//intDirective/value"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//varDirective">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//varDirective/left"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//varDirective/right"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//ifDirective">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//ifDirective/left"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//ifDirective/operator"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//ifDirective/right"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Macro.ecore#//ifDirective/directives"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//waitDirective">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//waitDirective/time"/>
+    </genClasses>
+    <genClasses ecoreClass="Macro.ecore#//lockDirective">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Macro.ecore#//lockDirective/variable"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

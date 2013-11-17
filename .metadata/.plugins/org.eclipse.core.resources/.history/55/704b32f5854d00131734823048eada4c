@@ -1,0 +1,12 @@
+package Parsers;
+
+import Game.GClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class PartyParser extends AbstractPacketParser {
+
+	@Override
+	public boolean parse(GClient c, String packet) {
+		return false;
+	}
+}

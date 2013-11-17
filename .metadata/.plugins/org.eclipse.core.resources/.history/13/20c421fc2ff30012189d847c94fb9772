@@ -1,0 +1,37 @@
+package Tests;
+
+public class GlobalObjectSpace {
+	
+	
+	private GlobalObjectSpace(){
+		
+	}
+	private GlobalObjectSpace(String name){
+		
+	}
+
+	
+	public static GlobalObjectSpace create(){
+		return new GlobalObjectSpace();
+	}
+	public static GlobalObjectSpace open(String name){
+		return new GlobalObjectSpace(name);
+	}
+	
+	
+	
+	public void put(){
+		
+	}
+	public Class<?> get(String name){
+		Object o = null;
+		
+		return o;
+	}
+	public void close(){
+		
+	}
+	
+	
+
+}

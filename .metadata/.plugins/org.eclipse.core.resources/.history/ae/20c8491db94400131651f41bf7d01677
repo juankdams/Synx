@@ -1,0 +1,24 @@
+package Providers;
+
+import Core.Syn;
+import Game.DofusServer;
+import GameObjects.GDropItem;
+import GameObjects.GItem;
+import Interfaces.IProvider;
+import Plugins.Managers.EffectsManager;
+
+public class GDropItemProvider implements IProvider {
+	
+	public GDropItem createNew(GItem item, DofusServer serv, short cell){
+		EffectsManager em = serv == null ? Syn.Services.defaultPluginsManager.getEffectsManager() : serv.getEffectsManager();
+		
+		GDropItem gdi = new GDropItem();
+		gdi.setID(item.getID());
+		gdi.setTemplate(item.getTemplate());
+		gdi.setItemEffects(item.getEffectsPacket(em), true, serv);
+		gdi.setQuantity(item.getQuantity());
+		gdi.setCellID(cell);
+		return gdi;
+	}
+	
+}

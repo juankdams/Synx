@@ -1,0 +1,7 @@
+package Wakfu;
+
+import Servers.Netty.*;
+
+public class WakfuEncoder extends Encoder {
+
+}

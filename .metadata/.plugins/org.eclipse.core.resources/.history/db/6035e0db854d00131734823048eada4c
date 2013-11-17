@@ -1,0 +1,23 @@
+package Wakfu;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageEncoder;
+
+
+public class PacketEncoder extends MessageToMessageEncoder<OutPacket, ByteBuf> {
+	
+	public PacketEncoder() {
+		super(OutPacket.class);
+	}
+	
+    @Override
+    public ByteBuf encode(ChannelHandlerContext ctx, OutPacket msg) throws Exception {
+    	ByteBuf buf = Unpooled.buffer();
+    	msg.finish();
+    	buf.writeBytes(msg.getData());
+        return buf;
+    }
+    
+}

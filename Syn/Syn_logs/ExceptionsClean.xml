@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Exceptions logID="0">
+  <Exception/>
+  <NullPointerException />
+  <NumberFormatException />
+  <ArrayIndexOutOfBoundsException />
+  <StringIndexOutOfBoundsException />
+  <IndexOutOfBoundsException />
+  <IllegalArgumentException />
+  <InterruptedException />
+</Exceptions>
+

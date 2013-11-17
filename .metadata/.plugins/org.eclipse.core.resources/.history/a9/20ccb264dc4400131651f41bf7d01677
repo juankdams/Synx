@@ -1,0 +1,20 @@
+package GameClientStrategies;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import Abstractions.AbstractWorld;
+import Plugins.Managers.PluginsManager;
+
+public class DofusClientStrategy extends GameClientStrategy {
+
+
+	public AbstractWorld globalWorld;
+	public PluginsManager defaultPluginsManager;
+	public ScriptsService<ExecutableScript> scripts;
+	
+	DofusClientStrategy(){
+		
+	}
+
+	
+}

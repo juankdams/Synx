@@ -1,0 +1,18 @@
+package Providers;
+
+import Game.WakfuGameClient;
+import Interfaces.IProvider;
+import Login.WakfuLoginClient;
+
+public class ClientProvider extends IProvider {
+	
+	
+	public WakfuGameClient createNewGameClient(){
+		return null;
+	}
+
+	public WakfuLoginClient createNewLoginClient(){
+		return null;
+	}
+
+}

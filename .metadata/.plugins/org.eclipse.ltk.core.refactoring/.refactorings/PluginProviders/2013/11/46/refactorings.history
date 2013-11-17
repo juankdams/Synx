@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename source folder &apos;PluginProviders/injecters&apos; to &apos;Injecters&apos;&#x0D;&#x0A;- Original project: &apos;PluginProviders&apos;&#x0D;&#x0A;- Original element: &apos;PluginProviders/injecters&apos;&#x0D;&#x0A;- Renamed element: &apos;injecters&apos;" description="Rename source folder &apos;injecters&apos;" id="org.eclipse.jdt.ui.rename.source.folder" input="/injecters" name="Injecters" stamp="1384668119735" version="1.0"/>
+</session>

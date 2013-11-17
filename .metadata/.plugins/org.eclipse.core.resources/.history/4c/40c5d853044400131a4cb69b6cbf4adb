@@ -1,0 +1,88 @@
+package Plugins.Managers;
+
+import Providers.*;
+
+public class ProvidersManager {
+	
+	//protected GameResultProvider gameResults = new GameResultProvider();
+	protected GMonsterProvider monsters = new GMonsterProvider(); 
+	protected GPersonnageProvider personnages = new GPersonnageProvider(); 
+	protected GMonsterGroupProvider monsterGroups = new GMonsterGroupProvider();
+	protected GDropItemProvider dropItems = new GDropItemProvider();
+	protected GItemProvider items = new GItemProvider();
+	protected IAProvider intelligences = new IAProvider();
+	protected GBuffProvider buffs = new GBuffProvider();
+	protected GDropProvider drops = new GDropProvider();
+	protected GEffectProvider effects = new GEffectProvider();
+	protected GSpellProvider spells = new GSpellProvider();
+
+	
+	//public GameResultProvider provideGameResult() {
+	//	return gameResults;
+	//}
+
+	public GMonsterProvider provideMonster() {
+		return monsters;
+	}
+	public GPersonnageProvider providePerso() {
+		return personnages;
+	}
+	public GMonsterGroupProvider provideMonsterGroup() {
+		return monsterGroups;
+	}
+	public GDropItemProvider provideDropItem() {
+		return dropItems;
+	}
+	public GItemProvider provideItem(){
+		return items;
+	}
+	public IAProvider provideIA(){
+		return intelligences;
+	}
+	public GBuffProvider provideBuff(){
+		return buffs;
+	}
+	public GDropProvider provideDrop() {
+		return drops;
+	}
+	public GEffectProvider provideEffect() {
+		return effects;
+	}
+	public GSpellProvider provideSpell(){
+		return spells;
+	}
+	
+	
+	public void setMonstersProvider(GMonsterProvider monsters){
+		this.monsters = monsters;
+	}
+	public void setPersonnagesProvider(GPersonnageProvider personnages){
+		this.personnages = personnages;
+	}
+	public void setMonsterGroupsProvider(GMonsterGroupProvider monsterGroups){
+		this.monsterGroups = monsterGroups;
+	}
+	public void setDropItemsProvider(GDropItemProvider dropItems){
+		this.dropItems = dropItems;
+	}
+	public void setItemsprovider(GItemProvider items){
+		this.items = items;
+	}
+	public void setIAProvider(IAProvider ias){
+		this.intelligences = ias;
+	}
+	public setBuffsProvider(GBuffProvider buffs){
+		this.buffs = buffs;
+	}
+	public void setDropsProvider(GDropProvider drops){
+		this.drops = drops;
+	}
+	public void setEffectsProvider(GEffectProvider effects){
+		this.effects = effects;
+	}
+	public void setSpellsProvider(GSpellProvider spells){
+		this.spells = spells;
+	}
+	
+
+}

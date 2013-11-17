@@ -1,0 +1,57 @@
+package Game;
+
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import GameObjects.GWorld;
+import Handlers.GHandler;
+import Login.LServer;
+import Servers.MinaServer;
+import Servers.NettyServer;
+
+public class WakfuGameServer extends GameServer {
+
+	
+	
+	// Les ConstantWorld ne sont pas les mêmes dans Dofus et dans Wakfu, 
+	//faudrait ptete les surclasser en abstract et faire deux implémentations !
+	//pareillement pour la GConfig, elle n'est pas pareille en dofus qu'en wakfu
+	
+	//Donc ptete les mettre directement dans DofusGS/WakfuGS au lieu de dans l'abstract GS ?
+	//Ou sinon cest en faisant une superclass abstract ou interface sur les gconfig/cworld..
+
+
+	public NettyServer s = null;
+	
+	public WakfuGameServer(LServer s, GConfig config, CWorld cworld){
+		super(s, config, cworld);
+	}
+	
+	@Override
+	/**
+	 * Initialise le GameServer en fonction de la config qui a été donnée.<br>
+	 * Initialize ses propriétés telles le GameWorld, ThreadManager, SqlService, GHandler... <br>
+	 * Charge le reste de sa configuration en BDD SQL.
+	 */
+	public void boot() throws Exception {
+		super.boot();
+		//setWorld( new GWorld(this) );
+		s = new NettyServer();
+		//s.setHandler( new GHandler(this) );
+	}
+
+	
+	@Override
+	public void terminate() {
+		super.terminate();
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+	public NettyServer get(){
+		return s;
+	}
+
+	
+
+}

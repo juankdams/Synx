@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="ank"/>
+	<classpathentry kind="src" path="com"/>
+	<classpathentry kind="src" path="dofus"/>
+	<classpathentry kind="src" path="mx"/>
+	<classpathentry kind="src" path="org"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

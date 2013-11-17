@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename enum constant &apos;CONSULTER_FICHE_MOUNTURE&apos; of &apos;pack.SpellEffectType&apos; to &apos;CONSULTER_FICHE_MONTURE&apos;&#x0D;&#x0A;- Original project: &apos;PluginEffects&apos;&#x0D;&#x0A;- Original element: &apos;pack.SpellEffectType.CONSULTER_FICHE_MOUNTURE&apos;&#x0D;&#x0A;- Renamed element: &apos;pack.SpellEffectType.CONSULTER_FICHE_MONTURE&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" delegate="false" deprecate="false" description="Rename enum constant &apos;CONSULTER_FICHE_MOUNTURE&apos;" flags="589830" getter="false" id="org.eclipse.jdt.ui.rename.enum.constant" input="/src&lt;pack{SpellEffectType.java[SpellEffectType^CONSULTER_FICHE_MOUNTURE" name="CONSULTER_FICHE_MONTURE" references="true" setter="false" stamp="1382414857694" textual="false" version="1.0"/>
+</session>

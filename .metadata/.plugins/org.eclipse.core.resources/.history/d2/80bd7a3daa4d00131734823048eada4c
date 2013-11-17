@@ -1,0 +1,42 @@
+package Game;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import Core.Syn;
+import Handlers.NettyHandler;
+
+public class WakfuGameHandler extends NettyHandler {
+	
+	public static final AttributeKey<WakfuGameClient> GameCLIENT_ATTR = new AttributeKey<WakfuGameClient>("GameClient");
+
+	private WakfuGameServer server = null;
+	
+	public WakfuGameHandler(WakfuGameServer wakfuGameServer) {
+		server = wakfuGameServer;
+	}
+
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		Channel c = ctx.channel();
+		c.attr(GameCLIENT_ATTR).setIfAbsent(new WakfuGameClient(c));
+		Syn.d("A new channel is active: " + ctx.channel());
+	}
+	
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		WakfuGameClient sess = ctx.channel().attr(GameCLIENT_ATTR).get();
+		Syn.d("Channel inactive: " + sess);
+		//TODO: deregister from list
+ 	}
+	
+
+	public void setServer(WakfuGameServer server) {
+		this.server = server;
+	}
+	public WakfuGameServer getServer() {
+		return server;
+	}
+	
+
+}

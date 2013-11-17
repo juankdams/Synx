@@ -1,0 +1,28 @@
+package Handlers;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToByteEncoder;
+
+import Core.Syn;
+
+import com.velocity.jwakfu.io.OutPacket;
+
+//public class WakfuEncoder extends Encoder {
+
+//}
+
+public class WakfuEncoder extends MessageToByteEncoder<OutPacket> {
+	
+	public WakfuEncoder() {
+		super(OutPacket.class);
+	}
+	
+	@Override
+	protected void encode(ChannelHandlerContext ctx, OutPacket msg, ByteBuf out) throws Exception {
+		Syn.d("[w] Sending "+msg.);
+		msg.finish();
+		out.writeBytes(msg.getData());
+	}
+    
+}

@@ -1,0 +1,203 @@
+package Providers;
+
+import static Constants.Constants.ONE_SHORT_MINUS;
+import static Constants.Constants.ZERO_SHORT;
+import Core.Exceptions;
+import Core.Syn;
+import GameObjects.GEffect;
+import Interfaces.IEffectParam;
+import Misc.Dice;
+import Misc.Jet;
+import Misc.StringUtils;
+import Plugins.Interfaces.IEffectType;
+import Plugins.Managers.EffectsManager;
+
+public class GEffectProvider {
+	
+
+	
+	/**
+	 * Pour créer un nouveau GEffect avec de nouvelles stats à partir des stats de l'ItemTemplate
+	 * <p>Si c'est (p.Ex) un effet de dommage d'arme (DamagingEffect), les valeurs sont gardées telles quelles
+	 * <p>Sinon, on prend un jet aléatoire possible à partir de ces stats et on le set au baseBoost du Dice. Puis On set à 0 le nombre de dés et de faces dans l'objet Dice 
+	 * <p>Donc dans le premier cas, en jeu, ca va afficher X à Y  (Ex 1d50+150). Dans le deuxieme cas ca va afficher X tout cours (Ex 0d0+187).
+	 */
+	public GEffect createNew(String stats, boolean jetParfait, EffectsManager em){
+		GEffect e = new GEffect();
+		//Perfs perf = new Perfs();
+		IEffectType et = em.getEffectByHexStringID(stats.substring(0, stats.indexOf("#")));
+		//perf.stopTiming("Prendre un IEffectType dans le plugin grâce à l'EffectManager");
+		if(et == null){
+			//Syn.d("GEffect.createNew. IEffectType == null  String="+stats.substring(0, stats.indexOf("#")));
+			return null;
+		}else{
+			//Syn.d("GEffect.createNew. stats =="+stats+".");
+			e.setEffectID(et.getID());
+			try{
+				String temp[] = stats.split("#");
+				e.setSpecialArg(temp[3]);
+				if(et.hasDice()){
+					String temp2[] = temp[4].substring(temp[4].indexOf("d")+1).split("\\+");
+					e.setDice(new Dice(
+							Short.parseShort(temp[4].substring(0, temp[4].indexOf("d"))), 
+							Short.parseShort(temp2[0]), 
+							Short.parseShort(temp2[1])
+							));
+					if(em.isFixEffectBonus(e.getEffectID())){
+						//Ici on enleve le jet aléatoire et met un jet fixe à partir des valeur qu'on a eu
+						if(jetParfait){
+							e.setJet(new Jet((short) e.getDice().getBestShot()));
+							//e.getDice().setBaseBoost((short) e.getDice().getBestShot());
+						}else{
+							e.setJet(new Jet((short) e.getDice().getRandomShot()));
+							//e.getDice().setBaseBoost((short) e.getDice().getRandomShot());
+						}
+						//e.getDice().setNumberOfDices(ZERO_SHORT);
+						//e.getDice().setNumberOfFaces(ZERO_SHORT);
+						
+					}//else{} //Ici on garde les valeurs aléatoires car 
+					 //elles serviront pour des dégats d'arme, un heal de potion, un vol de kamas, etc
+				}else{
+					if(temp[1].equals("0") == false && temp[2].equals("0")){
+						e.setJet(new Jet(Short.parseShort(temp[1], 16)));
+					}else if(temp[2].equals("0") == false && temp[1].equals("0")){
+						e.setJet(new Jet(Short.parseShort(temp[2], 16)));
+					}else{
+						e.setJet(new Jet(ZERO_SHORT));
+					}
+				}
+			}catch(Exception ex){
+				ex.printStackTrace();
+				return null;
+			}
+		}
+		return e;
+	}
+	
+	
+	
+	/**
+	 * Créé un effet du style utilisé sur les sorts. 
+	 * <br>(pas exactement pareil que pour les items du à la mise en forme de la bdd d'ancestra. 
+	 *		C'pas trop grave, ca me dérange pas. 
+	 *		TODO Peut-être optimiser plus tard la bdd et/pour mettre un seul GEffect.createNew)
+	 * @param stats - Ex: 96;9;13;-1;0;0;1d5+8 -> 
+	 * 				      effectID ; min ; max ; morph ; durée ; probabilité ; dice
+	 */
+	public GEffect createNewForSpell(String stats, EffectsManager em){
+		String strID = stats.substring(0, stats.indexOf(";"));
+		if(Misc.Utils.isParsableInteger(strID) == false){
+			Exceptions.throwException("Impossible de parser un ID d'effet dans les sorts. L'effet est décrit ainsi :"+stats+"...");
+			return null;
+		}
+		GEffect e = new GEffect();
+		IEffectType et = em.getEffect(Short.parseShort(strID));
+		if(et == null){
+			return null;
+		}else{
+			e.setEffectID(et.getID());
+			e.setSpecialArg(stats.substring(Misc.StringUtils.indexOf(stats, ";", 3)+1, stats.lastIndexOf(";")));
+			
+			try{
+				if(et.hasDice() && stats.indexOf("d") != -1){
+					e.setDice(new Dice(
+							Short.parseShort( stats.substring(stats.lastIndexOf(";")+1, stats.indexOf("d")) ), 
+							Short.parseShort( stats.substring(stats.indexOf("d")+1, stats.indexOf("+")) ), 
+							Short.parseShort( stats.substring(stats.indexOf("+")+1) )
+							));
+				}else{
+					e.setSpecialArg(stats.substring(Misc.StringUtils.indexOf(stats, ";", 3)+1));
+				}
+				if(e.getParams() == null){
+					String min = stats.substring(Misc.StringUtils.indexOf(stats, ";", 1)+1, Misc.StringUtils.indexOf(stats, ";", 2));
+					String max = stats.substring(Misc.StringUtils.indexOf(stats, ";", 2)+1, Misc.StringUtils.indexOf(stats, ";", 3));
+					e.setDice(new Dice(
+							Short.parseShort( min ),
+							Short.parseShort( max ),
+							ONE_SHORT_MINUS 
+							));
+				}
+			}catch(Exception ex){
+				ex.printStackTrace();
+				return null;
+			}
+		}	
+		return e;
+	}
+
+
+	/**
+	 * Pour dans le EffectsShare.getSimilarEffect
+	 */
+	public GEffect createBase(short effectTypeID, String specialArg, IEffectParam iep2){
+		GEffect e = new GEffect();
+		e.setEffectID(effectTypeID);
+		e.setSpecialArg(specialArg);
+		e.setParams(iep2);
+		return e;
+	}
+	
+	
+	/**
+	 * Utilisé uniquement pour les constructeurs d'ItemSet
+	 */
+	public GEffect createNewForItemSet(short ID, short value){
+		GEffect e = new GEffect();
+		e.setEffectID(ID);
+		//this.iep = new Dice(ZERO_SHORT, ZERO_SHORT, value);
+		e.setJet(new Jet(value));
+		return e;
+	}
+	
+
+
+	/**
+	 * Constructeur pour reconstruire un GEffect déjà existant à partir d'un item fraichement chargé de la bdd à l'inventaire d'un joueur
+	 * @param stats - Les stats de l'effet comme elles étaient avant.
+	 */
+	public GEffect reloadInstance(String stats, EffectsManager em){
+		IEffectType et = em.getEffectByHexStringID(stats.substring(0, stats.indexOf("#")));
+		if(et == null){
+			return null;
+		}else{
+			GEffect e = new GEffect();
+			e.setEffectID(et.getID());
+			String temp[] = StringUtils.split2(stats, "#");//stats.split("#");
+			e.setSpecialArg(temp[3]);
+			if(et.hasDice()){//S'il y a un dé sur l'effet (0d0+0)
+				try{
+					String temp2[] = temp[4].substring(temp[4].indexOf("d")+1).split("\\+");
+					if(em.isFixEffectBonus(e.getEffectID())){
+						Syn.d("Jet d'effet chargé =("+temp[4]+")");
+						//Ici on enleve le jet aléatoire et met un jet fixe à partir des valeur qu'on a eu
+						e.setJet(new Jet(Short.parseShort(temp2[1])));
+					}else{
+						Syn.d("Dé d'effet chargé =("+temp[4]+")");
+						e.setDice(new Dice(
+								Short.parseShort(temp[4].substring(0, temp[4].indexOf("d"))), 
+								Short.parseShort(temp2[0]), 
+								Short.parseShort(temp2[1])
+								));
+					}
+				}catch(Exception ex){
+					ex.printStackTrace();
+					return null;
+				}
+			}else{//Si on a pas besoin de dé, de juste une valeur
+				if(temp[1].equals("0") == false && temp[2].equals("0")){
+					this.setJet(new Jet(Short.parseShort(temp[1], 16)));
+				}else if(temp[2].equals("0") == false && temp[1].equals("0")){
+					this.setJet(new Jet(Short.parseShort(temp[2], 16)));
+				}else{
+					this.setJet(new Jet(ZERO_SHORT));
+				}
+			}
+			
+		}
+	}
+	
+	
+	
+	
+
+}

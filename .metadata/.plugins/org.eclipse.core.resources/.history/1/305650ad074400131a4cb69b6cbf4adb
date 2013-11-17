@@ -1,0 +1,40 @@
+package Providers;
+
+import GameObjects.GInventory;
+import GameObjects.GItem;
+import GameObjects.GWorld;
+import GlobalObjects.GlobalWorld;
+
+public class GInventoryProvider {
+	
+
+	/**
+	 * Pour créer un tout nouvel inventory à la création d'un personnage
+	 * <p> Créé automatiquement les items à
+	 * @param persoID
+	 * @param startItemTemplateIDs
+	 * @param w
+	 */
+	public GInventory createNew(int persoID, int startItemTemplateIDs[][], GWorld w){
+		GInventory gi = new GInventory();
+		if(startItemTemplateIDs != null){
+			//Syn.d("startItemTemplateIDs != null");
+			for(int idAndQuantity[] : startItemTemplateIDs){
+				GItem i = GItem.provide(w.getServer()).createNew(w.getNextItemID(), GlobalWorld.getItemTemplate(w, idAndQuantity[0]), (short) idAndQuantity[1], false, w.getServer());
+				if(i != null){
+					SQL.Items.create(i, w);
+					gi.getItems().add(i);
+		//			w.addItem(i);
+					//Syn.d("Item ID:"+i.getID()+" tempID:"+idAndQuantity[0]+" Qty:"+idAndQuantity[1]);
+				}else{
+					
+				}
+			}
+		}
+		w.addInventory(persoID, gi);
+		return gi;
+	}
+	
+	
+
+}

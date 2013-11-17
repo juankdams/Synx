@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="var" path="ZLIBS/spymemcached-2.9.0/spymemcached-2.9.0.jar" sourcepath="/ZLIBS/spymemcached-2.9.0/spymemcached-2.9.0-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/media/Synz/Dropbox/Private/zLIBS/spymemcached-2.9.0/spymemcached-2.9.0-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="ZLIBS/jedis-2.1.0.jar"/>
+	<classpathentry kind="var" path="ZLIBS/johm-0.5.0.jar"/>
+	<classpathentry kind="var" path="ZLIBS/apache-commons-pool-1.6/commons-pool-1.6.jar" sourcepath="/ZLIBS/apache-commons-pool-1.6/commons-pool-1.6-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/media/Synz/Dropbox/Private/zLIBS/apache-commons-pool-1.6/commons-pool-1.6-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="ZLIBS/quartz-2.1.7/quartz-all-2.1.7.jar" sourcepath="/ZLIBS/quartz-2.1.7/quartz">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/media/Synz/Dropbox/Private/zLIBS/quartz-2.1.7/docs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="ZLIBS/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="var" path="ZLIBS/slf4j-jdk14-1.6.4.jar"/>
+	<classpathentry kind="var" path="ZLIBS/xuggle-xuggler-5.4.jar"/>
+	<classpathentry kind="var" path="JDK/include"/>
+	<classpathentry kind="var" path="ZLIBS/transform-3.0.2.jar" sourcepath="/ZLIBS/transform-3.0.2-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/E:/Dropbox/Private/zLIBS/transform-3.0.2-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="Synx/Syn/Syn_plugins/UtilsLib.jar"/>
+	<classpathentry kind="var" path="Synx/Syn/Syn_plugins/PiouLib.jar"/>
+	<classpathentry kind="var" path="ZLIBS/rhino1_7R4/js-14.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Robyn/Desktop/ehcache-2.7.5/lib/ehcache-2.7.5.jar" sourcepath="C:/Users/Robyn/Desktop/ehcache-2.7.5/src">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/C:/Users/Robyn/Desktop/ehcache-2.7.5/javadoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/Robyn/Desktop/ehcache-2.7.5/lib/slf4j-api-1.6.6.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Robyn/Desktop/ehcache-2.7.5/lib/slf4j-jdk14-1.6.6.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Syn"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

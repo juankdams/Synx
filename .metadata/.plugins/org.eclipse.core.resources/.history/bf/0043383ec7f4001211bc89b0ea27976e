@@ -1,0 +1,27 @@
+package GameObjects.Fights;
+
+public class FightMvm extends GFight{
+
+
+	@Override
+	public byte getTypeID() {
+		return Enums.FightType.MVM.get();
+	}
+
+	@Override
+	public boolean getShowCancelButtonOnJoin() {
+		return false;
+	}
+
+	@Override
+	public boolean getShowUIOnJoin() {
+		return false;
+	}
+
+	@Override
+	public byte getTeamAlignment(int teamIndex) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+}

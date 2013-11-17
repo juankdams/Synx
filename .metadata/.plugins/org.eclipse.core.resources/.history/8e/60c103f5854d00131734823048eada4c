@@ -1,0 +1,57 @@
+package Parsers;
+
+import static Enums.CharacteristicType.FORCE;
+import static Enums.CharacteristicType.VITALITE;
+import static GameObjects.GStatistiques.CharacteristicColumn.BASE;
+import static Handlers.GHandler.packetCantParse;
+import Constants.CPerso;
+import Enums.CharacteristicType;
+import Game.GClient;
+import GameObjects.GPersonnage;
+import Misc.Tests.Perfs;
+import Misc.Utils;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class AccountParser extends AbstractPacketParser {
+	
+
+	@Override
+	public boolean parse(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'B'://TODO Boost charac
+				if(Utils.isParsableInteger(packet.substring(2)) == false){
+					packetCantParse(c, packet, "Impossible de parser l'ID de la charac en chiffre");
+				}	
+				Perfs p = new Perfs();
+				CharacteristicType toBoost = CharacteristicType.getCharacteristique(Byte.parseByte(packet.substring(2)));
+				short[] canBoostArgs = CPerso.getBoostCostAndCountForCharacteristic(c.getAccount().getCurPerso(), toBoost);
+				if(canBoostArgs == null){
+					packetCantParse(c, packet, "Les canBoostArgs pour booster la charac == null");
+				}
+				GPersonnage perso = c.getAccount().getCurPerso();
+				//FormulingManager fm = perso.getServer().getFormulingManager();
+				if(canBoostArgs[0] <= perso.getStatistique().getValue(CharacteristicType.STATS_POINTS.get(), BASE)){
+					perso.getStatistique().decrementValue(CharacteristicType.STATS_POINTS, canBoostArgs[0], BASE);//enlève les points de capital
+					perso.getStatistique().incrementValue(toBoost, canBoostArgs[1], BASE);//ajoute les stats :)
+					if(toBoost == VITALITE){
+						//perso.getStatistique().setPdvMax(fm.calculatePdvMax(perso.getStatistique(), perso));
+						perso.getStatistique().incrementPdv(canBoostArgs[1], perso);
+					}
+					SM.Account.As(c.getSession(), perso);
+					if(toBoost == FORCE){
+						SM.Objects.Ow(c.getSession(), perso);
+					}
+					p.stopTiming("booster une characteristique.");
+				}else{
+					packetCantParse(c, packet, "Packet AB, le perso("+perso.getID()+") essaie de se booster sans avoir assez de points.");
+				}
+				return true;		
+			case 'f':
+				//TODO: le case 'f' dans GGameHandler.parseAccount
+				return true;
+		}
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+}

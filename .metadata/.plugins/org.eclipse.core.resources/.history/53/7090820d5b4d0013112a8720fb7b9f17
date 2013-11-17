@@ -1,0 +1,5 @@
+package Wakfu;
+
+public class WakfuDecoder extends Decoder {
+
+}

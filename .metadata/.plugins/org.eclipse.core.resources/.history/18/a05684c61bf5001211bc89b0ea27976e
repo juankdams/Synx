@@ -1,0 +1,23 @@
+package GameObjects.Fights;
+
+import java.util.ArrayList;
+
+import Abstractions.CombativeCharacter;
+
+public class FightTeam<CombativeCharacter> extends ArrayList<CombativeCharacter> {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	private boolean isClosed = false;//si complètement barré (icone de cadedans)
+	private boolean isClosedGroup = false;//si on bloque à tout le monde sauf le groupe
+	private boolean isAllowingSpectators = false;//si on les accepte ou si on bloque les spectateurs 
+	private boolean isAskingHelp = false;
+	
+	
+	
+	public void a(){
+		
+	}
+}

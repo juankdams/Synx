@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AConfig 
+
+
+
+>
+	<Account ID="10" username="syn" password="qazwsx12" pseudo="Nexus" secretquestion="q" secretanswer="q" gmlvl="5" community="0" curIP="127.0.0.1" isBanned="0" premiumTime="84000000000"></Account>
+	<Account ID="20" username="synn" password="qazwsx12" pseudo="Nexuss" secretquestion="q" secretanswer="q" gmlvl="5" community="3" curIP="127.0.0.1" isBanned="1" premiumTime="84000000000"></Account>
+	</AConfig>

@@ -1,0 +1,188 @@
+package GlobalObjects;
+
+import static Constants.Constants.ZERO_SHORT;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import Core.Exceptions;
+import Core.Syn;
+import Game.GServer;
+import GameObjects.GEffect;
+import Interfaces.IEffectParam;
+import Misc.Dice;
+import Misc.Jet;
+import Plugins.Interfaces.IEffectType;
+import Plugins.Managers.EffectsManager;
+
+public class EffectsShare {
+
+	
+	
+	/**
+	 * <effectTypeID, WeakGEffects>
+	 */
+	//private static HashMap<Short, ArrayList<WeakReference<GEffect>>> effects = new HashMap<Short, ArrayList<WeakReference<GEffect>>>(200);
+	private static HashMap<Short, ArrayList<WeakReference<GEffect>>> effects = new HashMap<Short, ArrayList<WeakReference<GEffect>>>(200);
+
+	
+	
+	
+	
+	/**
+	 * Cherche un geffet similaire à celui dans la string et le renvoie s'il le trouve. 
+	 * <p>Sinon on créé un noveau GEffect et on l'ajoute dans la liste avant de le renvoyer
+	 * @param effect - La String représentant l'effet à chercher/créer-ajouter
+	 * @param parfait - Si on veut que l'effet aie ses valeures maximales
+	 * @return - Le GEffect trouvé/produit
+	 */
+	public static GEffect getSimilarEffect(String effect, boolean parfait, GServer serv){
+		EffectsManager em = serv == null ? Syn.Services.defaultPluginsManager.getEffectsManager() : serv.getEffectsManager();
+		
+		//short effectTypeID = Short.parseShort(effect.substring(0, effect.indexOf("#")), 16);
+		IEffectType ie = em.getEffectByHexStringID(effect.substring(0, effect.indexOf("#")));
+		if(ie == null){
+			Exceptions.throwException("Impossible de prendre/créer l'effet dans cette string puisque son effectTypeID n'existe pas :"+effect+".");
+		}
+		//S'il y a vraiment aucun GEffect de ce type dans la Map, on en créé tout de suite un nouveau.
+		if(effects.get(ie.getID()) == null){
+			GEffect newGE = GEffect.provide(serv).createNew(effect, parfait, em);
+			WeakReference<GEffect> wr = new WeakReference<GEffect>(newGE);
+			effects.put(ie.getID(), new ArrayList<WeakReference<GEffect>>());
+			effects.get(ie.getID()).add(wr);
+			return newGE;
+		}
+		
+		String temp[] = effect.split("#");
+		IEffectParam iep = null;
+		if(ie.hasDice() && temp.length >= 5){
+			if(temp[4].indexOf("d") != -1){
+				try{
+					short nbrDice = Short.parseShort(temp[4].substring(0, temp[4].indexOf("d")));
+					short nbrFace = Short.parseShort(temp[4].substring(temp[4].indexOf("d")+1, temp[4].indexOf("+")));
+					short baseBoost = Short.parseShort(temp[4].substring(temp[4].indexOf("+")+1));
+					iep = new Dice(nbrDice, nbrFace, baseBoost);
+				}catch(Exception ne){
+					ne.printStackTrace();
+					Syn.d("EffectsShare.getSimilarEffect() Jet de l'effet qui bug :"+temp[4]+".");
+				}
+			}
+			//if(iep.getDice() != null){
+			if(em.isFixEffectBonus(ie.getID())){
+				//Ici on enleve le jet aléatoire et met un jet fixe à partir des valeur qu'on a eu
+				if(parfait){
+					iep = new Jet((short) iep.getDice().getBestShot());
+					//e.getDice().setBaseBoost((short) e.getDice().getBestShot());
+				}else{
+					iep = new Jet((short) iep.getDice().getRandomShot());
+					//e.getDice().setBaseBoost((short) e.getDice().getRandomShot());
+				}
+				//e.getDice().setNumberOfDices(ZERO_SHORT);
+				//e.getDice().setNumberOfFaces(ZERO_SHORT);
+				
+			}
+			//}
+		}else{
+			if(temp[1].equals("0") == false && temp[2].equals("0")){
+				iep = new Jet(Short.parseShort(temp[1], 16));
+			}else if(temp[2].equals("0") == false && temp[1].equals("0")){
+				iep = new Jet(Short.parseShort(temp[2], 16));
+			}else{
+				iep = new Jet(ZERO_SHORT);
+			}
+		}
+		
+		ArrayList<WeakReference<GEffect>> copy = effects.get(ie.getID());
+		for(int i = copy.size()-1; i >= 0; i--){
+		//for(WeakReference<GEffect> e : copy){
+			if(copy.get(i) == null){
+				Syn.log.error("WeakReference<GEffect> e == null");
+			}
+			if(copy.get(i).get() == null){
+				Syn.log.error("WeakReference<GEffect> e.getGEffect == null");
+				effects.get(ie.getID()).remove(i);
+				continue;
+			}
+			if(copy.get(i).get().getParams() == null){
+				Syn.log.error("WeakReference<GEffect> e.getGEffect.getParams() == null");
+				effects.get(ie.getID()).remove(i);
+				continue;
+			}
+			//Si le specialArgs est le même
+			if(copy.get(i).get().getSpecialArg().equals(temp[3])){
+				//Et qu'on trouve un Dé similaire.
+				if(copy.get(i).get().getParams().getString().equals(iep.getString())){
+					return copy.get(i).get();//Retourne l'effet trouvé qui est pareil
+				}
+			}
+		}
+		//Sinon: créé un nouvel effet avec le Dice qu'on a déjà créé tantot
+		GEffect e = GEffect.provide(serv).createBase(ie.getID(), temp[3], iep);
+		//et ajoute à l'arrayList:
+		WeakReference<GEffect> wr = new WeakReference<GEffect>(e);
+		effects.get(ie.getID()).add(wr);
+		//+ Return
+		return e;
+	}
+	
+	
+	
+	/**
+	 * Cherche un effet similaire à un autre dans la liste et retourne celui de la liste s'il en trouve un.
+	 * Return null si on en trouve pas.
+	 */
+	public static GEffect getSimilarEffect(GEffect ge){
+		for(WeakReference<GEffect> e : effects.get(ge.getEffectID())){
+			if(e == null || e.get() == null || e.get().getParams() == null){
+				continue;
+			}
+			if(e.get().getSpecialArg().equals(ge.getSpecialArg()) &&  //Si le specialArgs est le même
+				e.get().getParams().getString().equals(ge.getParams().getString())){//Et qu'on trouve un Dé ou un Param similaire
+				return e.get();//Retourne l'effet trouvé qui est pareil
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Ajoute un nouveau GEffect à la liste s'il n'en existe pas déjà de similaire et retourne ce même nouveau GEffect.
+	 * Ajoute évidemment directement l'effet à la liste si son effectTypeID n'est pas dans l'HashMap.
+	 * S'il en existat déjà un alors on ajoute rien et on renvoie celui qu'on a trouvé dans la liste.
+	 * @param newEffect - Le nouvel effet ou l'effet qu'on aura modifié après avoir fait une copie.
+	 */
+	public static GEffect addOrModifyEffect(GEffect newEffect){
+		if(effects.get(newEffect.getEffectID()) == null){
+			WeakReference<GEffect> wr = new WeakReference<GEffect>(newEffect);
+			effects.put(newEffect.getEffectID(), new ArrayList<WeakReference<GEffect>>());
+			effects.get(newEffect.getEffectID()).add(wr);
+			return newEffect;
+		}
+		GEffect same = getSimilarEffect(newEffect);
+		if(same == null){
+			WeakReference<GEffect> wr = new WeakReference<GEffect>(newEffect);
+			effects.get(newEffect.getEffectID()).add(wr);
+			return newEffect;
+		}
+		return same;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public static void setEffects(HashMap<Short, ArrayList<WeakReference<GEffect>>> effectss) {
+		effects = effectss;
+	}
+	public static HashMap<Short, ArrayList<WeakReference<GEffect>>> getEffects() {
+		return effects;
+	}
+	
+	
+}

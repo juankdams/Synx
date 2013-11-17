@@ -1,0 +1,12 @@
+package Parsers;
+
+import Game.GClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class QuestsParser extends AbstractPacketParser {
+
+	@Override
+	public boolean parse(GClient c, String packet) {
+		return false;
+	}
+}

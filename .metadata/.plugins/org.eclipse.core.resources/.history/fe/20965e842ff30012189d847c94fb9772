@@ -1,0 +1,17 @@
+package Tests;
+
+public class GlobalObjectSpace {
+	
+	
+	private GlobalObjectSpace(){
+		
+	}
+	
+	
+	public static GlobalObjectSpace getInstance(){
+		return new GlobalObjectSpace();
+	}
+	
+	
+
+}

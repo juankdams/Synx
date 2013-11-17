@@ -1,0 +1,602 @@
+package DofusParsers;
+
+import static Handlers.GHandler.packetCantParse;
+import Core.Syn;
+import Enums.FightState;
+import Enums.FightTeamEnum;
+import Enums.PlayerState;
+import Enums.SynActions.MapAction;
+import Events.FightReconnectionEvent;
+import Game.DofusGameClient;
+import GameObjects.GAction;
+import GameObjects.GPersonnage;
+import GameObjects.Fights.GFight;
+import Misc.Utils;
+import NewThreads.FightSchedulingStrategies.FightSchedulingStrategies;
+import Plugins.Abstractions.AbstractPacketParser;
+import Plugins.Managers.PluginsManager;
+
+
+public class GameParser extends AbstractPacketParser<DofusGameClient, String> {
+
+	
+	@Override
+	public boolean parse(DofusGameClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'C'://onCreate
+				//recu après avoir envoyé les packets du onSelected. Packet de création de jeu (GDK), affichage de map (GDM), et stats (As)
+				return onGameCreate(c);
+			case 'I'://onInfos
+				//pour afficher tout ce qu'il y a sur la map: monstres,perso,perco,prisms..
+				return onGameInfo(c);
+			case 'A'://onAction
+				//Pour exécuter et controler des game actions :s
+				return parseOnGameAction(c.getAccount().getCurPerso(), packet);
+			case 'K'://onKorect
+				//Pour terminer ou canceller une game action en cours
+				return parseOnGameActionKorect(c.getAccount().getCurPerso(), packet);
+
+			case 'D'://TODO onMapData
+				//_loc1.getMapData = function (nMapID)
+			    //{
+			    //    if (this.api.lang.getConfigText("ENABLE_CLIENT_MAP_REQUEST"))
+			    //    {
+			    //        this.aks.send("GD" + (nMapID != undefined ? (String(nMapID)) : ("")));
+			    //    } // end if
+			    //};
+				return false;
+				
+				
+			//Packets de combat:
+			case 'Q'://onQuit
+				//_loc1.leave = function (sSpriteID)
+			    //{
+			    //    this.aks.send("GQ" + (sSpriteID == undefined ? ("") : (sSpriteID)));
+			    //};
+				return onGameQuit(c, packet);
+			case 'F'://TODO onFreeMySoul
+				//_loc1.freeMySoul = function ()
+				//{
+				//    this.aks.send("GF", false);
+				//};
+				return false;
+			case 'f'://TODO onFlag
+				//_loc1.setFlag = function (nCellID)
+				//{
+				//    this.aks.send("Gf" + nCellID, false);
+				//};	
+				
+				return false;
+			case 'P'://TODO onPvpEnabled
+				//charAt(2) == '*' ou '+' ou '-'
+				//_loc1.enabledPVPMode = function (bEnabled)
+				//{
+				//    this.aks.send("GP" + (bEnabled ? ("+") : ("-")), false);
+				//};
+				//        --------
+				//_loc1.askDisablePVPMode = function ()
+				//{
+				//    this.aks.send("GP*", false);
+				//};
+				return false;
+			case 'p'://TODO onPosition
+				//_loc1.setPlayerPosition = function (nCellNum)
+			    //{
+			    //    this.aks.send("Gp" + nCellNum, true);
+			    //};
+				return onGamePosition(c, packet);
+			case 'T'://TODO onTurnOk
+				//_loc1.turnOk = function (sSpriteID)
+			    //{
+			    //    this.aks.send("GT" + (sSpriteID != undefined ? (sSpriteID) : ("")), false);
+			    //};
+			    //_loc1.turnOk2 = function (sSpriteID)
+			    //{
+			    //    this.aks.send("GT" + (sSpriteID != undefined ? (sSpriteID) : ("")), false);
+			    //};
+				return onGameTurnOk(c, packet);
+			case 't'://TODO onTurnEnd
+				//_loc1.turnEnd = function ()
+			    //{
+			    //    if (this.api.datacenter.Player.isCurrentPlayer)
+			    //    {
+			    //        this.aks.send("Gt", false);
+			    //    } // end if
+			    //};
+				return onGameTurnEnd(c, packet);
+			case 'R'://TODO onReady
+				//_loc1.ready = function (bReady)
+			    //{
+			    //    this.aks.send("GR" + (bReady ? ("1") : ("0")));
+			    //};
+				return onGameReady(c, packet);
+		}
+		return false;
+	}
+
+	
+	
+
+	private boolean onGameQuit(DofusGameClient c, String packet) {
+		GPersonnage p = c.getAccount().getCurPerso();
+		GFight f = p.getFight();
+		if(f != null){
+			if(f.getCharacterTeamID(p) == FightTeamEnum.SPECTATOR.get()){
+				//packets envoyés à celui qui "abandonne" le mode spectateur
+				//[12:17:4] [SEND] : GQ
+				//[12:17:4] [RECV] : GV
+				f.getCharacterTeam(p).remove(p);
+				p.setLayer(f.getOldLayer());
+				SM.Game.GV(p);
+				//p.onAddedToMap(p.getMap());
+			}else{
+				/*
+			 	  	Gars qui recoit packet de Fuble qui abandonne
+				[12:10:40] [RECV] : GM|-1776685
+				[12:10:40] [RECV] : GTM|1731379;0;140;6;3;139;;140|1776617;0;55;6;3;248;;55
+				[12:10:40] [RECV] : GTS1731379|29000
+				
+					Fuble qui abandonne:
+				[12:10:39] [SEND] : GQ
+				[12:10:40] [RECV] : GV
+				[12:10:40] [SEND] : GC1
+				[12:10:40] [RECV] : GCK|1|Fuble
+				[12:10:40] [RECV] : As0,0,110|0|0|0|0~0,0,0,0,0,0|55,55|10000,10000|0|100|6,0,0,0,6|3,0,0,0,3|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|1,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|20
+				[12:10:40] [SEND] : BD
+				[12:10:40] [RECV] : ILS2000
+				[12:10:40] [RECV] : GDM|10342|0706131721|582f237b213957293c772a6d66455d2f515c365744695c49622f686a6a233038253242353c622532426f407a612e4d5c71394472357c3d7d21487b28202065497d5123702e77646d7c43695026352a434a7763307d232c3a4d626869354d73376271504072253235333e7b2a4073246e79562f625d31535d625e39486a2636324a435754454c792e2e7d3b5a224c7b297921603a407630213672686965447b6c69322a7c5a3872215a26507a39443f7033322c5759376f51335129306a6b3b542f51793446686d356b6d22492831
+				[12:10:40] [SEND] : GI
+				[12:10:40] [RECV] : BT1376244641266
+				[12:10:40] [RECV] : fC3
+				 */
+				p.getStatistique().setPdv(0, p);
+				f.onKilledCharacter();//si tout le monde est mort/teamvide : set le state à FINISHED
+																		// : et .finish(f) le Scheduler
+				p.getMap().updateSpriteList(MapAction.REMOVE_SPRITE, p);
+				if(f.getState() != FightState.FINISHED.get()){
+					FightSchedulingStrategies.getStrategy().finish(f);
+					p.setLayer(f.getOldLayer());
+					SM.Game.GV(p);
+				}
+				//p.onAddedToMap(p.getMap());
+			}
+			
+			return true;
+		}
+		return false;
+	}
+
+
+
+
+	/**
+	 * TODO: GameParser.onGameTurnOk
+	 * @param c
+	 * @param packet
+	 * @return
+	 */
+	private boolean onGameTurnOk(DofusGameClient c, String packet) {
+		GFight f = c.getAccount().getCurPerso().getFight();
+		if(f == null){
+			packetCantParse(c, packet, "Le client n'est pas en combat.");
+		}	
+		if(f.getState() != FightState.ACTIVE.get()){
+			packetCantParse(c, packet, "Impossible de recevoir le packet GT(GameTurnOk) quand l'état du combat n'est pas en phase active. Anormal Cheat.");
+		}
+		if(packet.length() > 2 && Utils.isParsableInteger(packet.substring(2))){
+			int spriteID = Integer.parseInt(packet.substring(2));
+			
+			if(f.isCharacterInFight(spriteID)){
+				//TODO onGameTurn, onfait quoi avec le spriteID reçu ?
+			}else{
+				packetCantParse(c, packet, "Le sprite reçu n'est pas dans le combat du client.");
+			}
+		}else if(packet.length() > 2){
+			packetCantParse(c, packet, "Impossible de parser l'ID du sprite. = ("+packet.substring(2)+") ");
+		}
+		
+		//f.endTurn();
+		return true;
+	}
+
+
+	/**
+	 * TODO : GameParser.onGameTurnEnd -> Quand le joueur passe son tour.
+	 */
+	private boolean onGameTurnEnd(DofusGameClient c, String packet) {
+		if(packet.equals("Gt") == false){
+			packetCantParse(c, packet, "Packet non conforme: if(packet.equals(\"Gt\") == false)");
+		}
+		GFight f = c.getAccount().getCurPerso().getFight();
+		if(f == null){
+			packetCantParse(c, packet, "Le client n'est pas en combat.");
+		}	
+		if(f.getState() != FightState.ACTIVE.get()){
+			packetCantParse(c, packet, "Impossible de recevoir le packet Gt(GameTurnEnd) quand l'état du combat n'est pas en phase active. Anormal Cheat.");
+		}
+		if(c.getAccount().getCurPerso().equals(f.getCurrentFighter()) == false){
+			packetCantParse(c, packet, "Ce n'est pas au tour du client de jouer.");
+		}
+		try{
+			FightSchedulingStrategies.getStrategy().finish(f);
+			Syn.d("Passing turn : finished strategy.");
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return true;
+	}
+
+	
+	/**
+	 * TODO : GameParser.onGameReady
+	 */
+	private boolean onGameReady(DofusGameClient c, String packet) {
+		if(packet.length() != 3){
+			packetCantParse(c, packet, "Packet de mauvaise longueur, non conforme: if(packet.length() != 3)");
+		}
+		GPersonnage p = c.getAccount().getCurPerso();
+		GFight f = p.getFight();
+		if(f == null){
+			packetCantParse(c, packet, "Le client n'est pas en combat.");
+		}	
+		if(f.getState() != FightState.PLACE.get()){
+			packetCantParse(c, packet, "Impossible de recevoir le packet GR(GameReady) quand l'état du combat n'est pas en phase de placement. Anormal Cheat.");
+		}
+		if(packet.charAt(2) == '1'){
+			//set ready (true)
+			if(p.hasState(PlayerState.InFightReady)){
+				packetCantParse(c, packet, "Un joueur essaye d'envoyer un packet pour dire qu'il est prêt alors qu'il avait déjà l'état disant qu'il était prêt. Anormal Cheat.");
+			}
+			p.addState(PlayerState.InFightReady);
+			SM.Game.GR_FIGHT(p, f, true);
+			if(f.isEveryoneReady()){
+				NewThreads.FightSchedulingStrategies.FightSchedulingStrategies.getStrategy().finish(f);
+				//f.startFight();
+			}
+		}else
+		if(packet.charAt(2) == '0'){
+			//set ready (false)
+			if(p.hasState(PlayerState.InFightReady) == false){
+				packetCantParse(c, packet, "Un joueur essaye d'envoyer un packet pour dire qu'il n'est plus prêt alors qu'il n'avait déjà pas l'état pour dire qu'il était prêt. Anormal Cheat.");
+			}
+			p.removeState(PlayerState.InFightReady);
+			SM.Game.GR_FIGHT(p, f, false);
+		}else{
+			packetCantParse(c, packet, "Packet non conforme: if(packet.length() != 3)");
+		}
+		return true;
+	}
+
+	
+	private boolean onGamePosition(DofusGameClient c, String packet) {
+		// TODO Auto-generated method stub
+		if(packet.length() > 5){//Gp266 -> le max pour une cellID étant 3 chiffres -> longueur max totale = 5
+			packetCantParse(c, packet, "Packet de mauvaise longueur, non conforme: if(packet.length() > 5)");
+		}
+		GFight f = c.getAccount().getCurPerso().getFight();
+		if(f == null){
+			packetCantParse(c, packet, "Le client n'est pas en combat.");
+		}	
+		if(f.getState() != FightState.PLACE.get()){
+			packetCantParse(c, packet, "Impossible de recevoir le packet Gp(GamePosition) quand l'état du combat n'est pas en phase de placement. Anormal Cheat.");
+		}
+		packet = packet.substring(2);//mtn le packet = la cellid
+		if(Utils.isParsableInteger(packet)){
+			short cellid = Short.parseShort(packet);
+			GPersonnage p = c.getAccount().getCurPerso();
+			if(p.getMap().isCellOccupied(cellid) == false){
+				p.setCellID(cellid);
+				SM.Game.GIC_FIGHT(p, f, false);
+			}else{
+				SM.Game.GIC(p, f, true);
+			}
+			
+		}
+		return true;
+	}
+
+	
+
+	public boolean onGameInfo(DofusGameClient c) {
+		GPersonnage p = c.getAccount().getCurPerso();
+		//onMapLoaded
+		SM.Game.GDK(c.getSession());
+		//Packet pour connaitre le nombre de fight sur la map
+		SM.fights.fC(c.getSession(), p.getMap().getFightCount(p.getLayer()));
+		//Update la liste de personnages sur la map
+		// et envoie le packet GM_ADD_ALL
+		// et aussi GM_ADD    v
+		GFight f = p.getFight();
+		if(f != null){//[TODO] reconnection en combat lorsqu'on recoit le packet GI
+			//Affichage de p aux autres et affichage des autres sprites à lui
+			if(f.getState() == FightState.ACTIVE.get()){
+				//Enlève l'Observer qui comptait les tours déconnecté, envoie un msg "P s'est reco en combat !"
+				// et gère toute la reconnection en combat quoi.
+				//f.getStateMachine().set(ActionListenerType.ON_FIGHT_RECONNECTED.ordinal()).notifyObservers(p);
+				f.getStateMachine().notifyObservers(new FightReconnectionEvent(f, p));
+			}
+			return true;
+		}
+		p.getMap().updateSpriteList(MapAction.ADD_SPRITE, p);
+		
+		//Créé une action de mouvement sur la même cellule pour qu'il prenne les items dropppés par terre s'il y en a
+		/*PluginsManager pm = p.getServer().getPluginsManager();
+		GAction b = pm.getActionsManager().getFactory().newMovementAction(	p, 
+				pm.getFormulingManager().createPath().push(
+						pm.getFormulingManager().createNode(p.getOrientation(), p.getCellID())
+				)
+		);
+		pm.getActionsManager().applyOnDone(p, b);//Applique les actions de fin de mouvement.*/
+		return true;
+	}
+
+	public boolean onGameCreate(DofusGameClient c) {
+		/*
+		    _loc1.create = function ()
+		    {
+		        this.aks.send("GC" + dofus.aks.Game.TYPE_SOLO);
+		    };
+		    
+		    
+		    (_global.dofus.aks.Game = function (oAKS, oAPI)
+		    {
+		        super.initialize(oAKS, oAPI);
+		    }).TYPE_SOLO = 1;
+		    (_global.dofus.aks.Game = function (oAKS, oAPI)
+		    {
+		        super.initialize(oAKS, oAPI);
+		    }).TYPE_FIGHT = 2;
+		 */
+		
+		
+		/*
+		 public void sendGameCreate() {
+			if (_compte.getGameThread() == null)
+				return;
+			PrintWriter out = _compte.getGameThread().get_out();
+
+			if (is_showSeller() == true
+					&& World.getSeller(get_curCarte().get_id()) != null
+					&& World.getSeller(get_curCarte().get_id())
+							.contains(get_GUID())) {
+				World.removeSeller(get_GUID(), get_curCarte().get_id());
+				SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(get_curCarte(),
+						get_GUID());
+				set_showSeller(false);
+			}
+
+			SocketManager.GAME_SEND_GAME_CREATE(out, _name);
+			SM.Accounts.As(this);
+			SQLManager.LOG_OUT(_compte.get_GUID(), 1);
+			SM.Game.GDM(out, _curCarte.get_id(),_curCarte.get_date(), _curCarte.get_key());
+			SocketManager.GAME_SEND_MAP_FIGHT_COUNT(out, this.get_curCarte());
+			_curCarte.addPlayer(this);
+			SQLManager.SAVE_PERSONNAGE(this, true);
+		}
+		 */
+		
+		//GameCreate OK, Stats, MapData.
+		SM.Game.GCK(  c.getSession(), c.getAccount().getCurPerso().getName());
+		SM.Account.As(c.getSession(), c.getAccount().getCurPerso());
+		SM.Game.GDM(  c.getSession(), c.getAccount().getCurPerso().getMap());
+		return true;
+	}
+	
+	/**
+	 * GA 
+	 * @param p
+	 * @param packet
+	 * @return
+	 */
+	public boolean parseOnGameAction(GPersonnage p, String packet){
+		
+		if(	   false == Misc.Utils.isParsableInteger(packet.substring(2,5))
+			//|| false == Misc.Utils.isParsableInteger(packet.substring(5,packet.contains(";")?packet.indexOf(";"):packet.length()))
+			//|| (packet.contains(";") && false == Misc.Utils.isParsableInteger(packet.substring(packet.indexOf(";")+1)))
+			){
+			Syn.d("Impossible de parser le packet de GameAction :"+packet+". Les données ne sont pas transformables en Integer.");
+			return false;
+		}
+		//exemple pour un sort : Game: Recv << GA300191;136  action 300 = lancer un sor, 191 = spellID, 136 = cellID
+		//TODO exemple pour un déplacement sur la map: GA001agehf2.  Returned: GA2;1;37;agcagehf2
+		
+		short actionID = Short.parseShort( packet.substring(2, 5) );
+
+		PluginsManager pm = p.getServer().getPluginsManager();
+		//Syn.d("Hello dans le parseOnGameAction, packet="+packet+" actionID="+actionID+".");
+		if(pm.getActionsManager().actionTypeExists(actionID)){
+			GAction a = new GAction(p.getWorld().getNextActionID(), actionID, packet.substring(5));
+			
+			if(packet.indexOf(";") == -1){
+				//Syn.d("Hello2 dans le parseOnGameAction, packet="+packet+" actionID="+actionID);
+				return pm.getActionsManager().apply(p, Constants.Constants.ZERO_SHORT, Constants.Constants.ZERO_SHORT, a);
+			}else{
+				if(    false == Misc.Utils.isParsableInteger(packet.substring(5,packet.contains(";")?packet.indexOf(";"):packet.length()))
+					|| false == Misc.Utils.isParsableInteger(packet.substring(packet.indexOf(";")+1))){
+					//Syn.d("Impossible de parser le packet de GameAction :"+packet+". Les données ne sont pas transformables en Integer.");
+					return false;
+				}
+				short spriteID = Short.parseShort( packet.substring(5, packet.contains(";") ? packet.indexOf(";") : packet.length()));
+				short cellID = packet.contains(";") ? Short.parseShort( packet.substring( packet.indexOf(";") + 1 ) ) : 0;
+				//Syn.d("Hello dans le parseOnGameAction, packet="+packet+" actionID="+actionID+" spriteID="+spriteID+" cellID"+cellID);
+				return pm.getActionsManager().apply(p, spriteID, cellID, a);
+			}
+		}else{
+			Syn.w("GameParser.onAction : actionType doesnt exist!");
+		}
+		return false;
+	}
+	
+	/**
+	 * GKK + unicActionID (Recu quand une action est terminée par le client)
+	 * <p> Return true si l'unicID == 0
+	 * @param p
+	 * @param packet
+	 * @return
+	 */
+	public boolean parseOnGameActionKorect(GPersonnage p, String packet){
+		if(	   /* TODO p.getActions() == null    (remettre ces conditions lorsq'on aura fini)
+			|| p.getActions().size() == 0
+			||*/ false == (packet.charAt(2) == 'K' || packet.charAt(2) == 'E')
+			|| false == Misc.Utils.isParsableInteger( packet.substring( 3, packet.indexOf("|") == -1 ? packet.length() : packet.indexOf("|") ) )){
+			return false;
+		}
+		//Ici return true pour les valeurs de EndGameActions reçues après avoir envoyé des GAF
+		//0 = spellEndAction et 2 = movementEndAction. Il faut les ignorer puisqu'on ne les met pas dans l'arraylist d'actions du joueur :P
+		if(p.getServer().getActionsManager().endGameActionExists(packet.charAt(3))){
+			//anciennement : packet.charAt(3) == '0' || packet.charAt(3) == '2'
+			return true;
+		}
+		
+		boolean success = packet.charAt(2) == 'K';
+		/** { ActionID , Param } */ //À ce que je saches le param = une cellID (la currentCell ou le perso s'trouve pendant qu'y cours)
+		short params[] = new short[]{-1,-1};
+		
+		if(packet.charAt(2) == 'K' && packet.indexOf("|") == -1){//exemple GKK5   (5 étant l'unicActionID)
+			params[0] = Short.parseShort( packet.substring( 3, packet.length() ) );
+		}else if(packet.charAt(2) == 'E' && packet.indexOf("|") != -1){//Exemple GKE34|367  (34=persoID, 367=cell)
+			if(!Misc.Utils.isParsableInteger( packet.substring( packet.indexOf("|")+1, packet.length() ))){
+				return false;
+			}
+			params[0] = Short.parseShort( packet.substring( 3, packet.indexOf("|") ) );
+			params[1] = Short.parseShort(  packet.substring( packet.indexOf("|")+1, packet.length() ) );
+		}else{
+			return false;
+		}
+		//Exemple d'echec entrainant un .cancel() :  GKE34|367    (sur une action de mouvement)
+		
+		/*
+		 	_loc1.actionAck = function (nActionID)
+		    {
+		        this.aks.send("GKK" + nActionID, false);
+		    };
+		    _loc1.actionCancel = function (nActionID, params)
+		    {
+		        this.aks.send("GKE" + nActionID + "|" + params, false);
+		    };
+		 */
+		
+		Syn.w("in parseOnGameActionKorect.   actionID ="+params[0]+".");
+		GAction a = null;
+		
+		if(p.getActions() == null || p.getActions().size() == 0){ }else //Évite un nullpointerexception ;o
+		if(p.getActions().peek().getID() == params[0]){
+			a = p.getActions().peek();
+		}else{
+			for(int i = p.getActions().size()-1; i >= 0; i--){
+				if(p.getActions().get(i).getID() == params[0]){
+					a = p.getActions().get(i);
+					break;
+				}
+			}
+		}
+		if(a != null){
+			/*TODO pourrait ptete le faire avec ça ? à investiguer.. (dans l'onMovement)
+			p.getMap().verifyMapActions((byte) a.getType());
+			*/
+			PluginsManager pm = p.getServer().getPluginsManager();
+			if(success){
+				success = pm.getActionsManager().applyOnDone(p, a);
+			}else{
+				success = pm.getActionsManager().applyOnCancel(p, a, params[1]);
+			}
+			a.terminate();
+			a = null;
+			//return true;//XXX JUSTE POUR TEST,  À ENLEVER (c'tun return true; à la place de cqui devrait être un return false;)
+			return success;
+		}
+		Syn.d("GameParser.onGKK : UnicActionID("+params[0]+") inexistante sur le perso("+p.getID()+").. CompteID="+p.getAccountID()+".");
+		//return true;//XXX JUSTE POUR TEST,  À ENLEVER (c'tun return true; à la place de cqui devrait être un return false;)
+		Syn.d("Gkk return false");
+		return false;
+	}
+	
+	
+	/*
+	 
+[SEND] >> GA001cd1de7cfydg6
+
+[RECV] << GA0;1;5950;adycd1de7cfydg6
+[SEND] >> GKE0|400
+[SEND] >> GA001bg9ahabhp
+
+[RECV] << BN
+
+[RECV] << GA0;1;5950;agqbg9ahabhp
+[SEND] >> GKK0
+
+[RECV] << BN
+	 */
+	
+	
+	/*
+	  _loc1.sendActions = function (nActionType, aParams)
+    {
+        var _loc4 = new String();
+        this.aks.send("GA" + new ank.utils.ExtendedString(nActionType).addLeftChar("0", 3) + aParams.join(";"));
+    };
+    _loc1.actionAck = function (nActionID)
+    {
+        this.aks.send("GKK" + nActionID, false);
+    };
+    _loc1.actionCancel = function (nActionID, params)
+    {
+        this.aks.send("GKE" + nActionID + "|" + params, false);
+    };
+    _loc1.challenge = function (sSpriteID)
+    {
+        this.sendActions(900, [sSpriteID]);
+    };
+    _loc1.acceptChallenge = function (sSpriteID)
+    {
+        this.sendActions(901, [sSpriteID]);
+    };
+    _loc1.refuseChallenge = function (sSpriteID)
+    {
+        this.sendActions(902, [sSpriteID]);
+    };
+    _loc1.joinChallenge = function (nChallengeID, sSpriteID)
+    {
+        if (sSpriteID == undefined)
+        {
+            this.sendActions(903, [nChallengeID]);
+        }
+        else
+        {
+            this.sendActions(903, [nChallengeID, sSpriteID]);
+        } // end else if
+    };
+    _loc1.attack = function (sSpriteID)
+    {
+        this.sendActions(906, [sSpriteID]);
+    };
+    _loc1.attackTaxCollector = function (sSpriteID)
+    {
+        this.sendActions(909, [sSpriteID]);
+    };
+    _loc1.mutantAttack = function (sSpriteID)
+    {
+        this.sendActions(910, [sSpriteID]);
+    };
+    _loc1.attackPrism = function (sSpriteID)
+    {
+        this.sendActions(912, [sSpriteID]);
+    };
+    _loc1.usePrism = function (sSpriteID)
+    {
+        this.sendActions(512, [sSpriteID]);
+    };
+    _loc1.acceptMarriage = function (sSpriteID)
+    {
+        this.sendActions(618, [sSpriteID]);
+    };
+    _loc1.refuseMarriage = function (sSpriteID)
+    {
+        this.sendActions(619, [sSpriteID]);
+    };
+	 */
+	
+	
+	
+	
+}

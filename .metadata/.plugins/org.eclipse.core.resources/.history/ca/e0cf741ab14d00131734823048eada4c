@@ -1,0 +1,13 @@
+package Providers;
+
+import Game.WakfuGameClient;
+import Game.WakfuLoginClient;
+
+public class ClientProvider {
+	
+	
+	public WakfuGameClient createNew(){
+		
+	}
+
+}

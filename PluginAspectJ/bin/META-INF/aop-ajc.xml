@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aspectj>
+	<aspects>
+		<aspect name="pack.World"/>
+		<aspect name="pack.MacroRecorder"/>
+	</aspects>
+</aspectj>

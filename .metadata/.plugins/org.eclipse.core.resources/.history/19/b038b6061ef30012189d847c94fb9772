@@ -1,0 +1,40 @@
+
+import Main.Xuggling;
+
+public class Main {
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) throws Exception {
+		testExceptions();
+		//Redis.setup(); Redis.go();
+		//Quartz.go();
+		
+		//DelayingFights.go();
+		
+		//HelloWorld hello = new HelloWorld();
+		//hello.displayMessage();
+		
+		Xuggling.go();
+		
+	}
+	
+	
+	public static void testExceptions(){
+		Thread.setDefaultUncaughtExceptionHandler( new Thread.UncaughtExceptionHandler(){
+    		public void uncaughtException(Thread t, Throwable e) {
+    			e.printStackTrace(); // you can use e.printStackTrace ( printstream ps )
+    		}
+    	});		
+    	//System.out.println( 2/0 );  // Throw the Exception 
+    	//String a = null;
+    	//a.equals("");
+	}
+	
+	private static void w(String str){
+		System.out.println(str);
+	}
+	
+	
+}

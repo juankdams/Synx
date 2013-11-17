@@ -1,0 +1,16 @@
+package GameClientStrategies;
+
+public class DofusClientStrategy implements GameClientStrategy {
+
+	
+	
+	DofusClientStrategy(){
+		
+	}
+	
+	@Override
+	public String getName() {
+		return "DofusClientStrategy";
+	}
+
+}

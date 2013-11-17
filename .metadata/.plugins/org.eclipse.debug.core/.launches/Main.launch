@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/NewTests/src/Core/Main.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="Core.Main"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="NewTests"/>
+<stringAttribute key="yk-options" value="&#13;&#10;alloc-size-limit-enabled=true&#13;&#10;alloc-record-each=10&#13;&#10;alloc-size-limit=16&#13;&#10;alloc-record-each-enabled=true&#13;&#10;additional-options2=onexit\=snapshot&#13;&#10;startup=6&#13;&#10;"/>
+</launchConfiguration>

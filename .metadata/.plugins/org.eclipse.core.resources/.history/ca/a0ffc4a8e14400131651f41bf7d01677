@@ -1,0 +1,19 @@
+package GlobalObjects;
+
+import Abstractions.AbstractWorld;
+import Constants.CPerso;
+import Constants.CSpells;
+import SQL.SConfig;
+
+public class GlobalWorld extends AbstractWorld {
+	
+	public GlobalWorld(){
+		if(getStrategy().get() == GameClientStrategies.DofusClientStrategy){
+			
+		}
+		
+	}
+	
+
+	
+}

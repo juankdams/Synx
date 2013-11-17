@@ -1,0 +1,11 @@
+package Interfaces;
+
+
+public interface IClient {
+
+	public H getHandler();
+	public void kick();
+	public void terminate() throws Throwable;
+	
+
+}

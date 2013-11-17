@@ -1,0 +1,19 @@
+package GameClientStrategies;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import Plugins.Managers.PluginsManager;
+
+public class WakfuClientStrategy extends GameClientStrategy {
+
+	public AbstractWorld globalWorld;
+	public PluginsManager defaultPluginsManager;
+	public ScriptsService<ExecutableScript> scripts;
+	
+	WakfuClientStrategy(){
+		
+	}
+
+
+
+}

@@ -1,0 +1,111 @@
+package Game;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
+import Core.Syn;
+import Enums.SynActions.CommonAction;
+
+public class ConnexionQueue {
+
+	private List<DofusLoginClient> clientsWaitingForConnexion = Collections.synchronizedList(new LinkedList<DofusLoginClient>());
+	private List<DofusLoginClient> clientsPremiumWaitingForConnexion = Collections.synchronizedList(new LinkedList<DofusLoginClient>());
+
+
+	public boolean tick(GameServer gs, DofusLoginClient client){
+		Syn.d("ConnexionQueue.tick");
+		if(client != null){
+			if(client.getAccount().isPremium()){
+				SM.Account.Af(client.getSession(), clientsPremiumWaitingForConnexion.indexOf(client), clientsPremiumWaitingForConnexion.size(), clientsWaitingForConnexion.size(), client.getAccount().isPremium(), gs.getID());
+			}else{
+				SM.Account.Af(client.getSession(), clientsWaitingForConnexion.indexOf(client), clientsPremiumWaitingForConnexion.size(), clientsWaitingForConnexion.size(), client.getAccount().isPremium(), gs.getID());
+			}
+		}else{
+			Iterator<DofusLoginClient> i = clientsPremiumWaitingForConnexion.iterator();
+			int pos = 0;
+			while(i.hasNext()){
+				pos++;
+				DofusLoginClient c = i.next();
+				SM.Account.Af(c.getSession(), pos, clientsPremiumWaitingForConnexion.size(), clientsWaitingForConnexion.size(), c.getAccount().isPremium(), gs.getID());
+			}
+			i = clientsWaitingForConnexion.iterator();
+			pos = 0;
+			while(i.hasNext()){
+				pos++;
+				DofusLoginClient c = i.next();
+				SM.Account.Af(c.getSession(), pos, clientsPremiumWaitingForConnexion.size(), clientsWaitingForConnexion.size(), c.getAccount().isPremium(), gs.getID());
+			}
+		}
+		
+		
+		if(gs.clients.size() >= gs.getConfig().getMaximumClients()){
+			return false;
+		}
+		//Essaie de flusher 10 clients d'un coup
+		for(int i = 10; i -- >=0;){
+			//Si la liste de client PREMIUM en attente n'est pas vide et qu'il y a de la place pour connecter des joueurs...
+			if(gs.clients.size() < gs.getConfig().getMaximumClients() && clientsPremiumWaitingForConnexion.size() > 0){
+				DofusLoginClient c = updatePremiumWaitingClientList(CommonAction.REMOVE, null, 0);
+				SM.Account.AYK(c.getSession(), c.getAccount().getID(), gs);
+				c.kick();
+				Syn.d("ConnexionQueue.tick.envoie AXK Premium");
+				continue;
+			}
+			//Si la liste de client NON-PREMIUM en attente n'est pas vide et qu'il y a de la place pour connecter des joueurs...
+			if(gs.clients.size() < gs.getConfig().getMaximumClients() && clientsWaitingForConnexion.size() > 0){
+				DofusLoginClient c = updateWaitingClientList(CommonAction.REMOVE, null, 0);
+				SM.Account.AYK(c.getSession(), c.getAccount().getID(), gs);
+				c.kick();
+				Syn.d("ConnexionQueue.tick.envoie AXK Non-Premium");
+				continue;
+			}
+		}
+		
+		return false;
+	}
+	
+	
+	
+	
+	public synchronized DofusLoginClient updatePremiumWaitingClientList(CommonAction ca, DofusLoginClient c, int index){
+		switch(ca){
+			case ADD:
+				if(c != null){
+					clientsPremiumWaitingForConnexion.add(c);
+				}
+				break;
+			case REMOVE:
+				if(index < clientsPremiumWaitingForConnexion.size()){
+					return clientsPremiumWaitingForConnexion.remove(index);
+				}
+		}
+		return c;
+	}
+	
+	public synchronized DofusLoginClient updateWaitingClientList(CommonAction ca, DofusLoginClient c, int index){
+		switch(ca){
+			case ADD:
+				if(c != null){
+					clientsWaitingForConnexion.add(c);
+				}
+				break;
+			case REMOVE:
+				if(index < clientsWaitingForConnexion.size()){
+					return clientsWaitingForConnexion.remove(index);
+				}
+		}
+		return c;
+	}
+
+
+	public int getWaitingPremiumListSize() {
+		return clientsPremiumWaitingForConnexion.size();
+	}
+	public int getWaitingListSize() {
+		return clientsWaitingForConnexion.size();
+	}
+	
+	
+}

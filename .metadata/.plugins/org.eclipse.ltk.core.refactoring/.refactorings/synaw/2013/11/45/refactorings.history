@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy 3 source folders to &apos;Synod&apos;&#x0D;&#x0A;- Original project: &apos;Synaw&apos;&#x0D;&#x0A;- Destination element: &apos;Synod&apos;&#x0D;&#x0A;- Original elements:&#x0D;&#x0A;     Synaw/Objects&#x0D;&#x0A;     Synaw/Servers&#x0D;&#x0A;     Synaw/External" description="Copy source folders" destination="=Synod" element1="/Objects" element2="/Servers" element3="/External" flags="6" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyRoots" roots="3" stamp="1384022762503" version="1.0"/>
+</session>

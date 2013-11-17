@@ -1,0 +1,226 @@
+package Login;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ScheduledFuture;
+
+import Abstractions.AbstractSqlService;
+import Core.Syn;
+import Game.GameServer;
+import GameClientStrategies.GameClientStrategy;
+import Handlers.LHandler;
+import Interfaces.IService;
+import LoginObjects.LWorld;
+import Management.Users.User;
+import SQL.SqlServiceMySql;
+import Servers.MinaServer;
+import Servers.Server;
+
+
+public abstract class LServer implements IService {
+	
+	private static interface LServerProvider {
+		public LServer createNew(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss);
+	}
+	private static class DofusLServerProvider implements LServerProvider {
+		public LServer createNew(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss) {
+			return new DofusLoginServer(ID, port, dbHostIP, dbName, dbUser, dbPass, ownerss);
+		}
+	}
+	private static class WakfuLServerProvider implements LServerProvider {
+		public LServer createNew(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss) {
+			return new WakfuLoginServer(ID, port, dbHostIP, dbName, dbUser, dbPass, ownerss);
+		}
+	}
+	
+	public static LServerProvider provide(GameClientStrategy gcs){
+		if(gcs.get() == GameClientStrategies.GameClientStrategies.DofusClientStrategy){
+			
+		}
+	}
+	
+	
+	
+	public short ID = 0;
+	//public short port = 667;
+
+	public String DB_HOSTIP = "127.0.0.1";
+	public String DB_NAME = "syn_login0";
+	public String DB_USERNAME = "root";
+	public String DB_PASSWORD = "";
+	public ArrayList<User> owners = new ArrayList<User>();
+	public byte MAX_CO_PER_IP = 0;
+	
+
+	public LWorld world = null;
+	public ArrayList<GameServer> gameServers = new ArrayList<GameServer>();
+	private AbstractSqlService sqlService = null;
+	
+	
+	public ArrayList<LClient> clients = new ArrayList<LClient>();
+	public ArrayList<String> bannedIPs = new ArrayList<String>();
+	//v Pour la queue de connexion au loginServeur
+	public int numberOfPremiumClients = 0;
+	public int numberOfNonPremiumClients = 0;
+	//public Queue queue = new Queue();lol not sure. confused mind
+	public HashMap<Integer, ScheduledFuture<Object>> clientsToTerminate = new HashMap<Integer, ScheduledFuture<Object>>();
+
+	public LServer(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss) {
+		this.ID = ID;
+		get().setPort(port);
+		this.DB_HOSTIP = dbHostIP;
+		this.DB_NAME = dbName;
+		this.DB_USERNAME = dbUser;
+		this.DB_PASSWORD = dbPass;
+		String[] owners = ownerss.split(",");
+		for(String owner : owners){
+			User u = Syn.Services.users.get(owner);
+			if(u != null) this.owners.add(u);
+		}
+	}
+
+	@Override
+	public void boot() throws Exception {
+		sqlService = new SqlServiceMySql(){
+			@Override
+			public void boot() throws Exception {
+				c = createConnection(DB_HOSTIP, DB_NAME, DB_USERNAME, DB_PASSWORD);
+				//this.TIMER(false);
+				c.setAutoCommit(true);
+			}
+		};
+		sqlService.boot();
+		
+		world = new LWorld(this);
+	}
+
+	@Override
+	public void reboot() throws Exception {
+		save();
+		off(false);
+		get().restart();
+	}
+	public void on(){	
+		get().start();
+	}
+
+	public void save() {
+		world.saveAll();
+	}
+	public void off(boolean terminate) {
+		ArrayList<LClient> copy = new ArrayList<LClient>(clients.size());
+		copy.addAll(clients);
+		//synchronized(clients){
+			for(LClient lc : copy){
+				lc.kick();
+			}
+			clients.clear();
+			get().stop();
+			//setState(Constants.CWorld.STATE_OFFLINE);
+			if(terminate){
+				terminate();
+			}
+		//}
+	}
+	
+	public void terminate() {
+		get().terminate();
+		world.terminate();
+		clients = null;
+		bannedIPs = null;
+		clientsToTerminate = null;
+	}
+
+
+
+	public void setSqlService(AbstractSqlService sqlService) {
+		this.sqlService = sqlService;
+	}
+	public AbstractSqlService getSqlService() {
+		/*InvocationHandler handler = ServerStrategyFactory.newNettyServer();
+		LServer f = (LServer) Proxy.newProxyInstance(LServer.class.getClassLoader(),
+                 new Class[] { LServer.class },
+                 handler);s //-> à refaire, totalement brisé, mal implémenté
+                 			//jpense que c'est LServer qui devrait être l'InvocationHandler
+                 			//et qui faudrait mettre NettyServer ou Server dans les interfaces
+		
+*/
+		return sqlService;
+	}
+
+	
+	
+	public abstract GameClientStrategy getGameClientStrategy();
+	protected abstract Server get();
+	
+	
+	//@Override
+	//public void setPort(short port){
+	//	this.port = port;
+	//}
+	//@Override
+	//public short getPort() {
+	//	return port;
+	//}
+	
+	
+	/**
+	 * TODO pas fini deleteGServ mais ca le delete COMPLETEMENT (sauf bdd יvidemment, juste delete le GServ et la config dans le gconfig.xml)
+	 * <p>A: Enlever la GConfig de l'array et la nulliser
+	 * <p>B: Enlever le GServer de l'array et le nulliser
+	 * <p>C: Vider toutes les variables/clients du GServer
+	 * <p>D: ?
+	 */
+/*	public static void deleteGServ(byte worldID){
+		//1: Enlever la GConfig de l'array et la nulliser
+		//2: Enlever le GServer de l'array et le nulliser
+		//3: Vider toutes les variables/clients du GServer
+		//4: ?
+		GServer sToRem = null;
+		GConfigJDOM cToRem = null;
+		//Ici v on enleve le GServ de l'array
+		GServer copy[] = new GServer[Syn.gameServers.length-1];
+		int indexCopy = 0;
+		for(GServer gso : Syn.gameServers){
+			if(gso.getConfig().getWorldID() != worldID){
+				copy[indexCopy] = gso;
+			}else{
+				sToRem = gso;
+				cToRem = gso.getConfig();
+				indexCopy--;
+			}
+			indexCopy++;
+		}
+		Syn.gameServers = copy;
+		copy = null;
+		//Ici on delete la config et l'enleve de l'array
+		GConfigWriterJDOM.deleteGConfig(cToRem.getServerName());
+		
+		sToRem.off();
+		sToRem.terminate();
+		sToRem = null;
+		
+		cToRem = null;
+	}
+*/	
+	
+	/**
+	 * todo addGServer: 
+	 * <p>Créé une nouvelle blank GCConfig à la suite des autres, crée un GServ, crייe un nouvelle co sql, et fout le tout dans les array
+	 * <p>Ajoute le tout dans les arrays.
+	 */
+/*	public static void addNewGServer(String serverName, String worldID){
+		
+		GConfigJDOM gc = new GConfigJDOM();
+		gc = GConfigWriterJDOM.writeNewGConfig(serverName, worldID);
+		gc.readNewConfig(serverName, worldID);
+		
+		GServer gs = new GServer(gc);
+		
+		
+	}
+*/	
+	
+	
+	
+}

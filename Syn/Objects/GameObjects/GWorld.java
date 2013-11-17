@@ -1,0 +1,712 @@
+package GameObjects;
+
+import static Enums.ChannelEnum.ALIGNMENT;
+import static Enums.ChannelEnum.GENERAL;
+import static Enums.ChannelEnum.RECRUITMENT;
+import static Enums.ChannelEnum.TRADING;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ScheduledFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Abstractions.AbstractWorld;
+import ConfigurationObjects.Classe;
+import ConfigurationObjects.Command;
+import ConfigurationObjects.SimpleIA;
+import Core.Syn;
+import Enums.ChannelEnum;
+import Enums.SynActions;
+import Enums.SynActions.ChatBufferA;
+import Game.GameServer;
+import GameClientStrategies.GameClientStrategies;
+import GameObjects.GArea.GSubArea;
+import GameObjects.GArea.GSuperArea;
+import GlobalObjects.ItemSet;
+import GlobalObjects.Map;
+import Interfaces.IItemTemplate;
+import Interfaces.IObject;
+import Login.LoginServer;
+import Misc.Tests.Perfs;
+import Plugins.Abstractions.AbstractActionListener;
+import SQL.SConfig;
+
+
+public class GWorld extends AbstractWorld implements IObject {
+
+	public static Logger log = LoggerFactory.getLogger(GWorld.class);
+	
+	private GameServer server = null;
+	
+	//private TitleManager titleManager = null;
+	private ArrayList<Classe> classes = new ArrayList<Classe>();
+	private HashMap<String, Command> commands = new HashMap<String, Command>();
+	private HashMap<SynActions, AbstractActionListener> listeners = new HashMap<SynActions, AbstractActionListener>();
+	
+	private int lastCharacterID = 0;// le get ->  @return :  --lastCharacterID;  .  Oui c'est en négatif.
+	private int lastPersoID = 0;
+	private int lastItemID = 0;
+	private int lastActionID = 3;//Commence à 3 pcq y'a les EndGameAction 0 et 2 qui se font renvoyer des GKK0/2 à ignorer
+	private int lastFightID = 0;
+	
+	public long[] persoXPLevels = null;
+	public long[] honorXPLevels = null;
+	public long[] mountsXPLevels = null;
+	public long[] guildXPLevels = null;
+	public long[] jobXPLevels = null;
+	public long[] banditsXPLevels = null;
+	//**Combien d'xp il faut pour monter le level d'alignement (Constante aussi présente dans CPerso)* /
+	//public static final byte xpForAlignmentLevel = 20; 
+	
+	//ChatFlooders
+	//private ChatParser chatParser = null;
+	private HashMap<GPersonnage, ScheduledFuture<Object>> generalFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	private HashMap<GPersonnage, ScheduledFuture<Object>> commerceFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	private HashMap<GPersonnage, ScheduledFuture<Object>> recrutementFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	private HashMap<GPersonnage, ScheduledFuture<Object>> alignementFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	
+	
+	/** les persos listés dans la map sont tous connectés */
+	private HashMap<Integer, GPersonnage> persos = new HashMap<Integer, GPersonnage>();
+	
+	/**Les banques de ce monde triées par leur AccountID*/
+	private HashMap<Integer, GBank> banks = new HashMap<Integer, GBank>();
+	
+	/** les persos listés dans cette map sont en état de déco/reco en combat*/
+	private HashMap<Integer, GPersonnage> inFightPersos = new HashMap<Integer, GPersonnage>();
+	
+	/**
+	 * Liste tous les inventaires des personnages.
+	 * <persoID, inventaire>
+	 */
+	private HashMap<Integer, GInventory> inventories = new HashMap<Integer, GInventory>();
+	/**
+	 * Liste tous les statistiques des characters. (ID positif pour personnage, négatif pour autre character)
+	 * <characterID, statistique>
+	 */
+	private HashMap<Integer, GStatistiques> statistiques = new HashMap<Integer, GStatistiques>();
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public GWorld(GameServer gameServer){
+		setStrategy(gameServer.getLoginServer().getGameClientStrategy());
+		this.setServer(gameServer);
+		gameServer.setWorld(this);
+	}
+	
+	public void reboot(){
+		this.clear();
+		boot();
+	}
+	
+	public void boot(){
+		if(this.getStrategy().get() == GameClientStrategies.WakfuClientStrategy){
+			return;
+		}
+		//chatParser = new ChatParser();
+		//titleManager = new TitleManager();
+		this.lastPersoID = SQL.Personnages.loadLastPersoID(getServer());
+		this.lastItemID = SQL.Items.loadLastItemID(getServer());
+		//Les données .
+		Perfs p = new Perfs();
+		SConfig.loadXP(this);//Configuration de l'XP
+		p.stopTiming("Loading XP"); p.restartTiming();
+		//SConfig.loadTitles(this);//Chargement des titles des gens
+		SConfig.loadClasses(this);//Configuration des Classes par bdd
+		p.stopTiming("Loading Classes"); p.restartTiming();
+		SConfig.loadCommands(this);//Configuration des Commands par bdd
+		p.stopTiming("Loading Commands"); p.restartTiming();
+		SConfig.loadIntelligences(this);//Configuration des Intelligences Artificielles par bdd
+		p.stopTiming("Loading IAs"); p.restartTiming();
+		SQL.Challenges.loadAllChallenges(this);//Bleh, c'est léger à charger quand même
+		p.stopTiming("Loading Challenges"); p.restartTiming();
+		
+		SQL.ActionListeners.loadWorld(getServer(), true);
+		p.stopTiming("Loading ActionListeners"); p.restartTiming();
+		SQL.Areas.loadAllAreasTypes(this, true);
+		p.stopTiming("Loading Areas"); p.restartTiming();
+		SQL.Maps.loadAllOfficialMapsSupplementaries(this, true);
+		p.stopTiming("Loading MapOverrides"); p.restartTiming();
+	}
+	
+	
+	
+	/**
+	 * TODO: GWorld.saveALL
+	 */
+	public void saveAll(){
+		
+	}
+	
+	/**
+	 * TODO: GWorld.cleanAll
+	 */
+	public void clearAll(){
+		//if(cWorld != null) cWorld.  rien à clear en rapport au cWorld
+		if(persos != null) this.persos.clear(); 	
+		if(areas != null) this.areas.clear();
+		if(banks != null) this.banks.clear();
+		if(classes != null) this.classes.clear();
+		if(commands != null) this.commands.clear();
+		if(inFightPersos != null) this.inFightPersos.clear();
+		if(inventories != null) this.inventories.clear();
+		if(itemSets != null) this.itemSets.clear();
+		if(itemTemplates != null) this.itemTemplates.clear();
+		if(maps != null) this.maps.clear();
+		if(spells != null) this.spells.clear();
+		if(statistiques != null) this.statistiques.clear();
+		if(intelligences != null) intelligences.clear();
+		if(challenges != null) challenges.clear();
+		
+		this.clearFlooders();	//this.chatParser.clear();
+		//this.titleManager.modifyTitlesList(CommonAction.CLEAN, null, 0);
+		
+		this.persoXPLevels = new long[0];
+		this.honorXPLevels = new long[0];
+		this.mountsXPLevels = new long[0];
+		this.guildXPLevels = new long[0];
+		this.jobXPLevels = new long[0];
+		this.banditsXPLevels = new long[0];
+	}
+	/**
+	 * TODO: GWorld.rebuildAll
+	 */
+	public void rebuildAll(){
+		//persos = new HashMap<Integer, GPersonnage>();
+	}
+	
+	@Override
+	public void terminate() {
+		clearAll();//TODO GWorld.cleanALL et .rebuildALL
+		this.persos = null;
+		this.areas = null;
+		this.banks = null;
+		this.classes = null;
+		this.commands = null;
+		this.inFightPersos = null;
+		this.inventories = null;
+		this.itemSets = null;
+		this.itemTemplates = null;
+		this.maps = null;
+		this.spells = null;
+		this.statistiques = null;
+		this.intelligences = null;
+		this.challenges = null;
+
+		this.server = null;
+		this.nullFlooders();	//this.chatParser = null;
+		//this.titleManager = null;
+		this.persoXPLevels = null;
+		this.honorXPLevels = null;
+		this.mountsXPLevels = null;
+		this.guildXPLevels = null;
+		this.jobXPLevels = null;
+		this.banditsXPLevels = null;
+
+		
+		//this.patente = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+	
+	public void setServer(GameServer server) {
+		this.server = server;
+	}
+
+	@Override
+	public GameServer getServer() {
+		return server;
+	}
+
+	//public void setServerID(int serverID) { 
+	//	for(GameServer s : server.getLoginServer().gameServers){
+	//		if(s.getServerID() == serverID){
+	//			this.server = s;
+	//		}
+	//	}
+	//}
+
+
+	
+	public HashMap<Integer, GPersonnage> getPersos(){
+		return persos;
+	}
+	
+	public GPersonnage getPerso(int id){
+		return persos.get(id);
+	}
+	
+	
+	public synchronized int getNextPersoID() {
+		if(lastPersoID == Integer.MAX_VALUE){
+			lastPersoID = 0;
+		}
+		return ++lastPersoID;
+	}
+	/**
+	 * @return :  --lastCharacterID;   .   Oui c'est en négatif.
+	 */
+	public synchronized int getNextCharacterID(){
+		if(lastCharacterID == Integer.MIN_VALUE){
+			lastCharacterID = 0;
+		}
+		return --lastCharacterID;
+	}
+	public synchronized int getNextItemID() {
+		if(lastItemID == Integer.MAX_VALUE){
+			lastItemID = 0;
+		}
+		return ++lastItemID;
+	}
+	public synchronized int getNextActionID(){
+		if(lastActionID == 10000){//Integer.MAX_VALUE){  //10 000 est prit de ank.utils.Sequencer.getActionIndex()
+			lastActionID = 3;
+		}
+		return ++lastActionID;
+	}
+	public synchronized int getNextFightID(){
+		if(lastFightID == Integer.MAX_VALUE){
+			lastFightID = 0;
+		}
+		return ++lastFightID;
+	}
+	
+	//useless pas mal
+	//public synchronized void setNextPersoID(int id) {
+	//	this.lastPersoID = id;
+	//}
+
+	
+	
+	public GPersonnage getPersoByName(String name){
+		for(GPersonnage p : persos.values()){
+			if(p.getName().equals(name)){
+				return p;
+			}
+		}
+		return null;
+	}
+	
+	public void addPerso(GPersonnage p){
+		persos.put(p.getID(), p);
+	}
+
+	public GPersonnage removePerso(GPersonnage perso){
+		return persos.remove(perso.getID());
+	}
+	
+	
+	public void addInFightDecoPerso(GPersonnage p){
+		inFightPersos.put(p.getID(), p);
+	}
+	
+	public void removeInFightDecoPerso(GPersonnage perso){
+		inFightPersos.remove(perso.getID());
+	}
+	/**
+	 * @return - Si le personnage est dans la liste de persos déconnectés en combat
+	 */
+	public boolean isInFightDecoPerso(GPersonnage p){
+		if(inFightPersos.containsKey(p.getID())){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	public GInventory getInventory(int persoID){
+		return inventories.get(persoID);
+	}
+	public void addInventory(int persoID, GInventory i){
+		inventories.put(persoID, i);
+	}
+
+	public void removeInventory(int persoID){
+		inventories.remove(persoID);
+	}
+
+	public HashMap<Integer, GStatistiques> getStatistiques(){
+		return statistiques;
+	}
+	public GStatistiques getStatistisque(int persoID){
+		return statistiques.get(persoID);
+	}
+	public void addStatistique(int persoID, GStatistiques statistique){
+		this.statistiques.put(persoID, statistique);
+	}
+	public void removeStatistiques(int persoID){
+		this.statistiques.remove(persoID);
+	}
+
+	public void setBanks(HashMap<Integer, GBank> banks) {
+		this.banks = banks;
+	}
+	public HashMap<Integer, GBank> getBanks() {
+		return banks;
+	}
+	public GBank getBank(int accountID){
+		return banks.get(accountID);
+	}
+	public void addBank(int accountID, GBank gb){
+		banks.put(accountID, gb);
+	}
+	public GBank removeBank(int accountID){
+		return banks.remove(accountID);
+	}
+
+
+	public Command getCommand(String commandName) {
+		return commands.get(commandName);
+	}
+	public void addCommand(Command command) {
+		commands.put(command.getName(), command);
+	}
+	public HashMap<String, Command> getCommands(){
+		return commands;
+	}
+	
+
+	public void addClasse(Classe classe) {
+		this.classes.add(classe);
+	}
+
+	public Classe getClasse(byte b) {
+		return this.classes.get(b);
+	}
+	public ArrayList<Classe> getClasses(){
+		return classes;
+	}
+	
+
+	//Utilise l'id de la classe dans CPerso
+	public short getStartCell(int classID){
+		return classes.get(classID).startCell;
+	}
+	public long getStartKamas(int classID){
+		return classes.get(classID).startKamas;
+	}
+	//Utilise l'id de la classe dans CPerso
+	public short getStartMap(byte classID){
+		return classes.get(classID).startMap;
+	}
+	public short getStartLvl(int classID){
+		return classes.get(classID).startLevel;
+	}
+	public int[][] getStartItems(int classID){
+		return classes.get(classID).startItems;
+	}
+	public GSpell[] getStartSpells(int classID){
+		return classes.get(classID).startSpells;
+	}
+	public HashMap<Integer, GSpell> getStartSpellsAsMapWithPositions(int classID){
+		HashMap<Integer, GSpell> spells = new HashMap<Integer, GSpell>();
+		int pos = 1;
+		for(GSpell s : getStartSpells(classID)){
+			spells.put(pos++, s);
+		}
+		return spells;
+	}
+
+	
+	/** return this.cWorld.id;   (fait pareil que this.getServerID) */
+	@Override
+	public int getID() {
+		return this.server.getcWorld().id;
+	}
+	/** return this.getServer().getConfig().getWorldID();     (fait pareil que this.getID) */
+	@Override
+	public short getServerID() {
+		return this.server.getcWorld().id;
+	}
+
+	@Override
+	public void setID(int iD) {
+		this.server.getcWorld().id = (short) iD;
+	}
+	
+	
+
+	/**
+	 * return this;
+	 */
+	@Override
+	public GWorld getWorld() {
+		return this;
+	}
+
+	public void setListeners(HashMap<SynActions, AbstractActionListener> listeners) {
+		this.listeners = listeners;
+	}
+
+	public HashMap<SynActions, AbstractActionListener> getListeners() {
+		return listeners;
+	}
+
+	/**
+	 * Ajoute le listener à un container s'il y a déjà un listener du meme type.
+	 * <p>Ajoute le listener directement à l'hashmap de listeners du world sinon.
+	 */
+	public void addListener(AbstractActionListener aa){
+		AbstractActionListener a = listeners.get(aa.getType());
+		if(a == null){
+			listeners.put(aa.getType(), aa);
+		}else{
+			listeners.put(aa.getType(), a.addListener(aa));
+		}
+	}
+
+	public AbstractActionListener getListener(SynActions type){
+		return listeners.get(type);
+	}
+	public AbstractActionListener getListener(int ID){
+		if(listeners != null && listeners.size() > 0){
+			for(AbstractActionListener aal : listeners.values()){
+				if(aal.getID() == ID){
+					return aal;
+				}
+				if(aal.isContainer()){
+					for(AbstractActionListener aall : aal.getListeners()){
+						if(aall.getID() == ID){
+							return aall;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	
+	//ChatFlooders HashMaps
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getGeneralFlooders() {
+		return generalFlooders;
+	}
+	public void setGeneralFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> generalFlooders) {
+		this.generalFlooders = generalFlooders;
+	}
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getCommerceFlooders() {
+		return commerceFlooders;
+	}
+	public void setCommerceFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> commerceFlooders) {
+		this.commerceFlooders = commerceFlooders;
+	}
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getRecrutementFlooders() {
+		return recrutementFlooders;
+	}
+	public void setRecrutementFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> recrutementFlooders) {
+		this.recrutementFlooders = recrutementFlooders;
+	}
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getAlignementFlooders() {
+		return alignementFlooders;
+	}
+	public void setAlignementFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> alignementFlooders) {
+		this.alignementFlooders = alignementFlooders;
+	}
+	/**
+	 * Vide toutes les HashMap de floodeurs
+	 */
+	public void clearFlooders(){
+		if(alignementFlooders != null) 	this.alignementFlooders.clear();
+		if(commerceFlooders != null) 	this.commerceFlooders.clear();
+		if(generalFlooders != null) 	this.generalFlooders.clear();
+		if(recrutementFlooders != null) this.recrutementFlooders.clear();
+	}
+	/**
+	 * Nullalize les HashMaps de Flooders
+	 */
+	public void nullFlooders(){
+		this.alignementFlooders = null;
+		this.commerceFlooders = null;
+		this.generalFlooders = null;
+		this.recrutementFlooders = null;
+	}
+	/**
+	 * Enleve ou Ajoute un personnage à une flood List avec un ScheduledFuture qui s'occupe de l'enlever au bon moment et de dire combien de temps il reste avant qu'il puisse parler.
+	 */
+	public synchronized void modifyFloodLists(ChannelEnum ce, ChatBufferA actionID, GPersonnage p, ScheduledFuture<Object> sf){
+		if(actionID == ChatBufferA.ADD_FLOODER){
+			if(ce == GENERAL){
+				generalFlooders.put(p, sf);
+			}else
+			if(ce == TRADING){
+				commerceFlooders.put(p, sf);
+			}else 
+			if(ce == RECRUITMENT){
+				recrutementFlooders.put(p, sf);
+			}else 
+			if(ce == ALIGNMENT){
+				alignementFlooders.put(p, sf);
+			}
+		}else
+		if(actionID == ChatBufferA.REMOVE_FLOODER){
+			if(ce == GENERAL){
+				generalFlooders.remove(p);
+			}else
+			if(ce == TRADING){
+				commerceFlooders.remove(p);
+			}else 
+			if(ce == RECRUITMENT){
+				recrutementFlooders.remove(p);
+			}else 
+			if(ce == ALIGNMENT){
+				alignementFlooders.remove(p);
+			}
+		}
+	}
+	
+	
+
+
+
+
+	//public Map getMap(int id){
+	//	if(predicate.apply(id)){
+	//		return this.addMap(this.getStrategy().globalWorld.getMap(id).copy());
+	//	}
+	//	return super.getMap(id);
+	//}
+
+	/**
+	 * Si la mapID est en haut ou égal à l'ID minimum des ID de maps des GWorlds: 
+	 * 		on check dans le world (dans lemu et ensuite dans la bdd)
+	 * Sinon, s'il est en bas du minimum, on check dans le login.
+	 * @param mapID - L'ID de la map à rechercher
+	 * @return - La Map ou null
+	 */
+	/*
+	 * Essaie d'abord de prend la map dans le GWorld donné: Check dans l'arrayList, check dans BDD.
+	 * <p>Si elle n'existe pas du tout dans le GWorld, on la prend dans l'arrayList du LWorld ou dans la BDD si elle n'est pas encore chargée.
+	 * @param gw - Le GWorld dans lequel il faut chercher avant de chercher dans le LWorld
+	 * 
+	 */
+	public Map getMap(int mapID){
+		//Si c'est une map dont l'ID est dans le login, 
+		//	on check d'abord si un des autres worlds l'a déjà chargée.
+		//  Si oui, on en fait une copie et on la met dans le gworld voulu.
+		//  Si on la trouve qui est déjà dans le bon gworld, on fait juste la retourner direct.
+		
+		if(predicate.apply(mapID)){//Si c'est une map OFFI, on check sans aller chercher dans la bdd directement pour l'instant
+			if(this.getStrategy().globalWorld.getMapWithoutAutoLoad(mapID, false) != null){ //check si elle est déjà chargée dans le global
+				Syn.d("got map from global world (already charged), now copying in game");
+				return this.addMap(this.getStrategy().globalWorld.getMapWithoutAutoLoad(mapID, false).copy(getServer()));
+			}
+			if(this.getMapWithoutAutoLoad(mapID, true) != null){ //check si elle est déjà chargée dans ce propre gworld
+				Syn.d("got map from game world (already charged)");
+				return this.getMapWithoutAutoLoad(mapID, true);
+			}
+			for(LoginServer s : Syn.Services.serversService.loginServers.values()){//check si elle est déjà chargée dans un autre gworld
+				if(s.getGameClientStrategy() == this.getStrategy()){
+					for(GameServer gs : s.gameServers){
+						if(gs.getWorld().getMapWithoutAutoLoad(mapID, false) != null && gs.getServerID() != this.getID()){
+							//Syn.d("GlobalWorld. got map ("+mapID+") from Other Game (id < minimumIDinWorldMapTable) to gworld("+gw.getID()+")");
+							Syn.d("got map from other game world (already charged), now copying in game");
+							return this.addMap(gs.getWorld().getMapWithoutAutoLoad(mapID, false).copy(getServer()));
+						}
+					}
+				}
+			}
+		}
+		
+		//Si la map a un ID externe au login, donc propre aux games, 
+		//on check juste dans le gworld voulu / load si necéssaire
+		if(predicate.apply(mapID) == false){  //si PERSONNEL
+			if(this.getMapWithoutAutoLoad(mapID, true) == null){
+				addMap(SQL.Maps.load(mapID, this.getServer().getSqlService(), this)); //return getMap(mapID);
+			}
+			return this.getMapWithoutAutoLoad(mapID, true);
+		}else{	// SI OFFI
+		//Si la map a un ID de login mais n'a pas été trouvée précédemment dans les worlds, 
+		//	on va la chercher dans la bdd du login.	
+			Map m = SQL.Maps.load(mapID, this.getStrategy().sqlGlobalService, this.getStrategy().globalWorld);
+			Syn.d("got map from global bdd, now copying in game");
+			this.getStrategy().globalWorld.addMap(m);
+			return addMap(m.copy(getServer()));
+		}
+	}
+	//public Map getMap(int id){
+	//	if(predicate.apply(id)){
+	//		return this.getStrategy().globalWorld.getMap(id);
+	//	}
+	//	return super.getMap(id);
+	//}
+	public ItemSet getItemSet(short itemSetID) {
+		if(predicate.apply(itemSetID)){
+			return this.getStrategy().globalWorld.getItemSet(itemSetID);
+		}
+		return super.getItemSet(itemSetID);
+	}
+	public GSpell[] getSpell(short spellID) {
+		if(predicate.apply(spellID)){
+			return this.getStrategy().globalWorld.getSpell(spellID);
+		}
+		return super.getSpell(spellID);
+	}
+	public IItemTemplate getItemTemplate(int id){
+		if(predicate.apply(id)){
+			return this.getStrategy().globalWorld.getItemTemplate(id);
+		}
+		return super.getItemTemplate(id);
+	}
+	public GChallenge getChallenge(short id) {
+		if(predicate.apply(id)){
+			return this.getStrategy().globalWorld.getChallenge(id);
+		}
+		return super.getChallenge(id);
+	}
+	public SimpleIA getIntelligence(short id) {
+		if(predicate.apply(id)){
+			return this.getStrategy().globalWorld.getIntelligence(id);
+		}
+		return super.getIntelligence(id);
+	}
+	public GSubArea getSubArea(short id){
+		if(predicate.apply(id)){
+			return this.getStrategy().globalWorld.getSubArea(id);
+		}
+		return super.getSubArea(id);
+	}
+	public GArea getArea(short id){
+		if(predicate.apply(id)){
+			return this.getStrategy().globalWorld.getArea(id);
+		}
+		return super.getArea(id);
+	}
+	public GSuperArea getSuperArea(short id){
+		if(predicate.apply(id)){
+			return this.getStrategy().globalWorld.getSuperArea(id);
+		}
+		return super.getSuperArea(id);
+	}
+	public GMonster[] getMonsterTemplate(short monsterTemplateID){
+		if(predicate.apply(monsterTemplateID)){
+			return this.getStrategy().globalWorld.getMonsterTemplate(monsterTemplateID);
+		}
+		return super.getMonsterTemplate(monsterTemplateID);
+	}
+
+	
+	
+	
+	
+	
+	
+
+	public GMount getMount(short value) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	
+	
+}

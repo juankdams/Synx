@@ -1,0 +1,40 @@
+package Handlers;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundByteHandlerAdapter;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+public abstract class NettyHandler extends ChannelInboundByteHandlerAdapter<ByteBuf> {//implements Handler {
+
+    private static final Logger logger = Logger.getLogger(NettyHandler.class.getName());
+
+    @Override
+    public void inboundBufferUpdated(ChannelHandlerContext ctx, ByteBuf in) {
+        ByteBuf out = ctx.nextOutboundByteBuffer();
+        out.writeBytes(in);
+        ctx.flush();
+    }
+
+
+   // @Override
+   // public void messageReceived(ChannelHandlerContext ctx, MessageList<Object> msgs) throws Exception {
+    //    ctx.write(msgs);
+   // }
+    
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        // Close the connection when an exception is raised.
+        logger.log(Level.WARNING, "Unexpected exception from downstream.", cause);
+        ctx.close();
+    }
+
+    
+    
+    
+    
+    
+}

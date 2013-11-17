@@ -1,0 +1,28 @@
+package Servers.Netty;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+
+import org.slf4j.Logger;
+
+
+public class Encoder extends ChannelHandler {
+	
+
+	@SuppressWarnings("unused")
+	private static final Logger logger = LoggingUtil.log();
+	
+	public PacketEncoder() {
+		super(OutPacket.class);
+	}
+	
+    @Override
+    public ByteBuf encode(ChannelHandlerContext ctx, OutPacket msg) throws Exception {
+    	ByteBuf buf = Unpooled.buffer();
+    	msg.finish();
+    	buf.writeBytes(msg.getData());
+        return buf;
+    }
+
+}

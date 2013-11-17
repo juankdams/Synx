@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="com/anotherbigidea/flash/|com/anotherbigidea/flash/interfaces/|com/anotherbigidea/flash/movie/|com/anotherbigidea/flash/readers/|com/anotherbigidea/flash/sound/|com/anotherbigidea/flash/structs/|com/anotherbigidea/flash/writers/|com/anotherbigidea/io/|com/anotherbigidea/util/|Main/ExtractText.java|Main/SwfDecoder.java" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="var" path="ZLIBS/transform-3.0/transform-3.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

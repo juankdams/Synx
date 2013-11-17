@@ -1,0 +1,753 @@
+package GameObjects;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import Constants.CSpells;
+import Constants.Constants;
+import Core.Syn;
+import Enums.PlayerState;
+import GlobalObjects.GlobalWorld;
+import Misc.StringUtils;
+import Plugins.Managers.EffectsManager;
+
+public class GSpell {
+	//MINIMAL_SPELL_LAUNCH_DELAY = 500;  Temps minimum de l'animation quand on lance un sort jpense (Dans dofus/Managers/GameManager)
+	
+	
+	private short spellID = 0;//ID du sorts dans la table dans bdd et blaabla
+	private short spellSpriteAnimationID = 0;//Le sprite du sort, l'animation du sort.. ex. 110=la boule brune dans armure terrestre
+	private byte characterSpriteAnimationID = 0;//L'animation que le character va faire. Ex. le mvm de frapper ak épée
+	private byte displayType = 0;//La manière que les animations sont affichées, j'sais pas trop
+	private boolean showInFrontOfCharacter = true;//Si on affiche le sprite du sort en avant du sprite target (souvent character)
+	
+	private boolean isLineLaunch = false;//Si le lancé se fait en ligne seulement
+	private boolean lineOfSight = false;//Si une ligne de vue est obligatoire (aucun objet ne doit bloquer la vue entre le caster et le target)
+	private boolean isEmptyCell = false;//Si la cellule visée doit être vide
+	private boolean isModifPO = false;//Si la portée est modifiable
+	private boolean isEcEndTurn = false;//Si l'EC fait passer le tour
+	private ArrayList<GEffect> effects = null;//Les effets à appliquer quand on lance le sort
+	private ArrayList<GEffect> effectsCC = null;//Les effets à appliquer en cas de CC
+	private byte PA = 0;//nombre de PA pour lancer le sort
+	private byte classID;//TODO ClasseID pouvant utiliser le sort je crois (?) (0 étant tout le monde)
+	private byte rangeMin;//Minimum de portée
+	private byte rangeMax;//Maximum de portée
+	private short rateCC;//Taux de Coup Critique
+	private short rateEC;//Taux d'Echec Critique
+	private byte maxLaunchByTurn;////Max de lancer par tour.
+	private byte maxLaunchByTurnByTarget;//Max de lancer par cible par tour.
+	private byte cooldown;//TurnsDelayBetweenLaunches. nbr de tours entre deux lancers.
+	private String zoneType[][];//Type de zone et de combien de large ..
+	private String zoneTypeCC[][];//Type de zone et de combien de large ..
+	private byte requiredStates[] = null;//S'il y en a, set le égal à CPerso.laffaire qui tarrange pour être en référence au lieu de créer des nouveaux objets
+	private byte forbiddenStates[] = null;//S'il y en a, set le égal à CPerso.laffaire qui tarrange pour être en référence au lieu de créer des nouveaux objets
+	private short learnLevel = 0;//à quel niveau on l'apprend. 
+	
+	
+	
+	
+	/**
+	 * TODO GSpell.createNew PAS FINI Pour créer un niveau de un sort à partir de la string contenant ses paramètres et effets.
+	 */
+	public static GSpell createNew(short ID, String params, short spellSprite, byte characterSprite, byte displayType, boolean showInFrontOfCharacter, EffectsManager em) {
+		GSpell s = new GSpell(ID);
+		params = org.apache.commons.lang3.StringUtils.replace(params, " ", "");
+		String[] str = StringUtils.split2(params, ",");//params.split(",");
+		//for(int i = str.length-1; i >= 0; i--){
+		//	str[i] = str[i].trim();
+		//}
+		s.setSpellSprite(spellSprite);
+		s.setSpriteAnimationID(characterSprite);
+		s.setDisplayType(displayType);
+		s.setShowInFrontOf(showInFrontOfCharacter);
+		
+		//Création des listes d'effets normaux et en CoupCritique.
+		String[] effects = StringUtils.split2(str[0], "|");//str[0].split("\\|");
+		String[] cceffects = StringUtils.split2(str[1], "|");//str[1].split("\\|");
+		s.effects = new ArrayList<GEffect>(effects.length);
+		s.effectsCC = new ArrayList<GEffect>(cceffects.length);
+		for(String effect : effects){
+			if(effect.equals("-1")){
+				//S'il n'a pas d'effets en coup critique.(Et le TauxCC sera alors 0)
+				// (donc impossible de faire cc puisque ca sera chance/taux -> chance/0 = 0)
+				s.effects = null;
+				break;
+			}
+			//if(effect.indexOf(";") == -1){
+			//	Syn.d("effect.indexOf(;) == -1 -- effect=("+effect+")");
+			//}
+			if(effect.length() > 0){
+				s.effects.add(GEffect.provide(s).createNewForSpell(effect, em));
+				if(ID < 100 && !s.effects.get(s.effects.size()-1).getStringForSpell(em).equals(effect)){
+					Syn.d("Création d'effet de sort ("+ID+") ne fonctionne pas parfaitement: " +
+							"\n "+effect+
+							"\n "+s.effects.get(s.effects.size()-1).getStringForSpell(em)
+							);
+				}
+			}
+		}
+		for(String cceffect : cceffects){
+			if(cceffect.equals("-1")){
+				//S'il n'a pas d'effets en coup critique.(Et le TauxCC sera alors 0)
+				// (donc impossible de faire cc puisque ca sera chance/taux -> chance/0 = 0)
+				s.effectsCC = null;
+				break;
+			}
+			if(cceffect.length() > 0){
+				s.effectsCC.add(GEffect.provide(s).createNewForSpell(cceffect, em));
+			}
+		}
+		//morph;duréetours;probabilite à mettre dans le specialArg du GEffect [FAIT] (dans le GEffect.createNewForSpell)
+		
+		if(str[2].length() == 0){
+			//Syn.d("str[2].length() == 0 -- sortID ("+ID+") params = ("+params+").");
+			s.setPA(Constants.ZERO_BYTE);
+		}else{
+			s.setPA(Byte.parseByte(str[2]));
+		}
+		s.setRangeMin(Byte.parseByte(str[3]));
+		s.setRangeMax(Byte.parseByte(str[4]));
+		s.setRateCC(Short.parseShort(str[5]));
+		s.setRateEC(Short.parseShort(str[6]));
+		s.setLineLaunch(str[7].equalsIgnoreCase("TRUE"));
+		s.setLineOfSight(str[8].equalsIgnoreCase("TRUE"));
+		s.setEmptyCell(str[9].equalsIgnoreCase("TRUE"));
+		s.setModifPO(str[10].equalsIgnoreCase("TRUE"));
+		s.setClassID(Byte.parseByte(str[11]));
+		
+		s.setMaxLaunchByTurn(Byte.parseByte(str[12]));
+		s.setMaxLaunchByTurnByTarget(Byte.parseByte(str[13]));
+		s.setCooldown(Byte.parseByte(str[14]));
+		
+		
+		//Ex. de zones pour un sort :   Pa;Mol;Cc|Ru$Cc|Pa;Had
+		//-> $ sépare les normaux des CC
+		//-> | sépare les effet
+		//-> ; sépare les zoneTypes de chaque effets
+		String [] zoneTypeEffects = null;
+		if(s.effectsCC == null){
+			zoneTypeEffects = str[15].split("(?<=\\G..)");//1 Split / 2 char.
+			s.setZoneType(new String[zoneTypeEffects.length][]);
+			for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+				s.setZoneType(i, new String[]{zoneTypeEffects[i]});
+			}
+		}else{
+			zoneTypeEffects = str[15].substring(0, str[15].length()/2).split("(?<=\\G..)");//1 Split / 2 char.
+			s.setZoneType(new String[zoneTypeEffects.length][]);
+			for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+				s.setZoneType(i, new String[]{zoneTypeEffects[i]});
+			}
+			String[] zoneTypeEffectsCC = str[15].substring(str[15].length()/2).split("(?<=\\G..)");//1 Split / 2 char.
+			s.setZoneTypeCC(new String[zoneTypeEffectsCC.length][]);
+			for(int i = zoneTypeEffectsCC.length-1; i >= 0; i--){
+				s.setZoneTypeCC(i, new String[]{zoneTypeEffects[i]});
+			}
+		}
+		/*
+		if(s.effectsCC == null){
+			zoneTypeEffects = str[15].split("\\|");
+			s.setZoneType(new String[zoneTypeEffects.length][]);
+			for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+				String[] zoneTypes = zoneTypeEffects[i].split(";");
+				s.setZoneType(i, zoneTypes);
+			}
+		}else{
+			zoneTypeEffects = str[15].substring(0, str[15].indexOf("$")).split("\\|");
+			String[] zoneTypeEffectsCC = str[15].substring(str[15].indexOf("$")+1).split("\\|");
+			//s.setZoneType(str[15].substring(0, str[15].indexOf("$")).split("\\|"));
+			//s.setZoneTypeCC(str[15].substring(str[15].indexOf("$")+1).split("\\|"));
+			s.setZoneTypeCC(new String[zoneTypeEffectsCC.length][]);
+			for(int i = zoneTypeEffectsCC.length-1; i >= 0; i--){
+				String[] zoneTypesCC = zoneTypeEffectsCC[i].split(";");
+				s.setZoneTypeCC(i, zoneTypesCC);
+			}
+			
+		}
+		s.setZoneType(new String[zoneTypeEffects.length][]);
+		for(int i = zoneTypeEffects.length-1; i >= 0; i--){
+			String[] zoneTypes = zoneTypeEffects[i].split(";");
+			s.setZoneType(i, zoneTypes);
+		}
+		*/
+		//String requiredstates = org.apache.commons.lang3.StringUtils.replace(str[16], " ", "");
+		String requiredstates = org.apache.commons.lang3.StringUtils.replace(str[16], ";", ",");
+		//String requiredstates = str[16].replace(" ", "").replace(";", ",");
+		for(int i = CSpells.requiredStates.length-1; i >= 0; i--){
+			if(("["+requiredstates+"]").equals(CSpells.requiredStates[i])){
+				s.requiredStates = CSpells.requiredStatesBytes[i];
+				break;
+			}
+		}
+		//String forbidsts = org.apache.commons.lang3.StringUtils.replace(str[17], " ", "");
+		String forbidsts = org.apache.commons.lang3.StringUtils.replace(str[17], ";", ",");
+		//String forbidsts = str[17].replace(" ", "").replace(";", ",");
+		for(int i = CSpells.forbiddenStates.length-1; i >= 0; i--){
+			if(forbidsts.equals(CSpells.forbiddenStates[i])){
+				s.forbiddenStates = CSpells.forbiddenStatesBytes[i];
+				break;
+			}
+		}
+		try{
+			s.setLearnLevel(Short.parseShort(str[18]));
+		}catch(Exception e){
+			Syn.d("s.setLearnLevel(Short.parseShort(str[18])); -- sortID ("+ID+") params = ("+params+").");
+		}
+		s.setEcEndTurn(str[19].equalsIgnoreCase("TRUE"));
+		
+		/*En venant du lang, c'est: n: "Armure Incandescente"   (ID = 1)
+		 l6: [[[265, 14, null, null, 4, 0, "0d0+14"]], [[265, 15, null, null, 4, 0, "0d0+15"]], 2, 0, 0, 50, 100, false, false, false, false, 0, 0, 0, 5, "CcCc", [], [18, 19, 3, 1, 41], 109, false]
+ 
+		En ordre :
+		 
+		 
+		l6 = level 6 du sort
+		[[265, 14, null, null, 4, 0, "0d0+14"]] = Effets
+		    |- [265, 14, null, null, 4, 0, "0d0+14"] = Premier effet (Remarquez le nombre de [])
+		             |- ID d'effet 265, jet mini 14, jet max null. morph null, durée de leffet en tours 4, probabilité de réussite 0 (=à tous les coups),  jet en dés "0d0+14"
+		 
+		[[265, 15, null, null, 4, 0, "0d0+15"]] = Effets en coup critique
+		 
+		  |- [265, 15, null, null, 4, 0, "0d0+15"] = Premier effet (Remarquez le nombre de [])
+		             |- ID d'effet 265, jet mini 15, jet max null. morph null, durée de leffet en tours 4, probabilité de réussite 0 (=à tous les coups),  jet en dés "0d0+15"
+		 
+		2 = Cout en PA
+		0 = Portée min
+		0 = Portée max
+		50 = Taux de CC
+		100 = Taux d'EC
+		false = Si le lancé se fait en ligne seulement
+		false = Si une ligne de vue est obligatoire
+		fase = Si la cellule visée doit être vide
+		false = Si la portée du sort est modifiable
+		0 = ClassID (0 = n'importe quelle classe me semble)
+		0 = Maximum de lancers par tour (0 = infini)
+		0 = Maximum de lancers par tour par cible (0 = infini)
+		5 = Cooldown
+		"CcCc" = Type de zone d'effet
+		[] = États du joueur requit pour lancer le sort
+		[18, 19, 3, 1, 41] = États du joueur interdits pour lancer le sort (Il ne pourra pas lancer le sort tant qu'il un des effets interdits)
+		109 = Niveau pour débloquer le niveau du sort 
+		false = Si l'echec critique fait passer le tour.
+ 
+		 */
+		
+		
+		return s;
+	}
+	
+	
+	//public static GSpell[] createAllLevelNew(int iD) {
+		// TODO Auto-generated method stub
+	//	return null;
+	//}
+
+
+
+	public GSpell(short ID){
+		this.spellID = ID;
+	}
+
+	
+	
+	/**
+	 * param spellID - L'ID du spell dans la table de la bdd et dans le jeu
+	 */
+	public void setID(short spellID) {
+		this.spellID = spellID;
+	}
+	/**
+	 * @return - L'ID du spell dans la table de la bdd et dans le jeu
+	 */
+	public short getID() {
+		return spellID;
+	}
+	
+	/**
+	 * Check si un des effets permet de poser une glyphe.
+	 */
+	public boolean searchIfGlyph(EffectsManager em){
+		for(GEffect e : effects){
+			if(em.isGlyphEffect(e)){
+				return true;
+			}
+		}
+		return false;
+	}
+	/**
+	 * Check si un des effets permet de poser un piège.
+	 */
+	public boolean searchIfTrap(EffectsManager em){
+		for(GEffect e : effects){
+			if(em.isTrapEffect(e)){
+				return true;
+			}
+		}
+		return false;
+	}
+	/**
+	 * Check si un des effets permet d'invoquer une créature ou un double.
+	 */
+	public boolean searchIfSummons(EffectsManager em){
+		for(GEffect e : effects){
+			if(em.isSummonsEffect(e)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+
+	/**
+	 * Vérifie si les états requis du sorts contiennent les états du personnages
+	 * <p> Donc TRUE = le perso est correct. FALSE = PAS LE DROIT DE LANCER LE SORT
+	 * @param persoStates - Les états du personnage 
+	 * @return - True si le perso a tous les états requits par le sorts (Donc qu'il a le droit de lancer le sort). False sinon.
+	 */
+	public boolean containsRequiredStates(ArrayList<PlayerState> persoStates){
+		if(this.requiredStates == null){
+			return true;//Si le sort a rien de requit, c'correct
+		}
+		if(persoStates == null){
+			return false;//Si le sort a des états requit et que le perso en a aucun, pas correct
+		}
+		if(requiredStates.length > persoStates.size()){
+			//    on s'entend tu que le gars les aura pas tous xd
+			return false; 
+		}
+		byte counter = 0;
+		for(byte id : requiredStates){
+			for(PlayerState ps : persoStates){
+				if(id == ps.get()){
+					counter++;
+				}
+			}
+		}
+		return (counter == requiredStates.length);
+	}
+	
+	/**
+	 * Vérifie si les états interdits du sorts contiennent un des états du personnages
+	 * <p> Donc FALSE = le perso est correct. TRUE = PAS LE DROIT DE LANCER LE SORT
+	 * @param persoStates - Les états du personnage 
+	 * @return - True si les états interdits contiennent au moins un état du perso (Donc pas le droit de lancer le sort). False sinon.
+	 */
+	public boolean containsForbiddenStates(ArrayList<PlayerState> persoStates){
+		if(this.forbiddenStates == null || persoStates == null){
+			return false;
+		}
+		for(byte id : forbiddenStates){
+			for(PlayerState ps : persoStates){
+				if(id == ps.get()){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	
+	/*public void setSpellLevel(byte spellLvl) {
+		this.spellLvl = spellLvl;
+	}
+	public byte getSpellLevel() {
+		return spellLvl;
+	}*/
+	public void setLearnLevel(short learnLevel) {
+		this.learnLevel = learnLevel;
+	}
+	public short getLearnLevel() {
+		return learnLevel;
+	}
+	public void setPA(byte pA) {
+		PA = pA;
+	}
+	public byte getPA() {
+		return PA;
+	}
+	public void setEffects(ArrayList<GEffect> effects) {
+		this.effects = effects;
+	}
+	public ArrayList<GEffect> getEffects() {
+		return effects;
+	}
+	public void setEffectsCC(ArrayList<GEffect> effectsCCs) {
+		this.effectsCC = effectsCCs;
+	}
+	public ArrayList<GEffect> getEffectsCC() {
+		return effectsCC;
+	}
+	public void setLineOfSight(boolean lineOfSight) {
+		this.lineOfSight = lineOfSight;
+	}
+	public boolean isLineOfSight() {
+		return lineOfSight;
+	}
+
+	//public void setSpellLvl(byte spellLvl) {
+	//	this.spellLvl = spellLvl;
+	//}
+
+	public byte getSpellLvl(GWorld w) {
+		GSpell[] lvls = GlobalWorld.getSpell(w, spellID);
+		for(byte i = 0; i <= lvls.length-1; i++){
+			if(lvls[i].equals(this)){
+				return ++i;
+			}
+		}
+		return 0;
+		//return spellLvl;
+	}
+
+	public void setZoneType(String[][] porteeType) {
+		this.zoneType = porteeType;
+	}
+
+	/**
+	 * Set les ZoneTypes pour un seul effet (Oui, y'a plusieurs zoneTypes par Effet)
+	 * @param effectIndex -   L'index du GEffect dans l'arrayList d'effet
+	 * @param zoneTypes - Les zoneTypes à setter au GEffect
+	 */
+	public void setZoneType(int effectIndex, String[] zoneTypes) {
+		this.zoneType[effectIndex] = zoneTypes;
+	}
+	
+	/**
+	    if(coupCritique){
+			return this.getZoneTypeCC(effectIndex);
+		}else{
+			return this.getZoneType(effectIndex);
+		}
+	 */
+	public String[] getZoneTypeAppropriate(boolean coupCritique, int effectIndex){
+		if(coupCritique){
+			return this.getZoneTypeCC(effectIndex);
+		}else{
+			return this.getZoneType(effectIndex);
+		}
+	}
+	
+	/**
+	 * Return les zoneTypes du GEffect souhaité.
+	 * @param effectIndex - L'index du GEffect dans l'arrayList d'effet
+	 */
+	public String[] getZoneType(int effectIndex) {
+		return this.zoneType[effectIndex];
+	}
+	
+	public String[][] getZoneType() {
+		return zoneType;
+	}
+	
+	/**
+	 * Set les ZoneTypes pour un seul effet (en CC) (Oui, y'a plusieurs zoneTypes par Effet)
+	 * @param effectIndex -   L'index du GEffect dans l'arrayList d'effet
+	 * @param zoneTypes - Les zoneTypes à setter au GEffect
+	 */
+	public void setZoneTypeCC(int effectIndexCC, String[] zoneTypesCC) {
+		this.zoneTypeCC[effectIndexCC] = zoneTypesCC;
+	}
+	
+	/**
+	 * Return les zoneTypes du GEffect souhaité.
+	 * @param effectIndex - L'index du GEffect dans l'arrayList d'effet
+	 */
+	public String[] getZoneTypeCC(int effectIndexCC) {
+		return this.zoneTypeCC[effectIndexCC];
+	}
+
+	public void setLineLaunch(boolean isLineLaunch) {
+		this.isLineLaunch = isLineLaunch;
+	}
+
+	public boolean isLineLaunch() {
+		return isLineLaunch;
+	}
+
+	public void setEmptyCell(boolean isEmptyCell) {
+		this.isEmptyCell = isEmptyCell;
+	}
+
+	public boolean isEmptyCell() {
+		return isEmptyCell;
+	}
+
+	public void setModifPO(boolean isModifPO) {
+		this.isModifPO = isModifPO;
+	}
+
+	public boolean isModifPO() {
+		return isModifPO;
+	}
+
+	public void setEcEndTurn(boolean isEcEndTurn) {
+		this.isEcEndTurn = isEcEndTurn;
+	}
+
+	public boolean isEcEndTurn() {
+		return isEcEndTurn;
+	}
+
+	public void setRangeMin(byte rangeMin) {
+		this.rangeMin = rangeMin;
+	}
+
+	public byte getRangeMin() {
+		return rangeMin;
+	}
+
+	public void setRangeMax(byte rangeMax) {
+		this.rangeMax = rangeMax;
+	}
+
+	public byte getRangeMax() {
+		return rangeMax;
+	}
+
+	public void setRateCC(short rateCC) {
+		this.rateCC = rateCC;
+	}
+
+	public short getRateCC() {
+		return rateCC;
+	}
+
+	public void setRateEC(short rateEC) {
+		this.rateEC = rateEC;
+	}
+
+	public short getRateEC() {
+		return rateEC;
+	}
+
+	public void setMaxLaunchByTurn(byte maxLaunchByTurn) {
+		this.maxLaunchByTurn = maxLaunchByTurn;
+	}
+
+	public byte getMaxLaunchByTurn() {
+		return maxLaunchByTurn;
+	}
+
+	public void setMaxLaunchByTurnByTarget(byte maxLaunchByTurnByTargett) {
+		this.maxLaunchByTurnByTarget = maxLaunchByTurnByTargett;
+	}
+
+	public byte getMaxLaunchByTurnByTarget() {
+		return maxLaunchByTurnByTarget;
+	}
+
+	public void setCooldown(byte cooldown) {
+		this.cooldown = cooldown;
+	}
+
+	public byte getCooldown() {
+		return cooldown;
+	}
+
+	public void setClassID(byte classID) {
+		this.classID = classID;
+	}
+
+	public byte getClassID() {
+		return classID;
+	}
+
+
+	public void setZoneTypeCC(String zoneTypeCC[][]) {
+		this.zoneTypeCC = zoneTypeCC;
+	}
+
+
+	public String[][] getZoneTypeCC() {
+		return zoneTypeCC;
+	}
+
+	public String getString(EffectsManager em){
+		StringBuilder b = new StringBuilder();
+		String tempStr = "";
+		for(int i = 1; i >= 0; i--){
+			ArrayList<GEffect> tempEff = effects; 
+			if(i == 0){
+				b.append(tempStr).append(",");
+				tempStr = "";
+				tempEff = effectsCC;
+			}
+			if(tempEff != null && tempEff.size() > 0){
+				for(GEffect e : tempEff){
+					if(tempStr.length() > 0){
+						tempStr += "|";
+					}
+					tempStr += e.getStringForSpell(em);
+				}
+			}
+		}
+		if(tempStr.length() == 0){
+			b.append("-1");
+		}
+		b.append(tempStr).append(",");
+		tempStr = "";
+		b.append(getPA()).append(',');
+		b.append(getRangeMin()).append(',');
+		b.append(getRangeMax()).append(',');
+		b.append(getRateCC()).append(',');
+		b.append(getRateEC()).append(',');
+
+		b.append(isLineLaunch()).append(',');
+		b.append(isLineOfSight()).append(',');
+		b.append(isEmptyCell()).append(',');
+		b.append(isModifPO()).append(',');
+		b.append(getClassID()).append(',');
+		b.append(getMaxLaunchByTurn()).append(',');
+		b.append(getMaxLaunchByTurnByTarget()).append(',');
+		b.append(getCooldown()).append(',');
+		for(int i = 1; i >= 0; i--){
+			//Syn.d("i="+i);
+			String[][] tempZones = zoneType; 
+			if(i == 0){
+				b.append(tempStr);
+				if(tempStr.length() != 0 && zoneTypeCC != null && zoneTypeCC.length > 0){
+					b.append("$");
+				}
+				tempStr = "";
+				tempZones = zoneTypeCC;
+			}
+			if(tempZones != null && tempZones.length > 0){
+				for(String[] s : tempZones){
+					if(s != null){
+						if(tempStr.length() > 0){
+							tempStr += "|";
+						}
+						for(String z : s){
+							if(tempStr.length() > 0 && tempStr.endsWith("|") == false){
+								tempStr += ";";
+							}
+							tempStr += z;
+						}
+					}
+				}
+			}
+		}
+		b.append(tempStr).append(',');
+		tempStr = "";
+		if(this.requiredStates != null && requiredStates.length > 0){
+			String a = "";
+			for(byte r : requiredStates){
+				if(a.length() > 0){
+					a += ";";
+				}
+				a += (""+r);
+			}
+			b.append(a);
+		}else{
+			b.append("-1");
+		}
+		b.append(',');
+		if(this.forbiddenStates != null && forbiddenStates.length > 0){
+			String a = "";
+			for(byte r : forbiddenStates){
+				if(a.length() > 0){
+					a += ";";
+				}
+				a += (""+r);
+			}
+			b.append(a);
+		}else{
+			b.append("-1");
+		}
+		b.append(',');
+		b.append(getLearnLevel()).append(',');
+		b.append(isEcEndTurn());
+		/*
+		s.setPA(Byte.parseByte(str[2]));
+		s.setRangeMin(Byte.parseByte(str[3]));
+		s.setRangeMax(Byte.parseByte(str[4]));
+		s.setRateCC(Byte.parseByte(str[5]));
+		s.setRateEC(Byte.parseByte(str[6]));
+		s.setLineLaunch(str[7].equalsIgnoreCase("TRUE"));
+		s.setLineOfSight(str[8].equalsIgnoreCase("TRUE"));
+		s.setEmptyCell(str[9].equalsIgnoreCase("TRUE"));
+		s.setModifPO(str[10].equalsIgnoreCase("TRUE"));
+		s.setClassID(Byte.parseByte(str[11]));
+		
+		s.setMaxLaunchByTurn(Byte.parseByte(str[12]));
+		s.setMaxLaunchByTurnByTarget(Byte.parseByte(str[13]));
+		s.setCooldown(Byte.parseByte(str[14]));
+		
+		if(s.effectsCC == null){
+			s.setZoneType(str[15].split("\\|"));
+		}else{
+			s.setZoneType(str[15].substring(0, str[15].indexOf("$")).split("\\|"));
+			s.setZoneTypeCC(str[15].substring(str[15].indexOf("$")+1).split("\\|"));
+		}
+		
+		String requiredstates = str[16].replace(" ", "").replace(";", ",");
+		for(int i = CSpells.requiredStates.length-1; i >= 0; i--){
+			if(requiredstates.equals(CSpells.requiredStates[i])){
+				s.requiredStates = CSpells.requiredStatesBytes[i];
+				break;
+			}
+		}
+		String forbidsts = str[17].replace(" ", "").replace(";", ",");
+		for(int i = CSpells.forbiddenStates.length-1; i >= 0; i--){
+			if(forbidsts.equals(CSpells.forbiddenStates[i])){
+				s.forbiddenStates = CSpells.forbiddenStatesBytes[i];
+				break;
+			}
+		}
+		s.setEcEndTurn(str[18].equalsIgnoreCase("TRUE"));
+		 */
+		return b.toString();
+	}
+
+
+	/** @param spellSpriteAnimationID - Le sprite du sort, l'animation du sort.. ex. 110=la boule brune dans armure terrestre */
+	public void setSpellSprite(short spellSpriteAnimationID) {
+		this.spellSpriteAnimationID = spellSpriteAnimationID;
+	}
+	/** @return spellSpriteAnimationID - Le sprite du sort, l'animation du sort.. ex. 110=la boule brune dans armure terrestre */
+	public short getSpellSprite() {
+		return spellSpriteAnimationID;
+	}
+	
+	/** @param characterSpriteAnimationID - L'animation que le character va faire. Ex. le mouvement de frapper avec une épée */
+	public void setSpriteAnimationID(byte characterSpriteAnimationID) {
+		this.characterSpriteAnimationID = characterSpriteAnimationID;
+	}
+	/** @return - L'animation que le character va faire. Ex. le mouvement de frapper avec une épée */
+	public byte getSpriteAnimationID() {
+		return characterSpriteAnimationID;
+	}
+
+	/** @param showInFrontOfCharacter - Si on affiche le sprite du sort en avant du sprite target (souvent character) */
+	public void setShowInFrontOf(boolean showInFrontOfCharacter) {
+		this.showInFrontOfCharacter = showInFrontOfCharacter;
+	}
+	/** @return showInFrontOfCharacter - Si on affiche le sprite du sort en avant du sprite target (souvent character) */
+	public boolean isShowInFrontOf() {
+		return showInFrontOfCharacter;
+	}
+
+
+	public byte getDisplayType() {
+		return displayType;
+	}
+
+
+	public void setDisplayType(byte displayType) {
+		this.displayType = displayType;
+	}
+
+	/** @return - Le niveau du sort (1 à 6)  */
+	public byte getLevel(GWorld w){
+		GSpell[] levels = GlobalWorld.getSpell(w, getID());
+		if(levels == null || levels[0] == null){
+			return 1;
+		}
+		for(int i = levels.length-1; i >= 0; i--){
+			if(levels[i] == this){
+				return (byte)(i+1);
+			}
+		}
+		return 1;
+	}
+	
+}

@@ -1,0 +1,599 @@
+package SQL;
+
+import static Constants.Constants.ONE_SHORT;
+import static SQL.SqlServiceMySql.closePreparedStatement;
+import static SQL.SqlServiceMySql.closeResultSet;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Abstractions.AbstractSqlService;
+import Abstractions.AbstractWorld;
+import Constants.CServers;
+import Core.Syn;
+import Enums.CharacteristicType;
+import Enums.Orientation;
+import GameObjects.GMonster;
+import GameObjects.GMonsterGroup;
+import GameObjects.GMonsterGroup.MonsterGroupType;
+import GameObjects.GStatistiques;
+import GameObjects.GStatistiques.CharacteristicColumn;
+import GlobalObjects.Map;
+
+public class Monsters {
+
+	public static Logger log = LoggerFactory.getLogger(Monsters.class);
+	
+	private static final String saveMonsterGroupInstance = "INSERT INTO monsters_groups_instances( `ID` , `monsters` , `mapID` , `cellID` , `orientation` , `stars` , `drops` , `type` )"+
+						" VALUES (?,?,?,?,?,?,?,?);";
+	private static final String createMonster = "INSERT INTO monsters( `ID` , `name` , `gfx` , `drops` , `spells` , `colors` , `accessories` , `xp` )"+
+	" VALUES (?,?,?,?,?,?,?,?);";
+	/** ID  = ( monsterTemplateID * 10 + grade )   */
+	private static final String createMonsterStats = "INSERT INTO monsters_statistiques" +
+			"( `ID` , `level` , `PA` , `PM` , `pdv` , `initiative` , `kamas` , " +
+			"`intelligence` , `force` , `chance` , `agilite` , `sagesse` , " +
+			"`resistanceNeutreFixe` , `resistanceTerreFixe` , `resistanceFeuFixe` , `resistanceAirFixe` , `resistanceEauFixe` , " +
+			"`resistanceNeutrePourcent` , `resistanceTerrePourcent` , `resistanceFeuPourcent` , `resistanceAirPourcent` , `resistanceEauPourcent` , "+
+			"`esquivePA` , `esquivePM` )"+
+			" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+	
+	/*int finalgradestats[] = {
+	 * alevel, aPA, aPM, apdvmax, ainit, kamas, 
+	 * intell, force, chance, agilite, sagesse 
+	 * RN, RT, RF, RA, RE, 
+	 * RNP, RTP, RFP, RAP, REP, 
+	 * AF, MF,};
+	 */
+
+
+	/**
+	 * Charge tous les grades d'un monstre. Il peut avoir 1 à 10 grades (gradeIndex 0 à 9 utilisé pour l'ID des gstatistiques)
+	 * Et les ajoutes dans le l/gworld (y comprit les stats).
+	 */
+	public static GMonster[] load(short ID, AbstractWorld w){
+		AbstractSqlService sqlService = w.getServer() == null ? w.getStrategy().sqlGlobalService : w.getServer().getSqlService();
+		
+		try
+		{
+			ResultSet RS = sqlService.executeQuery("SELECT * FROM monsters WHERE ID = "+ID+";");
+			if(RS == null){return null;}
+			GMonster[] mons = null;
+			if(RS.next())
+			{
+				//String[] grades = RS.getString("grades").split("|");
+				String[] gfxs = RS.getString("gfx").split("\\|");
+				String[] drops = RS.getString("drops").split("\\|");
+				String[] accessories = RS.getString("accessories").split("\\|");
+				String[] spells = RS.getString("spells").split("\\|");
+				String[] colors = RS.getString("colors").split("\\|");
+				String[] xps = RS.getString("xp").split("\\|");
+				String[] ias = RS.getString("iaID").split("\\|");
+				//Syn.d("colors="+RS.getString("colors"));
+				//Syn.d("colors[0]="+colors[0]);
+				Syn.d("Loading Mob :"+ID+". drops.length="+drops.length+".");
+				
+				mons = new GMonster[gfxs.length];
+				for(int i = mons.length-1; i >= 0; i--){
+					mons[i] = 
+						GMonster.provide(w).createNew(ID, gfxs[i], 
+							drops.length <= i ? null : drops[i].split(";"),
+							accessories[i], 
+							colors[i].split(";"),
+							spells.length <= i ? null : spells[i].split(";"), 
+							xps,
+							ias,
+							w.getServer()
+							);
+					GStatistiques st = loadStatistiques(ID+""+i, w);
+					mons[i].setStatistiques(st);
+					/*if(mons[i].getTemplateID() >= CServers.minimumIDinWorldMonstersTable){
+						s.getWorld().addStatistique( -((ID * 10) + i), st);
+					}else{
+						LWorld.addStatistique( -((ID * 10) + i), st);
+					}*/
+				}
+				//if(mons[0].getTemplateID() >= CServers.minimumWorldObjectID){//minimumIDinWorldMonstersTable){
+				//	w.getWorld().addMonsterTemplate(mons);
+				//}else{
+				//	GlobalWorld.addMonsterTemplate(mons);
+				//}
+				w.addMonsterTemplate(mons);
+			}
+			
+			closeResultSet(RS);
+			return mons;
+		}catch(Exception e)
+		{
+			Syn.d("Mob qui Bug :"+ID+". ");
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+
+	/*
+	public static ArrayList<GMonster> loadInstance(String mobInstancesIDs, GWorld w) {
+		// TODO Auto-generated method stub
+		String DBName = w == null ? Config.globalDBName : w.getServer().getConfig().getDBName();
+		ArrayList<GMonster> monsters = null;
+		try {
+			ResultSet RS = SQL.executeQuery("SELECT * from monsters_instances WHERE `ID` IN ("+mobInstancesIDs+");", DBName);
+			if(RS == null){
+				return null;
+			}
+			monsters = new ArrayList<GMonster>();
+			while(RS.next()){
+				load(RS.getShort("templateID"), w.getServer());
+				GMonster monster = GMonster.createNew(
+						RS.getString("drops"), 
+						RS.getString("accessories"), 
+						RS.getString("spells"), 
+						w.getServer());
+				GStatistiques st = loadStatistiques(monster.getStatistiquesID()+"", w.getServer());
+				if(monster.getTemplateID() >= CServers.minimumIDinWorldMonstersTable){
+					w.addStatistique(monster.getStatistiquesID(), st);
+				}else{
+					LWorld.addStatistique(monster.getStatistiquesID(), st);
+				}
+			}
+			closeResultSet(RS);
+		} catch (SQLException e) {e.printStackTrace();}
+		return monsters;
+	}
+	*/
+
+	public static ArrayList<GMonsterGroup> loadGroupsInstances(String monstersGroupsInstances, Map m, AbstractSqlService sqlService, AbstractWorld w) {
+		//String DBName = w == null ? Config.globalDBName : w.getServer().getConfig().getDBName();
+		ArrayList<GMonsterGroup> groups = null;
+		//Syn.d("DBName="+DBName);
+		try {
+			ResultSet RS = sqlService.executeQuery("SELECT * from monsters_groups_instances WHERE (`mapID` = '"+m.getID()+"' AND `ID` IN ("+monstersGroupsInstances+"));");
+			if(RS == null){
+				return null;
+			}
+			//Syn.d("monstersGroupsInstances 1 ="+monstersGroupsInstances);
+			groups = new ArrayList<GMonsterGroup>();
+			boolean alreadyUsedID = false;
+			while(RS.next()){
+				//Syn.d("loadGroupsInstances loadingGroup in RS.Next:"+groups.size());
+				for(GMonsterGroup mg : groups){
+					if(mg.getID() == RS.getShort("ID")){
+						alreadyUsedID = true;
+					}
+				}
+				if(alreadyUsedID){
+					alreadyUsedID = false;
+					Core.Exceptions.write("[AlreadyUsedID]", "SQL.Monsters.loadGroupsInstances: L'ID d'instance de groupe de monstre est déjà utilisé.");
+					continue;
+				}
+				
+				GMonsterGroup group = w.getServer().getProviders().provideMonsterGroup().loadInstance(RS.getShort("ID"), RS.getString("monsters"), RS.getString("type"), w);//GMonsterGroup.loadInstance(RS.getShort("ID"), RS.getString("monsters"), RS.getString("type"), w);
+				group.setCellID(RS.getShort("cellID"));
+				if(m != null){ group.setMap(m); } //SetMap depuis l'argument passé à cette method
+				else{ group.setMapID(RS.getShort("mapID")); } //SetMap depuis l'ID trouvé en bdd.
+				group.setOrientationID(RS.getByte("orientation"));
+				group.setDrops(RS.getString("drops").split("\\|"));
+				groups.add(group);
+				//Syn.d("loadGroupsInstances addedAGroup. groupsSize:"+groups.size());
+			}
+			closeResultSet(RS);
+		} catch (SQLException e) {e.printStackTrace();}
+		//Syn.d("monstersGroupsInstances 2 ="+monstersGroupsInstances);
+		//Syn.d("loadGroupsInstances size:"+groups.size());
+		return groups;
+	}
+	
+	
+	public static GStatistiques loadStatistiques(String gstatID, AbstractWorld w){
+		AbstractSqlService sqlService = w.getServer() == null ? w.getStrategy().sqlGlobalService : w.getServer().getSqlService();
+		try
+		{
+			ResultSet RS = sqlService.executeQuery("SELECT * FROM monsters_statistiques WHERE ID = "+gstatID+";");
+			if(RS == null){return null;}
+			if(RS.next())
+			{
+				GStatistiques stats = new GStatistiques();
+				//Set les charactéristiques de base
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.PA, RS.getByte("PA"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.PM, RS.getByte("PM"));
+				
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.LEVEL, RS.getShort("level"));
+				//stats.setPdvMax(RS.getShort("pdv"));
+				//stats.setPdv(RS.getShort("pdv"));
+				//stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.MAX_LIFE_POINTS, RS.getShort("pdv"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.LIFE_POINTS, RS.getShort("pdv"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.VITALITE, RS.getShort("pdv"));
+				
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.INITIATIVE, RS.getShort("initiative"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.INTELLIGENCE, RS.getShort("intelligence"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.FORCE, RS.getShort("force"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.CHANCE, RS.getShort("chance"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.AGILITE, RS.getShort("agilite"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.INVOCATIONS_MAX, ONE_SHORT);
+				
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_TERRE, RS.getShort("resistanceTerreFixe"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_TERRE_PERCENT, RS.getShort("resistanceTerrePourcent"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_FEU, RS.getShort("resistanceFeuFixe"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_FEU_PERCENT, RS.getShort("resistanceFeuPourcent"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_EAU, RS.getShort("resistanceEauFixe"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_EAU_PERCENT, RS.getShort("resistanceEauPourcent"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_AIR, RS.getShort("resistanceAirFixe"));
+				stats.putCharac(CharacteristicColumn.BASE, CharacteristicType.RESIST_AIR_PERCENT, RS.getShort("resistanceAirPourcent"));
+				
+				return stats;
+			}
+			
+			closeResultSet(RS);
+			return null;
+		}catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * Sauvegarde une instance de groupe de monstres qui ont été instanciés.
+	 * <br> Donc return true à .isInstance()
+	 */
+	public static void saveInstance(GMonsterGroup mg, AbstractWorld w){
+		AbstractSqlService sqlService = w.getServer() == null ? w.getStrategy().sqlGlobalService : w.getServer().getSqlService();
+		try {	//`ID` , `monsters` , `mapID` , `cellID` , `orientation`
+			PreparedStatement ps = sqlService.newTransact(saveMonsterGroupInstance);
+			ps.setInt(1, mg.getID());
+			ps.setString(2, mg.getMonstersInstancesIDs());
+			ps.setInt(3, mg.getMapID());
+			ps.setShort(4, mg.getCellID());
+			ps.setByte(5, mg.getOrientation());
+			ps.setShort(6, mg.getStars());//stars
+			ps.setString(7, "");//drops
+			ps.setString(8, mg.getType().name());//type
+			ps.execute();
+			
+			Maps.saveMonsterGroupList(null, null);
+			// |-> sauvegarde la liste d'instances de groupes de monstres ds colonne: monstersGroupsInstances.
+			
+			closePreparedStatement(ps);
+		} catch (SQLException e) {
+			log.error("Sauvegarde du groupe de monstres echouee: SQL ERROR: "+e.getMessage()+"\n  Game: Query: "+saveMonsterGroupInstance);
+		}
+	}
+
+	
+	
+	public static void transferZenMonstersToSyn() {
+		int id = -1;
+		try
+		{
+			ResultSet RS = Syn.Services.sqlZenService.executeQuery("SELECT * FROM monsters;");
+			//ResultSet RS = SQLManager.executeQuery("SELECT * FROM monsters;",Zen.STATIC_DB_NAME);
+			while(RS.next())
+			{
+				id = RS.getInt("id");
+				int numberOfGrades = 5;//RS.getString("grades").split("\\|").length;
+				int[][] fullfinalstats = new int[numberOfGrades][0];
+				String fullfinalspells = "";
+				String fullfinalcolors = "";
+				String fullfinaldrops = "";
+				String fullfinalGfxIDs = "";
+				String fullfinalxp = "";
+				String name = RS.getString("name");
+				
+
+				ResultSet RSdrops = Syn.Services.sqlZenService.executeQuery("SELECT * FROM drops WHERE mob = "+RS.getInt("id")+";");
+				String drops = "";
+				if(RSdrops != null && RSdrops.first()){// && RSdrops.isBeforeFirst() == false){
+					while(RSdrops.isAfterLast() == false){
+						if(drops.length() > 0){
+							drops += ";";
+						}
+						drops += RSdrops.getString("item") + "," ;//itemtemplateID
+						drops += RSdrops.getString("max") + "," ;//qtyMax he can drop
+						drops += RSdrops.getString("taux") + "," ;//taux = probabilité de drop
+						drops += "1,"; //nombre minimum de players pour pouvoir drop
+						drops += RSdrops.getString("seuil") ;//min prospection
+						RSdrops.next();
+						/*
+						 * d.setItemTemplateID(Integer.parseInt(infos[0]));
+							d.setQuantity(Short.parseShort(infos[1]));
+							d.setProbability(Double.parseDouble(infos[2]));
+							d.setMinimumPlayers(Byte.parseByte(infos[3]));
+							d.setMinimumProspection(Short.parseShort(infos[4]));
+						 */
+					}
+				}
+				
+				
+				int gfxID = RS.getInt("gfxID");
+				int align = RS.getInt("align");
+				String colors = RS.getString("colors").replace(",", ";");
+				String grades = RS.getString("grades");
+				String spells = RS.getString("spells");
+				String stats = RS.getString("stats");
+				String pdvs = RS.getString("pdvs");
+				String pts = RS.getString("points");
+				String inits = RS.getString("inits");
+				int mk = RS.getInt("minKamas");
+				int MK = RS.getInt("maxKamas");
+				if(MK < mk){
+					MK = mk;
+				}
+				//int IAType = RS.getInt("AI_Type");
+				String xp = RS.getString("exps");
+				/*boolean capturable;
+				if(RS.getInt("capturable") == 1)
+				{
+					capturable = true;
+				}else
+				{
+					capturable = false;
+				}*/
+				for(int n = 0; n <= numberOfGrades-1; n++)
+				{
+					try
+					{
+						//Grades
+						String agrade = grades.split("\\|")[n];
+						if(agrade.length() == 0){
+							Syn.d("alsuhjdb");
+						}
+						String[] ainfos = agrade.split("@");
+						int alevel = Integer.parseInt(ainfos[0]);
+						String aresists = ainfos[1];
+						//Stats
+						String astats =  stats.split("\\|")[n];
+						//Spells
+						
+						String aspells =  "";
+						if(spells.split("\\|").length > n){
+							aspells = spells.split("\\|")[n];
+						}
+						if(spells.equals("-1"))spells ="";
+						//PDVMax//init
+						int apdvmax = 0;
+						try{
+							apdvmax = Integer.parseInt(pdvs.split("\\|")[n]);
+						}catch(Exception e){e.printStackTrace();}
+						int ainit = 0;
+						try{
+							ainit = Integer.parseInt(inits.split("\\|")[n]);
+						}catch(Exception e){e.printStackTrace();}
+
+						//PA / PM
+						String[] apts = pts.split("\\|")[n].split(";");
+						int aPA = Integer.parseInt(apts[0]);
+						int aPM = Integer.parseInt(apts[1]);
+						int axp = Integer.parseInt(xp.split("\\|")[n]);
+						
+						String[] resists = aresists.split(";");
+						String[] statsArray = astats.split(",");
+						int RNP = 0,RFP = 0, REP = 0, RAP = 0, RTP= 0, AF = 0, MF = 0,force = 0, intell = 0, sagesse = 0,chance = 0, agilite = 0;
+						RNP = Integer.parseInt(resists[0]);
+						RTP = Integer.parseInt(resists[1]);
+						RFP = Integer.parseInt(resists[2]);
+						REP = Integer.parseInt(resists[3]);
+						RAP = Integer.parseInt(resists[4]);
+						AF = Integer.parseInt(resists[5]);
+						MF = Integer.parseInt(resists[6]);
+						force = Integer.parseInt(statsArray[0]);
+						sagesse = Integer.parseInt(statsArray[1]);
+						intell = Integer.parseInt(statsArray[2]);
+						chance = Integer.parseInt(statsArray[3]);
+						agilite = Integer.parseInt(statsArray[4]);
+						
+						double interval = (MK - mk / (numberOfGrades - 1));
+
+						int kamas = (int) ( mk + ((n) * interval) );
+						
+						int finalgradestats[] = {
+												  alevel, aPA, aPM, apdvmax, ainit, kamas, 
+												  intell, force, chance, agilite, sagesse, 
+												  0, 0, 0, 0, 0,
+												  RNP, RTP, RFP, RAP, REP,
+												  AF, MF};
+							//{alevel, aPA, aPM, apdvmax, ainit, kamas, axp, RN, RT, RF, RE, RA, AF, MF, force, sagesse, intell, chance, agilite};
+						try{
+							fullfinalstats[n] = finalgradestats;
+						}catch(Exception e){e.printStackTrace(); System.exit(0);}
+						
+						String newgradeSpells = aspells.replace("@", ",");
+						if(fullfinalspells.length() > 0){
+							fullfinalspells += "|";
+						}
+						fullfinalspells += newgradeSpells;
+						
+						if(fullfinalxp.length() > 0){
+							fullfinalxp += "|";
+						}
+						fullfinalxp += axp;
+						
+					}catch(Exception e){  Syn.d("Bug 1 dans le chargement d'un monstre ("+id+")"); e.printStackTrace();  };	
+				}
+				/*fullfinalspells = spells.replace("@", ",");
+				if(fullfinalspells.endsWith("\\|")){
+					fullfinalspells = fullfinalspells.substring(0, fullfinalspells.length()-1);
+				}
+				while(fullfinalspells.split("\\|").length < 5){
+					fullfinalspells += "|";
+				}*/
+				for(int i = 0; i <= numberOfGrades-1; i++){
+					if(fullfinalcolors.length() > 0){
+						fullfinalcolors += "|";
+						fullfinaldrops  += "|";
+						fullfinalGfxIDs += "|";
+					}
+					fullfinalcolors += colors;
+					fullfinaldrops += drops;
+					fullfinalGfxIDs += gfxID;
+				}
+				while(fullfinalxp.split("\\|").length < 5){
+					fullfinalxp += "|";
+				}
+				createMonsterFromZen(id, name, fullfinalstats, fullfinalspells, fullfinaldrops, fullfinalGfxIDs, align, fullfinalcolors, fullfinalxp);	
+			}
+			closeResultSet(RS);
+		}catch(Exception e){ Syn.d("Bug 2 dans le chargement d'un monstre ("+id+")"); e.printStackTrace();  }
+	}
+	
+	
+	public static void createMonsterFromZen(int id, String name, int[][] fullfinalstats, String fullfinalspells, String fullfinaldrops, String fullfinalgfxID, int align, String fullfinalcolors, String fullfinalxp){
+		if((id*10) >= Short.MAX_VALUE){
+			Syn.d("Rejected ID too high : "+id+".");
+			return;
+		}
+		try {	//`ID` , `monsters` , `mapID` , `cellID` , `orientation`
+			PreparedStatement ps = Syn.Services.dofusClientStrategy.sqlGlobalService.newTransact(createMonster);
+			ps.setInt(1, id);
+			ps.setString(2, name);
+			ps.setString(3, fullfinalgfxID);
+			ps.setString(4, fullfinaldrops);
+			ps.setString(5, fullfinalspells);
+			ps.setString(6, fullfinalcolors);
+			ps.setString(7, ",,,,|,,,,|,,,,|,,,,|,,,,");//accessoires
+			ps.setString(8, fullfinalxp);
+			ps.execute();
+
+			//Syn.d("asdf "+fullfinalstats[fullfinalstats.length-1].length); 
+			// |-> desfois ca marche (length 23) desfois non (length 0)
+			
+			for(int g = 0; g <= fullfinalstats.length-1; g++){
+				createMonsterStatsFromZen(id, g, fullfinalstats[g]);
+			}
+			
+			closePreparedStatement(ps);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.exit(0);
+			//log.error("Création de monstre à partir de Zen echouee: SQL ERROR: "+e.getMessage()+"\n  Game: Query: "+createMonster);
+		}
+	}
+	
+	public static void createMonsterStatsFromZen(int id, int grade, int[] finalgradestats){
+		PreparedStatement ps = null;
+		int n = 0;
+		try {	
+			ps = Syn.Services.dofusClientStrategy.sqlGlobalService.newTransact(createMonsterStats);
+			ps.setInt(1, ((id * 10) + grade) );
+			Syn.d("id=("+id+") finalgradestats.length = "+finalgradestats.length);
+			if(finalgradestats.length != 23){
+				System.exit(0);
+			}
+			for(n = 2; n <= finalgradestats.length+1; n++){
+				//Syn.d("asd"+(n+2));
+				ps.setShort( (n), (short) finalgradestats[n-2]);
+			}
+			//ps.setShort( (n), (short) finalgradestats[n-3]);
+			ps.execute();
+			
+			closePreparedStatement(ps);
+		} catch (Exception e) { e.printStackTrace(); }
+	}
+
+
+	public static void transferZenMonstersGroupsToSyn() {
+		HashMap<Integer, ArrayList<Integer>> mapsIDGroupIDInstances = new HashMap<Integer, ArrayList<Integer>>();
+		try
+		{
+			int groupID = 0;
+			ResultSet RS = Syn.Services.sqlZenService.executeQuery("SELECT * FROM mobgroups_fix;");
+			while(RS.next())
+			{
+				int mapID = RS.getInt("mapid");
+				short cellID = RS.getShort("cellid");
+				String groupData = RS.getString("groupData");
+				String newGroupData = "";
+				if(mapID >= CServers.minimumWorldObjectID){//minimumIDinWorldMapTable){
+					continue;
+				}
+
+				for(String data : groupData.split(";"))
+				{
+					String[] infos = data.split(",");
+					short mid = Short.parseShort(infos[0]);
+					int min = Integer.parseInt(infos[1]);
+					int max = Integer.parseInt(infos[2]);
+					GMonster monsters[] = Monsters.load(mid, null);
+					for(GMonster m : monsters){
+						if(m.getLevel() >= min && m.getLevel() <= max){
+							if(newGroupData.length() > 0){
+								newGroupData += ",";
+							}
+							newGroupData += ( "" + ( -m.getStatistiquesID() ) );
+						}
+					}
+				}
+				createMonsterGroupFromZen(groupID, mapID, cellID, newGroupData);
+				if(mapsIDGroupIDInstances.get(mapID) == null){
+					mapsIDGroupIDInstances.put(mapID, new ArrayList<Integer>());
+				}
+				mapsIDGroupIDInstances.get(mapID).add(groupID);
+				groupID++;
+			}
+			for(Entry<Integer, ArrayList<Integer>> entry : mapsIDGroupIDInstances.entrySet()){
+				saveMonsterGroupList(Syn.Services.dofusClientStrategy.sqlGlobalService, entry.getKey(), entry.getValue());
+			}
+			
+			closeResultSet(RS);
+		}catch(Exception e){ e.printStackTrace();  }
+	}
+
+	/**
+	 * Sauvegarde une instance de groupe de monstres qui ont été instanciés.
+	 * <br> Donc return true à .isInstance()
+	 */
+	public static void createMonsterGroupFromZen(int id, int mapID, short cellID, String groupData){
+		try {	//`ID` , `monsters` , `mapID` , `cellID` , `orientation`
+			PreparedStatement ps = Syn.Services.dofusClientStrategy.sqlGlobalService.newTransact(saveMonsterGroupInstance);
+			ps.setInt(1, id);
+			ps.setString(2, groupData);
+			ps.setInt(3, mapID);
+			ps.setShort(4, cellID);
+			ps.setByte(5, Orientation.getRandom().getValue());
+			ps.setShort(6, (short)0);//stars
+			ps.setString(7, "");//drops
+			ps.setString(8, MonsterGroupType.STATIC_INSTANCE.name());//type
+			ps.execute();
+			
+			Maps.saveMonsterGroupList(Syn.Services.dofusClientStrategy.globalWorld.getMap(mapID), null);
+			// |-> sauvegarde la liste d'instances de groupes de monstres ds colonne: monstersGroupsInstances.
+			
+			closePreparedStatement(ps);
+		} catch (SQLException e) {
+			log.error("Sauvegarde du groupe de monstres echouee: SQL ERROR: "+e.getMessage()+"\n  Game: Query: "+saveMonsterGroupInstance);
+		}
+	}
+	
+	public static void saveMonsterGroupList(AbstractSqlService sqlService, int mapID, ArrayList<Integer> groups) {
+		try {
+			//Syn.d("insertMap ID "+m.getID());
+			PreparedStatement p = sqlService.newTransact("UPDATE maps SET monstersGroupsInstances = ? WHERE ID = "+mapID+";");
+			String groupsList = "";
+			for(Integer id : groups){
+				if(groupsList.length() > 0){
+					groupsList += ",";
+				}
+				groupsList += id;
+			}
+			p.setString(1, groupsList);
+			
+			p.execute();
+			closePreparedStatement(p);
+		} catch (Exception e) {
+			Syn.d("saveMonsterGroupList.  Mapid ="+mapID+".");
+			e.printStackTrace();
+			// log.error("Game: SQL ERROR: "+e.getMessage());
+			// log.error("Game: Query: "+"UPDATE maps SET monstersGroupsInstances = ? WHERE ID = ?;");
+		}
+	}
+	
+	
+	
+
+}

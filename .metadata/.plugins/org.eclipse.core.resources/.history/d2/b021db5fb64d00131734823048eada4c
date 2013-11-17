@@ -1,0 +1,23 @@
+package Plugins.Managers;
+
+
+import java.util.HashMap;
+import org.fusesource.jansi.Ansi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import Core.Syn;
+import Game.DofusGameClient;
+import Interfaces.IClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+/**
+ * Juste un modèle de ParsingManager pour montrer que cette method parse(dofus)
+ * est disponible pour Synod.
+ * Sans ça, Synod se réfèrait au ParsingManager de Syn qui lui contient des référence à Synod
+ * donc y'aurait fallu import Synod sans Synaw et vice-versa sans ce modèle.
+ */
+public class ParsingManager {
+	public boolean parse(DofusGameClient c, String packet){
+		return false;
+	}
+}

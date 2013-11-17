@@ -1,0 +1,12 @@
+package Game;
+
+import Interfaces.IClient;
+import LoginObjects.LAccount;
+
+public abstract class GameClient implements IClient {
+	
+
+	private LAccount account = null;
+	
+	
+}

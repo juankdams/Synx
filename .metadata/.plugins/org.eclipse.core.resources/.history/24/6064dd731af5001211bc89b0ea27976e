@@ -1,0 +1,74 @@
+package Observing;
+
+import java.util.Observable;
+import java.util.Observer;
+
+import Enums.ActionListenerType;
+import GameObjects.GPersonnage;
+import GameObjects.Fights.GFight;
+
+public class FightDeconnectedObserver implements Observer {
+
+
+	private GPersonnage p = null;
+	private GFight f = null;
+	private byte turnsDeco = 20;
+	
+	
+	public FightDeconnectedObserver(GPersonnage p){
+		this.p = p;
+		this.f = p.getFight();
+	}
+	
+	@Override
+	public void update(Observable obs, Object obj) {
+		if(p.equals(obj) == false){
+			return;
+		}
+		if(f.getStateMachine().get() == ActionListenerType.ON_FIGHT_TURN_START.ordinal() && p.equals(obj)){
+			
+			if(turnsDeco == 0){//TODO: ajouter le nombre de tours pour déconnecter dans la gconfig
+				//TODO f.kick(p) + p.getClient().kick();  			donc retire le gars du combat + déconnecte et terminate
+				
+				//send Im Message : Le personnage Y ne s'est pas reconnecté, il est kické blabla
+				SM.Messages.MO("Le personnage "+p.getName()+" est déconnecté du combat car il ne s'est pas reconnecté en jeu depuis 20 tours.", Constants.Constants.COLOR_PINK, p.getWorld());
+				f.getStateMachine().deleteObserver(this);
+				//f.endTurn();
+				NewThreads.FightSchedulingStrategies.FightSchedulingStrategies.getStrategy().finish(f);
+				terminate();
+				
+			}else{
+				turnsDeco--;
+				//send Im Message :  Il reste X tours avant la déconnection totale de MonsieurLPerso.
+				SM.Messages.MO("Il reste "+turnsDeco+" avant la déconnection complète de "+p.getName()+".", Constants.Constants.COLOR_PINK, p.getWorld());
+				//f.endTurn();
+				NewThreads.FightSchedulingStrategies.FightSchedulingStrategies.getStrategy().finish(f);
+			}
+		}else if(f.getStateMachine().get() == ActionListenerType.ON_FIGHT_RECONNECTED.ordinal() && p.equals(obj)){
+			SM.Messages.MO("Le joueur "+p.getName()+" s'est reconnecté en combat!", Constants.Constants.COLOR_PINK, p.getWorld());
+			f.getStateMachine().deleteObserver(this);
+			//Reconnection du personnage : 
+			f.sendInitFightPackets(p);
+			SM.Game.showAllSprites(p, p.getMap());//Affiche les autres persos,monstres au gars qui se reconnecte.
+			SM.Infos.ILF(p.getClient(), 0, true);//Stop le timer de régénération
+			f.sendPlacementFightPackets(p);//
+			SM.Game.GM_ADD(p, p.getMap());//Affiche le gars qui se reconnecte aux autres gens dans le combat.
+			f.sendActiveFightPackets(p);
+
+			terminate();
+		}
+	}
+
+	public void terminate(){
+		p = null;
+		f = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+	}
+
+	
+
+}

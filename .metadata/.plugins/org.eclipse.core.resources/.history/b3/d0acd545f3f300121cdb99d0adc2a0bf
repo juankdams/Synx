@@ -1,0 +1,15 @@
+package pack;
+
+public enum GameActionEndType {
+	
+	SPELL(0),
+	MOVEMENT(2);
+	
+	private byte value = 0;
+	private GameActionEndType(int val){
+		this.value = val;
+	}
+	
+	
+
+}

@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+
+<i18n
+FRENCH = "Francais"
+ENGLISH = "English"
+>
+	<French
+	
+	
+	GM_LVL_TOO_LOW="Votre Niveau de Jeu (GM) est trop bas."
+	PLUGIN_NOT_EXISTS="Ce plugin n'existe pas."
+	COMMAND_NOT_EXISTS="Cette commande n'existe pas."
+	ACCOUNT_NOT_CONNECTED="Ce compte n'est pas connecté."
+	ACCOUNT_NOT_EXISTS="Ce compte n'existe pas."
+	PERSO_NOT_CONNECTED="Ce personnage n'est pas connecté."
+	PERSO_NOT_EXIST="Ce personnage n'existe pas."
+	SPECIFY_PARAMETER="Veuillez spécifier un paramètre."
+	>
+	</French>
+	
+	<English
+	
+	GM_LVL_TOO_LOW="Your Game Level (GM) is too low."
+	PLUGIN_NOT_EXISTS="This plugin doesn't exist."
+	COMMAND_NOT_EXISTS="This command doesn't exist."
+	ACCOUNT_NOT_CONNECTED="This account is not connected."
+	ACCOUNT_NOT_EXISTS="This account doesn't exist."
+	PERSO_NOT_CONNECTED="This character is not connected."
+	PERSO_NOT_EXIST="This character doesn't exist."
+	SPECIFY_PARAMETER="Please specify a parameter."
+	>
+	</English>
+</i18n>
+

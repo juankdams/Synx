@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename method &apos;Parsers.GameParser.onQuit(...)&apos; to &apos;onGameQuit&apos;&#x0D;&#x0A;- Original project: &apos;PluginParsing&apos;&#x0D;&#x0A;- Original element: &apos;Parsers.GameParser.onQuit(...)&apos;&#x0D;&#x0A;- Renamed element: &apos;Parsers.GameParser.onGameQuit(...)&apos;&#x0D;&#x0A;- Update references to refactored element" delegate="false" deprecate="false" description="Rename method &apos;onQuit&apos;" flags="589826" id="org.eclipse.jdt.ui.rename.method" input="/src&lt;Parsers{GameParser.java[GameParser~onQuit~QGClient;~QString;" name="onGameQuit" references="true" stamp="1376238458227" version="1.0"/>
+</session>

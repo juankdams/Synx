@@ -1,0 +1,15 @@
+package Plugins.Managers;
+
+public class PluginsManagerBuilder extends PluginsManager {
+
+	public PluginsManagerBuilder(PluginsManager defaultPluginsManager) {
+		super(defaultPluginsManager);
+	}
+
+	@Override
+	public void loadPlugins() {
+		// TODO Auto-generated method stub
+	}
+	
+
+}

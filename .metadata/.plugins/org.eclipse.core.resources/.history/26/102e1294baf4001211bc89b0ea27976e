@@ -1,0 +1,9 @@
+package Enums;
+
+public enum AlignementSpecializationType {
+	
+	//0=neutre, 1=bonta, 2=brakmar, 3=mercenaire.
+	
+	
+
+}

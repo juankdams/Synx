@@ -1,0 +1,9 @@
+package GameClientStrategies;
+
+public interface GameClientStrategy {
+	
+	private GameClientStrategies
+	public String getName();
+	
+
+}

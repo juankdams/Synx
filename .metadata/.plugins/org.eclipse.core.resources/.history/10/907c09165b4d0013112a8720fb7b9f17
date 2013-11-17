@@ -1,0 +1,16 @@
+package Wakfu;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.MessageBuf;
+import io.netty.channel.ChannelHandlerContext;
+import Servers.Netty.Decoder;
+
+public class WakfuDecoder extends Decoder {
+
+	@Override
+	protected void decode(ChannelHandlerContext ctx, ByteBuf msg, MessageBuf<Object> out) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

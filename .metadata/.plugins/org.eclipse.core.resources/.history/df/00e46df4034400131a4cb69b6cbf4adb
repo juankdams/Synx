@@ -1,0 +1,65 @@
+package Plugins.Managers;
+
+import Providers.*;
+
+public class ProvidersManager {
+	
+	//protected GameResultProvider gameResults = new GameResultProvider();
+	protected GMonsterProvider monsters = new GMonsterProvider(); 
+	protected GPersonnageProvider personnages = new GPersonnageProvider(); 
+	protected GMonsterGroupProvider monsterGroups = new GMonsterGroupProvider();
+	protected GDropItemProvider dropItems = new GDropItemProvider();
+	protected GItemProvider items = new GItemProvider();
+	protected IAProvider intelligences = new IAProvider();
+	protected GBuffProvider buffs = new GBuffProvider();
+	protected GDropProvider drops = new GDropProvider();
+	protected GEffectProvider effects = new GEffectProvider();
+	protected GSpellProvider spells = new GSpellProvider();
+
+	
+	//public GameResultProvider provideGameResult() {
+	//	return gameResults;
+	//}
+
+	public GMonsterProvider provideMonster() {
+		return monsters;
+	}
+	public GPersonnageProvider providePerso() {
+		return personnages;
+	}
+	public GMonsterGroupProvider provideMonsterGroup() {
+		return monsterGroups;
+	}
+	public GDropItemProvider provideDropItem() {
+		return dropItems;
+	}
+	public GItemProvider provideItem(){
+		return items;
+	}
+	public IAProvider provideIA(){
+		return intelligences;
+	}
+	public GBuffProvider provideBuff(){
+		return buffs;
+	}
+	public GDropProvider provideDrop() {
+		return drops;
+	}
+	public GEffectProvider provideEffect() {
+		return effects;
+	}
+	public GSpellProvider provideSpell(){
+		return spells;
+	}
+	
+	
+	public void setMonstersProvider(GMonsterProvider monsters){
+		this.monsters = monsters;
+	}
+	public void setPersosProvider(GPersonnageProvider persos){
+		this.personnages = persos;
+	}
+	
+	
+
+}

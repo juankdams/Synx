@@ -1,0 +1,20 @@
+package Login;
+
+import Handlers.LHandler;
+import LoginObjects.LAccount;
+
+public abstract class LoginClient {
+
+	protected LAccount account = null;
+	protected LHandler handler = null;
+	
+
+	public void setAccount(LAccount account) {
+		this.account = account;
+	}
+
+	public LAccount getAccount() {
+		return account;
+	}
+	
+}

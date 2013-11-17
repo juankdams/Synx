@@ -1,0 +1,29 @@
+package Providers;
+
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Game.GameServer;
+import Game.WakfuGameClient;
+import Game.WakfuGameServer;
+import Interfaces.IProvider;
+import Login.LoginServer;
+import Login.WakfuLoginClient;
+
+public interface WakfuClientProvider extends IProvider {
+	
+	public GameServer createNew();
+	
+	public static class WakfuGameClientProvider implements WakfuClientProvider {
+		public GameServer createNew() {
+			return new WakfuGameClient();
+		}
+	}
+	public static class WakfuLoginClientProvider implements WakfuClientProvider {
+		public GameServer createNew() {
+			return new WakfuLoginClient();
+		}
+	}
+	
+	
+
+}

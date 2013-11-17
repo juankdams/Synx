@@ -1,0 +1,9 @@
+package Wakfu;
+
+import io.netty.channel.Channel;
+
+public interface IWakfuClient {
+	
+	public Channel getChannel();
+
+}

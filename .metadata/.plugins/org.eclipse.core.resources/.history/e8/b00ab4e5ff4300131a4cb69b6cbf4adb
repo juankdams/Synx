@@ -1,0 +1,75 @@
+package Providers;
+
+import Core.Exceptions;
+import Core.Syn;
+import GameObjects.GItem;
+import Interfaces.IItemTemplate;
+import Interfaces.IProvider;
+import Plugins.Managers.EffectsManager;
+
+
+public class GItemProvider implements IProvider {
+	
+	/**
+	 * Pour créer un vraiment tout nouvel item
+	 * <p>Return NULL si le param ItemTemplate = null
+	 * @param ID - L'ID est à prendre dans GWorld.getNextItemID(); */
+	public GItem createNew(int ID, IItemTemplate template, short quantity, boolean parfait, GServer serv){
+		if(template == null){
+			Exceptions.throwNullPointerException("Template d'item null dans GItems.createNew. unicItemID=("+ID+").");
+			return null;
+		}
+		GItem i = new GItem();
+		i.setID(ID);
+		i.setTemplate(template);
+		i.setQuantity(quantity);
+		//todo: stats aléatoires
+		i.setItemEffects(template.getTemplateEffects(), parfait, serv);
+		/*if(template.getTemplateEffects().equals("") == false){
+			i.effects = new ArrayList<GEffect>();
+			for(String effet : template.getTemplateEffects().split(",")){
+				GEffect ge = EffectsShare.getSimilarEffect(effet, parfait, em);
+				//GEffect ge = GEffect.createNew(effet, parfait);
+				if(ge != null){
+					if(ge.getDice() != null || ge.getJet() != null){
+						Syn.d("createNewItem  GE.getParams.isDice : "+ge.getParams().isDice());
+						Syn.d("createNewItem  GE.getParams.isJet : "+ge.getParams().isJet());
+						i.getEffects().add(ge);
+						continue;
+					}
+				}else{
+					Syn.d("createNewItem  GE = null");
+				}
+				//ge = null;
+			}
+		}*/
+		return i;
+	}
+	
+
+	/**
+	 * Utilisé au chargement de l'inventaire/banque du personnage dans 
+	 * <p>Pour créer un item qui existait déjà genre dans la bdd, 
+	 * avec ses stats déjà settées et tout
+	 */
+	public GItem reloadInstance(int ID, IItemTemplate template, String totalEffects, short quantity, byte position, GServer serv){
+		GItem i = new GItem();
+		if(template == null){
+			//Exceptions.throwNullPointerException
+			Syn.log.error("Template d'item null dans GItems.constructor. unicItemID=("+ID+"). Go delete l'item de son inventaire.");
+		}
+		i.setID(ID);
+		i.setTemplate(template);
+		/**
+		 * true vu que cest un reload. 
+		 * On a déjà enlevé les aléatoires "x à y", 
+		 * là on est en "+x" donc on veut garder notre "+x" comme ça :)
+		 */
+		i.setItemEffects(totalEffects, true, serv);
+		i.setQuantity(quantity);
+		i.setPosition(position);
+		return i;
+	}
+	
+}
+

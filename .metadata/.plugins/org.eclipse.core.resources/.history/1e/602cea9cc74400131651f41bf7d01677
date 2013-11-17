@@ -1,0 +1,290 @@
+package GameObjects;
+
+import java.util.ArrayList;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Constants.CItems;
+import Core.Syn;
+import Game.DofusGameServer;
+import GlobalObjects.EffectsShare;
+import Interfaces.IItemTemplate;
+import Interfaces.IObject;
+import Plugins.Managers.EffectsManager;
+import Providers.GItemProvider;
+
+public class GItem implements IObject{
+	public static Logger log = LoggerFactory.getLogger(GItem.class);
+	
+	public static GItemProvider provide(DofusGameServer s){
+		if(s == null){
+			return Syn.Services.defaultPluginsManager.getProviders().provideItem();
+		}
+		return s.getProviders().provideItem();
+	}
+	
+	public static GItem copy(GWorld gw, GItem item){
+		EffectsManager em = gw.getServer().getEffectsManager();
+		return GItem.provide(gw.getServer()).reloadInstance(gw.getNextItemID(), item.getTemplate(), item.getEffectsPacket(em), item.getQuantity(), item.getPosition(), gw.getServer());
+	}
+	
+	
+	
+	
+	
+	private int itemID = 0;
+	private IItemTemplate template = null;
+	private short quantity = 0;
+	private byte position = CItems.POS_notEquiped;
+	private ArrayList<GEffect> effects = null;
+	
+
+
+
+	public void setID(int itemID){
+		this.itemID = itemID;
+	}
+	@Override
+	public int getID(){
+		return itemID;
+	}
+	public void setTemplate(IItemTemplate template){
+		this.template = template;
+	}
+	public IItemTemplate getTemplate(){
+		return template;
+	}
+	public void setQuantity(short quantity){
+		this.quantity = quantity;
+	}
+	public short getQuantity(){
+		return quantity;
+	}
+	public short getPods(){
+		return template.getPods();
+	}
+	/**
+	 * Set les effets dans l'arrayList à des nouveaux GEffects qui eux doivent être déjà bon (Utilisé pour quand on charge un item déjà créé de la bdd et qu'on lui redonne ses valeurs) 
+	 * @param itemEffects - La string contenant toutes les valeurs des effets, ceux-ci doivent être déjà parsés avant de venir ici (enlevé les jets aléatoires,etc)
+	 */
+	public void setItemEffects(String itemEffects, boolean parfait, DofusGameServer serv){
+		if(itemEffects == null){
+			this.effects = null;
+			return;
+		}
+		if(itemEffects.equals("")){
+			return;
+		}
+		String[] effets = itemEffects.split(",");
+		if(effets.length >= 1){
+			this.effects = new ArrayList<GEffect>(effets.length);
+		}
+		for(String effet : effets){
+			GEffect e = EffectsShare.getSimilarEffect(effet, parfait, serv);
+			if(e != null){
+				if(e.getDice() != null || e.getJet() != null){
+					//Syn.d("setItemEffects  GE.getParams.isDice : "+e.getParams().isDice());
+					//Syn.d("setItemEffects  GE.getParams.isJet : "+e.getParams().isJet());
+					effects.add(e);
+					continue;
+				}				
+			}
+		}
+	}
+
+	public byte getPosition(){
+		return position;
+	}
+
+	public void setPosition(byte position) {
+		this.position = position;
+	}
+	
+	public String getHexID(){
+		return Integer.toHexString(itemID);
+	}
+	public String getHexTemplateID(){
+		return Integer.toHexString(template.getID());
+	}
+	public String getHexQuantity(){
+		return Integer.toHexString(quantity);
+	}
+	public String getHexPosition(){
+		if(position == CItems.POS_notEquiped){
+			return CItems.POS_notEquiped+"";
+		}
+		return Integer.toHexString(position);
+	}
+
+	@Override
+	/**
+	 * dgh
+	 */
+	public void terminate() throws Throwable{
+		//this.itemEffects = null;
+		if(effects != null){
+			if(effects.size() > 0){
+				for(GEffect e : effects){
+					e.terminate();
+					e = null;
+				}
+				effects.clear();
+			}
+		}
+		this.effects = null;
+		this.template = null;
+		this.finalize();
+	}
+
+	public void decrementQuantity(int remove) {
+		this.quantity -= remove;
+	}
+	public void incrementQuantity(int add) {
+		this.quantity += add;
+	}
+
+	/**
+	 * TODO: GItem.getEffectsPacket
+	 * @return
+	 */
+	public String getEffectsPacket(EffectsManager em) {
+		if(isClassSet()){
+			return template.getTemplateEffects();
+		}
+		if(effects == null){
+			//Syn.d("GItem.getEffectsPacket itemID "+getID()+" : effects == null return");
+			return "";
+		}
+		if(effects.size() == 0){
+			//Syn.d("GItem.getEffectsPacket itemID "+getID()+" : effects.size == 0 return");
+			effects = null;
+			return "";
+		}
+		String stats = "";
+		for(GEffect e : effects){
+			if(stats.length() != 0){
+				stats += ",";
+			}
+			//if(e.getParams() == null){
+			//	Syn.d("GItem.getString.getIEP == null.  ItemID="+this.itemID+".");
+			//}
+			stats += e.getString(em);
+			//Syn.d("GItem.getEffectsPacket.GEffect.getString  -:"+e.getString());
+		}
+		//Syn.d("GItem.getEffectsPacket -:"+stats);
+		return stats;
+	}
+	
+	/**
+	 * Regarde si l'item est un accessoire:  Arme, Coiffe, Cape, Familier, Bouclier,
+	 * @return
+	 */
+	public boolean isAccessory(){
+		if(this.getTemplate().isWeapon()//Si c'est une arme
+			|| this.getTemplate().getType() == CItems.ITEM_TYPE_COIFFE
+			|| this.getTemplate().getType() == CItems.ITEM_TYPE_CAPE
+			|| this.getTemplate().getType() == CItems.ITEM_TYPE_FAMILIER
+			|| this.getTemplate().getType() == CItems.ITEM_TYPE_DRAGODINDE
+			|| this.getTemplate().getType() == CItems.ITEM_TYPE_BOUCLIER
+			){
+			return true;
+		}
+		return false;
+	}
+	
+	public ArrayList<GEffect> getEffects(){
+		return effects;
+	}
+	
+	/**
+	 * Vérifie si cet item a les mêmes effets/stats que l'autre item (Ex pour savoir si on peut les stacker)
+	 */
+	public boolean hasSameEffectsAs(EffectsManager em, GItem comparative){
+		if(comparative == null){
+			//Syn.w("comparative == null)");
+			return false;
+		}
+		
+		if(effects == comparative.getEffects()){
+			return true;
+		}
+		if((effects == null && comparative.getEffects() == null)){
+			return true;
+		}
+		if((effects == null || comparative.getEffects() == null)){
+			//Syn.w("(effects == null || comparative.getEffects() == null)");
+			return false;
+		}
+		if(comparative.getEffects().size() != effects.size()){ //S'ils ont pas le même nombre d'effets
+			//Syn.w("comparative.getEffects().size() != effects.size()");
+			return false;
+		}
+		//Va vérifier chaque GEffect
+		for(int i = effects.size()-1; i >= 0; i--){
+			//Vérifie tous les parametres du Dice
+			if( ! comparative.getEffects().get(i).getString(em).equals(effects.get(i).getString(em))){
+				//Syn.w(" ! comparative.getEffects().get(i).getString().equals(effects.get(i).getString())");
+				return false;
+			}
+			//if(comparative.getEffects().get(i).getDice().getNumberOfDices() != effects.get(i).getDice().getNumberOfDices()
+			//	|| 	comparative.getEffects().get(i).getDice().getNumberOfFaces() != effects.get(i).getDice().getNumberOfFaces()
+			//	|| 	comparative.getEffects().get(i).getDice().getBaseBoost() != effects.get(i).getDice().getBaseBoost()
+			//){
+			//	return false;
+			//}
+		}
+		return true;
+	}
+	
+	/**
+	 * Vérifie si l'item est un item éthéré (s'il contient de la durabilité en effets) (armes éthérées, objet interactifs, ...)
+	 */
+	public boolean isEtheree(EffectsManager em){
+		if(effects == null){
+			return false;
+		}
+		return (em.containsDurability(effects) ); //&& template.isWeapon());
+	}
+	
+	/**
+	 * Vérifie si l'item est en position équipée ou pas.
+	 * @return - True s,il est équipé, false s'il est en POS_notEquiped 
+	 */
+	public boolean isEquiped(){
+		return (position != CItems.POS_notEquiped);
+	}
+
+	/**
+	 * Vérifie si l'objet fait partie d'une panoplie de classe
+	 */
+	public boolean isClassSet() {
+		if(this.getTemplate().getItemSetID() == 0){
+			return false;
+		}
+		return (this.getTemplate().getItemSetID() >= CItems.ITEM_SET_IOP && this.getTemplate().getItemSetID() <= CItems.ITEM_SET_PANDAWA);
+	}
+
+	public boolean isIncarnation(EffectsManager em) {
+		if(effects == null){
+			return false;
+		}
+		for(GEffect e : this.getEffects()){
+			if(em.isIncarnationEffect(e)){
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	@Override @Deprecated
+	public short getServerID() { return 0; }
+	@Override @Deprecated
+	public DofusGameServer getServer() { return null; }
+	@Override @Deprecated
+	public GWorld getWorld() { return null; }
+	@Override @Deprecated
+	public void setServer(DofusGameServer s) { }
+
+}

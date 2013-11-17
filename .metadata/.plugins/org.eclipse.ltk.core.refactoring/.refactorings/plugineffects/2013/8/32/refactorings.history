@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;a&apos; in &apos;Applyers.DamagingEffectApplication.apply(...)&apos; to &apos;aPdv&apos;&#x0D;&#x0A;- Original project: &apos;PluginEffects&apos;&#x0D;&#x0A;- Original element: &apos;Applyers.DamagingEffectApplication.apply(GEffect, IEffectType, AbstractCharacter, AbstractCharacter, ParameterHolder, CombativeCharacter, CombativeCharacter).a&apos;&#x0D;&#x0A;- Renamed element: &apos;a&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename local variable &apos;a&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;Applyers{DamagingEffectApplication.java[DamagingEffectApplication~apply~QGEffect;~QIEffectType;~QAbstractCharacter;~QAbstractCharacter;~QParameterHolder;~QCombativeCharacter;~QCombativeCharacter;@a!2836!2934!2844!2844!QGAction;" name="aPdv" references="true" stamp="1376232621973" version="1.0"/>
+</session>

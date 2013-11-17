@@ -1,0 +1,15 @@
+package Game;
+
+public class WakfuGameServer implements GServer {
+
+	@Override
+	public void boot() throws Exception {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void reboot() throws Exception {
+		// TODO Auto-generated method stub
+	}
+
+}

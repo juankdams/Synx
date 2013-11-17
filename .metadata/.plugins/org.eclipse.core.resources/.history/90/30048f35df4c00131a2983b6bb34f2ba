@@ -1,0 +1,22 @@
+package Providers;
+
+import Interfaces.IProvider;
+import Game.GameServer;
+
+public interface GameServerProvider extends IProvider {
+
+
+	public GameServer createNew();
+	
+	public static class DofusLServerProvider implements GameServerProvider {
+		public GameServer createNew() {
+			return new DofusGameServer();
+		}
+	}
+	public static class WakfuLServerProvider implements GameServerProvider {
+		public GameServer createNew() {
+			return new WakfuGameServer();
+		}
+	}
+	
+}

@@ -1,0 +1,503 @@
+package GlobalObjects;
+
+import static Enums.SynActions.MapAction.ADD_FIGHT;
+import static Enums.SynActions.MapAction.ADD_SPRITE;
+import static Enums.SynActions.MapAction.GET_SPRITES;
+import static Enums.SynActions.MapAction.REMOVE_FIGHT;
+import static Enums.SynActions.MapAction.REMOVE_SPRITE;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Abstractions.AbstractCharacter;
+import Abstractions.AbstractWorld;
+import Constants.Constants;
+import Enums.CellType;
+import Enums.CharacterType;
+import Enums.SynActions;
+import Enums.SynActions.MapAction;
+import GameObjects.GArea.GSubArea;
+import GameObjects.GMonsterGroup;
+import GameObjects.Fights.GFight;
+import Interfaces.IMap;
+import Interfaces.ISprite;
+import Plugins.Abstractions.AbstractActionListener;
+
+public class Map implements IMap {
+	public static Logger log = LoggerFactory.getLogger(Map.class);
+	
+	public static final byte baseLayer = 0;
+	
+
+	
+	private int ID = 0;
+	private String key = null;
+	private String date = null;
+	private int height = 15, width = 15;
+	private short subArea = 0;	
+	
+	/*
+		private boolean _Walkable = true;
+		private boolean _LoS = true;
+		
+TODO Pour ces deux paramètres des cells (et les autres semblables) je verrais bien une HashMap<cellID, chiffre>
+	 ou le chiffre serait une accumulation de puissance de 2 (pareil que pour les restrictions sur le joueur ou pour les emotes)
+	 donc metons une enum avec ceci:
+	 	walkable(1)
+	 	lineOfSight(2)
+	 	etc(3)
+	 et chiffre += for(param){ 2^param.value } 	
+	 
+	 Ensuite pour vérifier si une cell est p.ex. walkable ou pas, 
+	 	on le fait avec des >> et des &, comme dofus :)
+	*/
+	private ArrayList<GFight> fights = null;
+	private ArrayList<ISprite> sprites = null;
+//	private ArrayList<GDropItem> droppedItems = null;  [Intégrés dans l'ArrayList de sprites ;)]
+	private ArrayList<AbstractActionListener> actionsListeners = null;
+	private HashMap<Short, Short> cellParams = null;
+	private ArrayList<Trigger> triggers = null;
+	private byte nextLayer = baseLayer;
+	
+	
+	public Map(int id, String key, String date, int h, int w, short subArea){
+		this.setID(id);
+		this.setKey(key);
+		this.setDate(date);
+		this.setHeight(h);
+		this.setWidth(w);
+		this.setSubAreaID(subArea);
+		//this.setTriggers(new ArrayList<Trigger>());
+		//this.setCellParams(new HashMap<Short, Short>());
+	}
+	public int getID() {
+		return this.ID;
+	}
+	@Override
+	public void setID(int id) {
+		this.ID = id;
+	}
+
+	@Override
+	public boolean isPremium(){
+		return Constants.premiumMapIDs.indexOf("-"+ID+"-") != -1;
+	}
+
+	@Override
+	public void setHeight(int height) {
+		this.height = height;
+	}
+
+	@Override
+	public int getHeight() {
+		return height;
+	}
+
+	@Override
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	@Override
+	public int getWidth() {
+		return width;
+	}
+
+	@Override
+	public void setDate(String date) {
+		this.date = date;
+	}
+
+	@Override
+	public String getDate() {
+		return date;
+	}
+
+	@Override
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	@Override
+	public String getKey() {
+		return key;
+	}
+
+	/**
+	 * TODO0 : liste des sprites sur la map 
+	 *  (persos, dropedItems, monstres, prisms, poubelles, npc, percepteur, interactiveItem, etc)
+	 * @exception - Throws NullPointerException if (sprites == null)
+	 * @return
+	 */
+	public ArrayList<ISprite> getSpritesSynchroFull() {
+		//TODO
+		if(sprites == null){
+			return null;
+			//Exceptions.throwNullPointerException("Map.getSprites : liste nulle.  MapID:"+ID+".");
+		}
+		//Syn.d("accessed map.getSprites()");
+		return updateSpriteList(GET_SPRITES, null);
+	}
+	
+	public List<ISprite> getSpritesSynchroCopy() {//non modifiable
+		if(sprites == null){
+			return null;
+		}
+	    synchronized(sprites){
+	    	ArrayList<ISprite> spritescopy = new ArrayList<ISprite>();
+	    	spritescopy.addAll( sprites ); //Collections.unmodifiableList(sprites));
+	    	return spritescopy;
+	    }
+	}
+	public List<GFight> getFightsSynchroCopy() {//non modifiable
+		if(fights == null){
+			return null;
+		}
+	    synchronized(fights){
+	    	ArrayList<GFight> fightscopy = new ArrayList<GFight>();
+	    	fightscopy.addAll( fights ); //Collections.unmodifiableList( fights );
+	    	return fightscopy;
+	    }
+	}
+	/*
+	 [12:24] Mathias: public List<ISprite> getSprites() {//non modifiable
+    		return Collections.unmodifiableList(sprites);
+		}
+		non-modifiable dans le sens que la liste retournée est psa modifiable directement ou que l'arraylist sprites dans Map est pas modifiable le temps que l'autre liste 
+	 */
+	public ISprite getSprite(int spriteID){
+		for(ISprite s : getSpritesSynchroCopy()){
+			if(s.getID() == spriteID){
+				return s;
+			}
+		}
+		return null;
+	}
+	
+	public void setSprites(ArrayList<ISprite> sprites){
+		this.sprites = sprites;
+	}
+	
+	public synchronized ArrayList<ISprite> updateSpriteList(MapAction action, ISprite c){
+		if(action == ADD_SPRITE && c != null){
+			if(sprites == null){
+				sprites = new ArrayList<ISprite>(10);
+			}
+			sprites.add(c);
+			c.onAddedToMap(this);
+			//Syn.d("In updateSpriteList Add: sprite.getID("+c.getID()+")");
+		}else
+		if(action == REMOVE_SPRITE && c != null){
+			if(sprites != null){
+				if(sprites.contains(c)){
+					c.onRemovedFromMap(this);
+					sprites.remove(c);
+				}
+				if(sprites.size() == 0){
+					sprites = null;
+				}
+				//Syn.d("In updateSpriteList Remove: sprite.getID("+c.getID()+")");
+			}else{
+				//Syn.d("In updateSpriteList Remove mais liste nulle: sprite.getID("+c.getID()+")");
+			}
+		}
+		return sprites;
+	}
+	
+	public ArrayList<ISprite> getSpritesAtCell(short targetCell){
+		ArrayList<ISprite> list = new ArrayList<ISprite>();
+		ArrayList<ISprite> mapSprites = getSpritesSynchroFull();
+		if(mapSprites != null && mapSprites.size() > 0){
+			for(ISprite s : mapSprites){
+				if(s instanceof AbstractCharacter && s.getCellID() == targetCell){
+					list.add((AbstractCharacter) s);
+				}
+			}
+		}
+		return list;
+	}
+	
+	//public void moveCharacter(ICharacter c, short newCellID){
+		
+	//}
+
+	public synchronized ArrayList<GFight> updateFightsList(MapAction action, GFight f){
+		if(action == ADD_FIGHT && f != null){
+			if(fights == null){
+				fights = new ArrayList<GFight>(10);
+			}
+			fights.add(f);
+			SM.fights.fC_LAYER(this, f.getOldLayer());
+			//f.getServer().threadsManager.updateFightTimingPool(1);
+		}else
+		if(action == REMOVE_FIGHT && f != null){
+			if(fights != null){
+				fights.remove(f);
+				SM.fights.fC_LAYER(this, f.getOldLayer());
+				//f.getServer().threadsManager.updateFightTimingPool(-1);
+				if(fights.size() == 0){
+					fights = null;
+				}
+			}
+		}//else
+		//if(action == MapAction.GET_FIGHTS){
+		//	return fights;
+		//}
+		return fights;
+	}
+
+	public int getFightCount(byte layer){
+		ArrayList<GFight> ofights = updateFightsList(MapAction.GET_FIGHTS, null);
+		if(ofights == null){
+			return 0;
+		}
+		ArrayList<GFight> fights = new ArrayList<GFight>(ofights);
+		for(int i = 0; i <= fights.size()-1; i++){
+			if(fights.get(i).getOldLayer() != layer){
+				fights.remove(i);
+			}
+		}
+		return fights.size();
+	}
+	
+	/**
+	 * FIXME Map.isIncarnam(); pour gérer le canal (channel) spécial à incarnam
+	 * à faire
+	 * @return
+	 */
+	public boolean isIncarnam(){
+		return true;
+	}
+
+	/**
+	 * TODO: Map.isCellOccupied
+	 * <br> Pour savoir si la cell est occupée par un perso, item, monstre, grp de monstre, PNJ, prisme...
+	 * @param cell
+	 * @return
+	 */
+	public boolean isCellOccupied(int cell) {
+		List<ISprite> sprites = this.getSpritesSynchroCopy();
+		if(sprites == null){
+			return false;
+		}
+		for(ISprite s : sprites){
+			if(s.getCellID() == cell){
+				return true;
+			}
+		}
+		return false;
+	}
+	/**
+	 * TODO: Map.isCellOccupiedBy
+	 * <br> Pour savoir si la cell est occupée par qqn dont l'ID = spriteID.. un perso, item, monstre, grp de monstre, PNJ, prisme...
+	 * @return
+	 */
+	public boolean isCellOccupiedBy(int cell, int spriteID) {
+		List<ISprite> sprites = this.getSpritesSynchroCopy();
+		if(sprites == null){
+			return false;
+		}
+		for(ISprite s : sprites){
+			if(s.getCellID() == cell && s.getID() == spriteID){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	/**
+	 * Return le Trigger de cette cellID ou null s'il n'y en avait pas.
+	 */
+	public Trigger getTrigger(short cellID){
+		if(triggers == null || triggers.size() == 0){
+			return null;
+		}
+		//la plupart du temps ya juste 4 triggers fack ca devrait pas être un probleme le for
+		for(Trigger t : triggers){
+			if(t.cell == cellID){
+				return t;
+			}
+		}
+		return null;
+	}
+	
+
+	public void setTriggers(ArrayList<Trigger> arrayList) {
+		this.triggers = arrayList;
+	}
+	public ArrayList<Trigger> getTriggers(){
+		return this.triggers;
+	}
+
+	public ArrayList<AbstractActionListener> getActionsListeners() {
+		return actionsListeners;
+	}
+	public void setActionsListeners(ArrayList<AbstractActionListener> actionsListeners) {
+		this.actionsListeners = actionsListeners;
+	}
+	/**
+	 * Ajoute le listener à un container s'il y a déjà un listener du meme type.
+	 * <p>Ajoute le listener directement à l'arrayList de listeners de la map sinon.
+	 */
+	public void addActionListener(AbstractActionListener aal){
+		int index = getActionsListenerIndex(aal.getType());
+		if(index != -1){
+			actionsListeners.set(index, actionsListeners.get(index).addListener(aal));
+		}else{
+			actionsListeners.add(aal);
+		}
+	}
+	
+	public int getActionsListenerIndex(SynActions type){
+		if(actionsListeners != null && actionsListeners.size() > 0){
+			for(int i = actionsListeners.size()-1; i >= 0; i--){
+				if(actionsListeners.get(i).getType() == type){
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	public AbstractActionListener getActionsListener(SynActions type){
+		if(actionsListeners != null && actionsListeners.size() > 0){
+			for(AbstractActionListener aal : actionsListeners){
+				if(aal.getType() == type){
+					return aal;
+				}
+			}
+		}
+		return null;
+	}
+	public AbstractActionListener getActionsListener(int ID){
+		if(actionsListeners != null && actionsListeners.size() > 0){
+			for(AbstractActionListener aal : actionsListeners){
+				if(aal.getID() == ID){
+					return aal;
+				}
+				if(aal.isContainer()){
+					for(AbstractActionListener aall : aal.getListeners()){
+						if(aall.getID() == ID){
+							return aall;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	
+	public void terminate() throws Throwable {
+		key = null;
+		date = null;
+		if(actionsListeners != null){
+			this.actionsListeners.clear();
+		}
+		if(fights != null && fights.size() > 0){
+			for(GFight f : fights){
+				f.terminate();
+				f = null;
+			}
+			fights = null;
+		}
+		if(sprites != null && sprites.size() > 0){
+			for(ISprite s : sprites){
+				s.terminate();
+				s = null;
+			}
+			sprites.clear();
+			sprites = null;
+		}
+		if(triggers != null && triggers.size() > 0){
+			for(Trigger t : triggers){
+				t = null;
+			}
+			triggers.clear();
+			triggers = null;
+		}
+	}
+	
+	/**
+	 * Copie la map: ID, key, date, height, width, subArea, actionsListeners, Triggers, et seulement les MONSTER_GROUP dans les sprites.
+	 * @return
+	 */
+	public Map copy(GameServer gs) {
+		Map m = new Map(ID, key, date, height, width, subArea);
+		if(getActionsListeners() != null){
+			m.setActionsListeners(new ArrayList<AbstractActionListener>(getActionsListeners()));
+		}
+		if(getTriggers() != null){
+			m.setTriggers(new ArrayList<Trigger>(getTriggers()));
+		}
+		List<ISprite> sprites = this.getSpritesSynchroCopy();
+		if(sprites != null && sprites.size() > 0){
+			for(ISprite s : sprites){
+				if(s.getCharacterType() == CharacterType.MONSTER_GROUP){
+					GMonsterGroup base = (GMonsterGroup) s;
+					GMonsterGroup copy = base.copy(gs);
+					m.updateSpriteList(ADD_SPRITE, copy );
+				}
+			}
+		}
+		return m;
+	}
+	
+	public void setCellParams(HashMap<Short, Short> cellParams) {
+		this.cellParams = cellParams;
+	}
+	public HashMap<Short, Short> getCellParams() {
+		return cellParams;
+	}
+	/**
+	 * TODO isCellWalkable, j'ai juste inventé de la marde d'exemple là :P xd, à refaire ;)
+	 */
+	public boolean isCellWalkable(short cellID){
+		if(cellParams == null || cellParams.get(cellID) == null){
+			return true;
+		}else if(cellParams.get((cellID) >> CellType.WALKABLE.get() & 1) == 1){
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * TODO isCellLineOfSightRequired, j'ai juste inventé de la marde d'exemple là :P xd, à refaire ;)
+	 */
+	public boolean isCellLineOfSightRequired(short cellID){
+		if(cellParams == null || cellParams.get(cellID) == null){
+			return true;
+		}else if(cellParams.get((cellID) >> CellType.LINE_OF_SIGHT.get() & 1) == 1){
+			return true;
+		}
+		return false;
+	}
+	
+	
+	
+	public void setSubAreaID(short subArea) {
+		this.subArea = subArea;
+	}
+	public short getSubAreaID() {
+		return subArea;
+	}
+	public void setSubAreaID(GSubArea subArea) {
+		this.subArea = subArea.getID();
+	}
+	public GSubArea getSubArea(AbstractWorld w) {
+		return w.getSubArea(subArea);
+	}
+
+	public byte getNextLayer(){
+		if(nextLayer == Byte.MAX_VALUE){
+			return nextLayer = 0;
+		}
+		return ++nextLayer;
+	}
+	
+
+}

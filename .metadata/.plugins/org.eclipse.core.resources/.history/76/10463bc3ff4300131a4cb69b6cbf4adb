@@ -1,0 +1,21 @@
+package Providers;
+
+import GameObjects.GDropItem;
+import GameObjects.GItem;
+import Interfaces.IProvider;
+import Plugins.Managers.EffectsManager;
+
+
+public class GDropItemProvider implements IProvider {
+	
+	public GDropItem createNew(GItem item, GServer serv, short cell){
+		GDropItem gdi = new GDropItem();
+		gdi.setID(item.getID());
+		gdi.setTemplate(item.getTemplate());
+		gdi.setItemEffects(item.getEffectsPacket(pm), true, serv);
+		gdi.setQuantity(item.getQuantity());
+		gdi.setCellID(cell);
+		return gdi;
+	}
+	
+}

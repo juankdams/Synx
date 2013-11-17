@@ -1,0 +1,30 @@
+package WakfuPackets;
+
+import io.netty.buffer.Unpooled;
+
+enum OutPacketsEnum {
+	
+
+	static {
+		for(OutPacketsEnum o : OutPacketsEnum.values()){
+			packets.put(o, Unpooled.buffer());
+			packets.get(o).writeShort(0); //Size placeholder
+			packets.get(o).writeShort(o.get());
+		}
+		prepare1032();
+	}
+	
+	RsaKey(1032),
+	
+	;
+	
+	private int id = 0;
+	private OutPacketsEnum(int id){
+		this.id = id;
+	}
+	public int get(){
+		return id;
+	}
+	
+	
+}

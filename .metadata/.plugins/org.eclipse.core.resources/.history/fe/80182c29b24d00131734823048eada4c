@@ -1,0 +1,32 @@
+package Providers;
+
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Game.DofusGameServer;
+import Game.GameServer;
+import Game.WakfuGameClient;
+import Game.WakfuGameServer;
+import Interfaces.IProvider;
+import Login.LoginServer;
+import Login.WakfuLoginClient;
+
+public interface ClientProvider extends IProvider {
+	
+	
+
+	public GameServer createNew(LoginServer ls, GConfig config, CWorld cworld);
+	
+	public static class WakfuGameClientProvider implements GameServerProvider {
+		public GameServer createNew(LoginServer ls, GConfig config, CWorld cworld) {
+			return new WakfuGameClient(ls, config, cworld);
+		}
+	}
+	public static class WakfuLoginClientProvider implements GameServerProvider {
+		public GameServer createNew(LoginServer ls, GConfig config, CWorld cworld) {
+			return new WakfuLoginClient(ls, config, cworld);
+		}
+	}
+	
+	
+
+}

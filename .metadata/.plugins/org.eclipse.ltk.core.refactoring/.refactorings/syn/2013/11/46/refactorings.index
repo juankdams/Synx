@@ -1,0 +1,40 @@
+1384223210702	Delete element
+1384306437965	Rename field 'globalDBIP'
+1384306447458	Rename field 'globalDBName'
+1384306450198	Rename field 'globalDBUser'
+1384306452319	Rename field 'globalDBPass'
+1384387598421	Move compilation unit
+1384387694856	Rename field 'normalExceptionNode'
+1384395823628	Delete element
+1384396785438	Rename type 'PluginsManagerBuilder'
+1384396832574	Rename method 'getBuilder'
+1384453058410	Rename type 'LClient'
+1384453213886	Rename type 'LServer'
+1384453327107	Encapsulate field 'channel'
+1384471865133	Rename type 'IWakfuClient'
+1384471869791	Rename type 'WakfuClient'
+1384471877632	Move compilation unit
+1384471969966	Rename type 'DofusGameClient'
+1384472040742	Copy packages
+1384472349236	Rename type 'GClient'
+1384472602019	Copy compilation units
+1384472614836	Copy compilation units
+1384472696109	Delete element
+1384472701458	Delete element
+1384472766520	Delete elements
+1384472793189	Copy packages
+1384473117791	Delete elements
+1384473517646	Delete element
+1384473529175	Move compilation unit
+1384473539730	Move compilation unit
+1384485620015	Copy package
+1384485625003	Delete element
+1384485653616	Copy package
+1384485714153	Delete elements
+1384485732922	Delete elements
+1384485740340	Delete elements
+1384485743782	Delete element
+1384490607599	Copy package
+1384640493355	Move file
+1384640502828	Rename resource 'test2.js'
+1384667192368	Rename source folder 'objects'

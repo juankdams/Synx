@@ -1,0 +1,15 @@
+package Plugins.Abstractions;
+
+import Game.GameClient;
+import Login.LoginClient;
+import Tool.TClient;
+
+public abstract class AbstractPacketParser<T> {
+
+	
+	public boolean parse(T c, String packet){
+		return false;
+	}
+	
+	
+}

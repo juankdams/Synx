@@ -1,0 +1,92 @@
+package GameClientStrategies;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import Abstractions.AbstractSqlService;
+import Abstractions.AbstractWorld;
+import Interfaces.IService;
+import Misc.Tests.Perfs;
+import Plugins.Managers.PluginsManager;
+import SQL.SConfig;
+import SQL.SqlServiceMySql;
+import XML.Config;
+
+public abstract class GameClientStrategy implements IService {
+	
+	private GameClientStrategies strategy;
+	
+	public GlobalWorld globalWorld;
+	public PluginsManager defaultPluginsManager;
+	public ScriptsService<ExecutableScript> scripts;
+	public AbstractSqlService sqlGlobalService;//Données de l'officiel
+	
+	protected GameClientStrategy(){
+		
+	}
+	
+	public String getName(){
+		return strategy.name();
+	}
+	
+	void set(GameClientStrategies strategy) {
+		this.strategy = strategy;
+	}
+	public GameClientStrategies get() {
+		return strategy;
+	}
+	
+	public void boot() throws Exception {
+		bootSqlService();
+		bootPluginsManager();
+		bootScripts();
+	}
+	public void reboot() throws Exception {
+		sqlGlobalService.reboot();
+		scripts.reboot();
+		defaultPluginsManager.reboot();
+	}
+	
+	private void bootSqlService() throws Exception {
+		Perfs p = new Perfs();
+		
+		sqlGlobalService = new SqlServiceMySql(){
+			@Override
+			public void boot() throws Exception{
+				c = createConnection(
+						Config.globalDBIP,
+						Config.globalDBName,
+						Config.globalDBUser,
+						Config.globalDBPass
+						);
+				//this.TIMER(false);
+				c.setAutoCommit(true);
+			}
+		};
+		sqlGlobalService.boot();
+		p.stopTiming("Booted Global SQL");
+	}
+	
+	private void bootScripts()  throws Exception {
+		this.scripts = new ScriptsService<ExecutableScript>(){
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void boot() throws Exception {
+				SQL.SConfig.loadScripts(null, null);
+			}
+		};
+		scripts.boot();
+	}
+
+	private void bootPluginsManager() throws Exception {
+		this.defaultPluginsManager = new PluginsManager(null){
+			@Override
+			public void loadPlugins() {
+				SConfig.loadPlugins(null, null);
+				SConfig.loadMacros(null, null);
+			}
+		};
+		defaultPluginsManager.boot();
+	}
+	
+
+}

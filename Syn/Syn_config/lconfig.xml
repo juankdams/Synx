@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<LConfig 
+
+LoginPort="668"
+LoginIP="localhost"
+MAX_CO_PER_IP="2">
+	
+	<SQL HostIP="127.0.0.1" Port="3306" dbName="syn" Username="root" Password=""></SQL>
+	
+</LConfig>

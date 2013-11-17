@@ -1,0 +1,17 @@
+package tests;
+
+import Servers.NettyServer;
+
+public class dmain {
+
+	public static NettyServer s = new NettyServer();
+	
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+}

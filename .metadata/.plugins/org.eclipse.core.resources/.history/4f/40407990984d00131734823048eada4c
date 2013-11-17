@@ -1,0 +1,22 @@
+package Parsers;
+
+import Game.DofusGameClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class InformationsParser extends AbstractPacketParser {
+
+	@Override
+	public boolean parse(DofusGameClient arg0, String packet) {
+		switch(packet.charAt(1)){
+			case 'r'://Exemple : Ir742;556;2
+				//String args[] = packet.substring(2).split(";")
+				//width = args[0]
+				//height = args[1]
+				//mode = args[3]
+				
+				return true;
+		}
+		return false;
+	}
+
+}

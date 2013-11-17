@@ -1,0 +1,16 @@
+package GameClientStrategies;
+
+public class WakfuClientStrategy implements GameClientStrategy {
+
+	
+	
+	WakfuClientStrategy(){
+		
+	}
+
+	@Override
+	public String getName() {
+		return "WakfuClientStrategy";
+	}
+
+}

@@ -1,0 +1,35 @@
+package Login;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import Core.Syn;
+import Game.WakfuGameClient;
+import Game.WakfuGameServer;
+
+public class WakfuLoginHandler extends NettyHandler {
+	
+
+	public static final AttributeKey<WakfuLoginClient> LOGINCLIENT_ATTR = new AttributeKey<WakfuLoginClient>("LoginClient");
+	public static final AttributeKey<WakfuGameClient>  GAMECLIENT_ATTR  = new AttributeKey<WakfuGameClient>("GameClient");
+
+	public WakfuHandler(WakfuGameServer wakfuGameServer) {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		Channel c = ctx.channel();
+		c.attr(CLIENTSESS_ATTR).setIfAbsent(new WakfuLoginClient(c));
+		Syn.d("A new channel is active: " + ctx.channel());
+	}
+	
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		WakfuLoginClient sess = ctx.channel().attr(CLIENTSESS_ATTR).get();
+		Syn.d("Channel inactive: " + sess);
+		//TODO: deregister from list
+ 	}
+	
+
+}

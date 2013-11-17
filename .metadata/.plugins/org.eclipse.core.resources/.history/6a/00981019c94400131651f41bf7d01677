@@ -1,0 +1,68 @@
+package Game;
+
+import java.util.ArrayList;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import plugin.Plugins;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Core.Syn;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Handlers.GHandler;
+import Interfaces.IService;
+import Login.LClient;
+import Login.LServer;
+import Misc.LifeRegenerator;
+import Misc.Tests.Perfs;
+import NewThreads.ThreadsManager;
+import Plugins.Managers.ActionsManager;
+import Plugins.Managers.AspectJManager;
+import Plugins.Managers.EffectsManager;
+import Plugins.Managers.FormulingManager;
+import Plugins.Managers.MacroManager;
+import Plugins.Managers.ParsingManager;
+import Plugins.Managers.PluginsManager;
+import Plugins.Managers.ProvidersManager;
+import Plugins.Managers.SystemsManager;
+import SQL.SConfig;
+import SQL.SqlServiceMySql;
+import Servers.MinaServer;
+import ZPlug.MiscEvent;
+
+public class DofusGameServer extends GameServer { //extends MinaServer /*CServers*/ implements GServer {
+
+	
+	
+	public DofusGameServer(LServer s, GConfig config, CWorld cworld){
+		super(s, config, cworld);
+	}
+	
+	@Override
+	/**
+	 * Initialise le GameServer en fonction de la config qui a été donnée.<br>
+	 * Initialize ses propriétés telles le GameWorld, ThreadManager, SqlService, GHandler... <br>
+	 * Charge le reste de sa configuration en BDD SQL.
+	 */
+	public void boot() throws Exception {
+		super.boot();
+		setWorld( new GWorld(this) );
+		s.setHandler( new GHandler(this) );
+	}
+
+	
+	@Override
+	public void terminate() {
+		super.terminate();
+
+		this.lifeRegen = null;
+
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+
+}

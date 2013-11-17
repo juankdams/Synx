@@ -1,0 +1,42 @@
+package Login;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import Core.Syn;
+import Handlers.NettyHandler;
+
+public class WakfuLoginHandler extends NettyHandler {
+	
+	public static final AttributeKey<WakfuLoginClient> LOGINCLIENT_ATTR = new AttributeKey<WakfuLoginClient>("LoginClient");
+
+	private WakfuLoginServer server = null;
+	
+	public WakfuLoginHandler(WakfuLoginServer wakfuLoginServer) {
+		server = wakfuLoginServer;
+	}
+
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		Channel c = ctx.channel();
+		c.attr(LOGINCLIENT_ATTR).setIfAbsent(new WakfuLoginClient(c));
+		Syn.d("A new login channel is active: " + ctx.channel());
+	}
+	
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		WakfuLoginClient sess = ctx.channel().attr(LOGINCLIENT_ATTR).get();
+		Syn.d("Channel inactive: " + sess);
+		//TODO: deregister from list
+ 	}
+	
+
+	public void setServer(WakfuLoginServer server) {
+		this.server = server;
+	}
+	public WakfuLoginServer getServer() {
+		return server;
+	}
+	
+
+}

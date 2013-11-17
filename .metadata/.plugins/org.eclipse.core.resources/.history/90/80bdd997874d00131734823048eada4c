@@ -1,0 +1,495 @@
+package Handlers;
+
+import GameObjects.GItem;
+import GameObjects.GSpell;
+import GameObjects.GStatistiques.CharacteristicColumn;
+import GlobalObjects.GlobalWorld;
+import Misc.Utils;
+import Misc.Tests.Perfs;
+import Plugins.Managers.ParsingManager;
+import Core.*;
+import Enums.ChannelEnum;
+import Enums.CharacteristicType;
+import static Enums.CharacteristicType.*;
+import Enums.EmoteEnum;
+import Enums.FightState;
+import Enums.Orientation;
+import Enums.SmileyEnum;
+import Constants.*;
+
+
+/**Un GameHandler pour apres la sélection du personnage*/
+public class GGameHandler extends GHandler{
+/*
+	private static final char Account 	= 'A';
+	private static final char Basics 	= 'B';
+	private static final char chat 		= 'c';
+	private static final char Conquest 	= 'C';
+	//private static final char account 	= 'D';
+	//private static final char Exchanges 	= 'E';
+	//private static final char account 	= 'F';
+	private static final char Game 	= 'G';
+	//private static final char Houses 	= 'H';
+	//private static final char Infos 	= 'I';
+	private static final char Jobs = 'J';
+	private static final char Kode = 'K';
+*/	
+	
+	//TODO: Fait une liste de char pour tous les sous-cas utilisés ci-dessous. 
+	//Smileys, Admin, Message, Boost, Channel, Use, Direction, Create, Info, etc
+	
+	private static final String[] names = {"@", "Account", "Basics", "chat", "Conquest", "emotes", "guilds", "Game", "houses", "Infos", "Jobs", "Kode", "Objects", "Party", "Quests", "Spells"};
+	/**TODO: Vider les "packetToIgnore" pour ne justement pas les ignorer.*/
+	private static final String[] packetsToIgnore = {"Ir742;556;2"};
+	
+	
+	public GGameHandler(GServer gServer){//, GClient c, GPersonnage gPersonnage) {
+		super(gServer);
+	}
+	
+	@Override
+	public Object parse(GClient c, String packet) throws Exception{
+		for(String s : packetsToIgnore){
+			if(packet.equals(s)){
+				this.log.info("Packet ignoré par le GGameHandler :"+packet+"..");
+				return null;
+			}
+		}
+		boolean nobug =  ParsingManager.parse(c, packet);
+		Syn.w("nobug ="+nobug+".");
+		if(!nobug){
+			packetCantParse(c, packet, "Raison inconnue, soit parseur non-créé soit erreur dans un des parseurs.");
+		}
+		return nobug;
+		
+		/*
+		if(packet.charAt(0) == '@'){
+			CrystalParser.parse(c, packet);
+		}else{
+			for(String n : names){
+				if(n.charAt(0) == packet.charAt(0)){
+					boolean nobug =  (Boolean) this.getClass().getDeclaredMethod("parse"+n, GClient.class, String.class).invoke(this, c, packet);
+					Syn.w("nobug ="+nobug+".");
+					if(!nobug){
+						packetCantParse(c, packet, "Raison inconnue, soit parseur non-créé soit erreur dans un des parseurs.");
+					}
+					return nobug;
+				}
+			}
+			packetCantParse(c, packet, "Methode de parsing inexistante dans le GGameHandler");
+		}
+		return null;
+		*/
+	}
+	
+/*	
+	@SuppressWarnings("unused")
+	private static boolean parseAccount(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'B'://TODO Boost charac
+				if(Utils.isParsableInteger(packet.substring(2)) == false){
+					packetCantParse(c, packet, "Impossible de parser l'ID de la charac en chiffre");
+				}	
+				Perfs p = new Perfs();
+				CharacteristicType toBoost = CharacteristicType.getCharacteristique(Byte.parseByte(packet.substring(2)));
+				short[] canBoostArgs = CPerso.getBoostCostAndCountForCharacteristic(c.getAccount().getCurPerso(), toBoost);
+				if(canBoostArgs == null){
+					packetCantParse(c, packet, "Les canBoostArgs pour booster la charac == null");
+				}
+				if(canBoostArgs[0] <= c.getAccount().getCurPerso().getStatistique().getValue(CharacteristicType.STATS_POINTS.get(), CharacteristicColumn.BASE)){
+					c.getAccount().getCurPerso().getStatistique().decrementValue(CharacteristicType.STATS_POINTS, canBoostArgs[0], CharacteristicColumn.BASE);
+					c.getAccount().getCurPerso().getStatistique().incrementValue(toBoost, canBoostArgs[1], CharacteristicColumn.BASE);
+					if(toBoost == VITALITE){
+						c.getAccount().getCurPerso().getStatistique().setPdvMax(Formulas.calculatePdvMax(c.getAccount().getCurPerso().getStatistique(), c.getAccount().getCurPerso()));
+					}
+					c.getAccount().getCurPerso().getStatistique().incrementPdv(canBoostArgs[1]);
+					SM.Account.As(c.getSession(), c.getAccount().getCurPerso());
+					if(toBoost == FORCE){
+						SM.Objects.Ow(c.getSession(), c.getAccount().getCurPerso());
+					}
+					p.stopTiming("booster une characteristique.");
+				}	
+				return true;		
+			case 'f':
+				//TODO: le case 'f' dans GGameHandler.parseAccount
+				return true;
+		}
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseBasics(GClient c, String packet){
+		//Core.Syn.d("Char at length-1 du message : "+(packet.charAt(packet.length()-1)+""));
+		while((packet.charAt(packet.length()-1)+"").equals("\\|")){
+			packet = packet.substring(0, packet.length()-2).trim();
+		}
+		switch(packet.charAt(1)){
+			case 'S'://Smileys
+				//Core.Syn.d("parseBasics, emotes : le chiffre vérifé par pattern est : "+isInteger);
+				if(Utils.isParsableInteger(packet.substring(2)) == false){
+					packetCantParse(c, packet, "GGHandler.parseBasics.Smileys: impossible de parser l'ID du smiley en int");
+				}	
+				if(SmileyEnum.getSmiley(Integer.parseInt(packet.substring(2))) == null){
+					break;
+				}
+				if (c.getAccount().getCurPerso().getFight() == null){
+					SM.chat.cS(c.getAccount().getCurPerso(), Integer.parseInt(packet.substring(2)));
+				}else{
+					//TODO Smileys en combat : SM.chat.cS(c.getAccount().getCurPerso().getFight(), 7, c.getAccount().getCurPerso().getID(), Integer.parseInt(packet.substring(2)));
+				}
+				return true;
+			case 'T'://TODO: GetServerTimer exemple //[Send] >> BT1355840128776
+				
+				// case "T":
+                //{
+                //    this.aks.Basics.onReferenceTime(sData.substr(2));
+                //    break;
+                //}
+				 
+				
+				break;
+			case 'D'://TODO: GetServerDate exemple //[Send] >> BD642|11|18
+				// case "D":
+                //{
+                //    this.aks.Basics.onDate(sData.substr(2));
+                //    break;
+                //} 
+				SM.Basics.BD(c.getSession());//[Send] >> BD642|11|18
+				return true;
+			case 'M'://BasicMessage  BMLeo|salut|
+				ChatParser.parse(c, packet);
+				return true;
+			case 'A'://Admin
+				ConsoleParser.parse(c, packet.trim().substring(2, packet.trim().length()));
+				return true;
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parsechat(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'C'://Chat Channels management.
+				String chan = packet.charAt(3)+"";
+				//Pour le canal bleu:
+				//doit inclure les canaux d'équipe (en cbt), de groupe et de message privé:
+				if(packet.substring(3).equals(""+ChannelEnum.TEAM.getValue()+ChannelEnum.PARTY.getValue()+ChannelEnum.PRIVATE.getValue())){
+					chan = packet.substring(3);
+				}
+				if(packet.charAt(2) == '+'){
+					c.getAccount().getCurPerso().addChanel(chan);
+					//SQL.Personnages.updateChannels(c.getAccount().getCurPerso());
+				}else 
+				if(packet.charAt(2) == '-'){
+					c.getAccount().getCurPerso().removeChanel(chan);
+					//SQL.Personnages.updateChannels(c.getAccount().getCurPerso());
+				}else{
+					packetCantParse(c, packet, "Opérateur invalide. Devrait etre + ou -");
+					c.kick();
+				}
+				return true;
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseConquest(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'b':
+				return true;
+			case 'B':
+				return true;
+		}
+		return false;
+	}
+	
+	@SuppressWarnings({ "unused", "static-access" })
+	private static boolean parseemotes(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'D'://TODO Direction/Orientation
+				if(c.getAccount().getCurPerso().getFight() != null){
+					packetCantParse(c, packet, "Personnage en combat donc n'a pas le droit de changer d'orientation");
+				}
+				if(Utils.isParsableInteger(packet.charAt(2)+"") == false){
+					SM.emotes.eUE(c.getSession());
+					packetCantParse(c, packet, "Impossible de parser l'ID d'Orientation en chiffre");
+				}
+				byte orientation = Byte.parseByte(""+packet.charAt(2));
+				if(Enums.Orientation.getOrientation(orientation) != null){
+					if(Orientation.isDiagonal(orientation) == false){
+						if(c.getAccount().getCurPerso().isSit()){
+							//Set à l'orientation d'apres si le perso est assis et 
+							//demande une orientation non-diagonale. 
+							//(Le sprite s'afficherait alors mal (debout alors quil est assit...))
+							orientation = Orientation.getNextOrientation(orientation);
+						}
+					}
+					c.getAccount().getCurPerso().setOrientation(orientation);
+					SM.emotes.eD(c.getAccount().getCurPerso().getMap(), c.getAccount().getCurPerso().getID(), orientation);
+				}
+				return true;
+			case 'U'://TODO Use (D'emote)
+				if(packet.length() > 4){//impossible d'avoir un packet plus long que 4. le max étant:"eU23"
+					packetCantParse(c, packet, "Impossible d'avoir un packet d'emote d'une length de plus de 4. Le max est \"eU23\"");
+				}
+				if(c.getAccount().getCurPerso().getFight() != null){//pas d'emote en combat...
+					packetCantParse(c, packet, "Personnage en combat. Impossible de faire une emote en combat.");
+				}
+				if(Utils.isParsableInteger(packet.substring(2)) == false){
+					packetCantParse(c, packet, "Impossible de de parser l'ID de l'emote en chiffre.");
+				}
+				EmoteEnum EE = EmoteEnum.getEmote(Integer.parseInt(packet.substring(2)));
+				if(EE == null){
+					packetCantParse(c, packet, "Impossible de trouver l'emote correspondante à cet ID.("+Integer.parseInt(packet.substring(2))+")");//passible de BAN (flood/cheat packet)
+				}
+				if(c.getAccount().getCurPerso().hasEmote(EE) == false){
+					SM.emotes.eUE(c.getSession());//Message rouge: "Votre personnage ne connaît pas cette attitude !"
+					break;
+				}
+				if(EE == EE.SIT || EE == EE.REST || EE == EE.SIT_CHAIR){
+					if(c.getAccount().getCurPerso().isSit()){
+						EE = EmoteEnum.STAND_UP;
+					}
+					c.getAccount().getCurPerso().sit();
+				}
+				if(EE == EE.DRINK_BEER || EE == EE.EAT_BREAD){
+					
+				}
+				SM.emotes.eU(c.getAccount().getCurPerso(), EE.getValue(), 0);
+				return true;
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseGame(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'C':
+				//recu après avoir envoyé les packets du onSelected. Packet de création de jeu (GDK), affichage de map (GDM), et stats (As)
+				return GameParser.onGameCreate(c);
+			case 'I':
+				//pour afficher tout ce qu'il y a sur la map: monstres,perso,perco,prisms..
+				return GameParser.onGameInfo(c);
+			case 'A':
+				//Pour exécuter et controler des game actions :s
+				return GameParser.parseOnGameAction(c.getAccount().getCurPerso(), packet);
+			case 'K':
+				//Pour terminer ou canceller une game action en cours
+				return GameParser.parseOnGameActionKorect(c.getAccount().getCurPerso(), packet);
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseguilds(GClient c, String packet){
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parsehouses(GClient c, String packet){
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+
+	@SuppressWarnings("unused")
+	private static boolean parseInfos(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'r'://Exemple : Ir742;556;2
+				//String args[] = packet.substring(2).split(";")
+				//width = args[0]
+				//height = args[1]
+				//mode = args[3]
+				
+				return true;
+		}
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseJobs(GClient c, String packet){
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseKode(GClient c, String packet){
+		//SM.Basics.BN(c.getSession());
+		return false;
+	}
+
+	@SuppressWarnings("unused")
+	private static boolean parseObjects(GClient c, String packet){
+		/*
+		 _loc1.movement = function (nID, nPosition, nQuantity)
+	    {
+	        if (nPosition > 0)
+	        {
+	            this.api.kernel.GameManager.setAsModified(nPosition);
+	        } // end if
+	        this.aks.send("OM" + nID + "|" + nPosition + (_global.isNaN(nQuantity) ? ("") : ("|" + nQuantity)), true);
+	    };
+	    _loc1.drop = function (nID, nQuantity)
+	    {
+	        this.aks.send("OD" + nID + "|" + nQuantity, false);
+	    };
+	    _loc1.destroy = function (nID, nQuantity)
+	    {
+	        this.aks.send("Od" + nID + "|" + nQuantity, false);
+	    };
+	    _loc1.use = function (nID, sSpriteID, nCellNum, bConfirm)
+	    {
+	        this.aks.send("O" + (bConfirm ? ("u") : ("U")) + nID + (sSpriteID != undefined && !_global.isNaN(Number(sSpriteID)) ? ("|" + sSpriteID) : ("|")) + (nCellNum != undefined ? ("|" + nCellNum) : ("")), true);
+	    };
+	    _loc1.dissociate = function (nID, nPosition)
+	    {
+	        this.aks.send("Ox" + nID + "|" + nPosition, false);
+	    };
+	    _loc1.setSkin = function (nID, nPosition, nSkin)
+	    {
+	        this.aks.send("Os" + nID + "|" + nPosition + "|" + nSkin, false);
+	    };
+	    _loc1.feed = function (nID, nPosition, nFeededItemId)
+	    {
+	        this.aks.send("Of" + nID + "|" + nPosition + "|" + nFeededItemId, false);
+	    };
+		 */
+		//Impossible de bouger/détruire/jeter un objet pendant un combat actif
+/*		if(c.getAccount().getCurPerso().getFight() != null){
+			if(c.getAccount().getCurPerso().getFight().state == FightState.ACTIVE.ordinal()){
+				packetCantParse(c, packet, " FightState == FightState.ACTIVE");
+			}
+		}
+		if(packet.indexOf("|") == -1){
+			packetCantParse(c, packet, " packet.indexOf(\"|\") == -1.  Il manque donc des arguments.");
+		}
+		String[] infos = null;
+		if(packet.endsWith("\\|")){
+			infos = packet.substring(2, packet.length()-1).split("\\|");
+		}else{
+			infos = packet.substring(2).split("\\|");
+		}
+		//for(String param : infos){
+		for(int i = 0; i < infos.length; i++){//itemID | positionID | qty(optional)
+			if(i != 1 || !infos[1].equals(CItems.POS_notEquiped_String)){//positionID, si c'est -1 
+				if(Utils.isParsableInteger(infos[i]) == false){
+					packetCantParse(c, packet, "Impossible de parser l'info: -"+infos[i]+"- en chiffre");
+				}
+			}
+			//else{ En gros, il testera pas le isParsable sur infos[1] si infos[1] == -1 }
+		}
+		GItem item = c.getAccount().getCurPerso().getInventory().getItemByID(Integer.parseInt(infos[0]));
+		//Vérifie si l'perso possede bien l'item
+		if(item == null){
+			packetCantParse(c, packet, "Le personnage n'a pas l'item proposé par l'itemID dans le packet à infos[0].");
+		}
+		switch(packet.charAt(1)){
+			case 'd'://Object onDelete
+				return ObjectsParser.parseOnDelete(c.getAccount().getCurPerso(), item, infos);
+			case 'D'://Object onDrop
+				return ObjectsParser.parseOnDrop(c.getAccount().getCurPerso(), item, infos);
+			case 'M'://Object onMovement
+				return ObjectsParser.parseOnMovement(c.getAccount().getCurPerso(), item, infos);
+			case 'u'://Object onUse (avec confirmation)
+				//if(ObjectsParser.parseOnUseConfirmation(c.getAccount().getCurPerso(), item, infos) == true){
+				//	return;
+				//}
+				break;
+			case 'U'://Object onUse (sans confirmation)
+				
+				//Un Items.onUse peut venir de: un double-clic: sur un item dans la barre rapide
+				//											  sur un item dans l'inventaire
+				//	                          en cliquant(pointant) sur la map avec un objet
+					                                         										   		
+				 
+				return ObjectsParser.parseOnUseNoConfirmation(c.getAccount().getCurPerso(), item, infos);
+			case 'x'://Object_obvijevan_desassocier(packet);
+			   
+			    break;
+			case 'f'://Object_obvijevan_feed(packet);
+				
+				break;
+			case 's'://Object_obvijevan_changeSkin(packet);
+				
+				break;	
+		}
+		//packetCantParse(c, packet, "Raison inconnue, soit parseur non-créé soit erreur dans un des parseurs.");
+		return false;
+	}
+	
+	
+	
+	@SuppressWarnings("unused")
+	private static boolean parseParty(GClient c, String packet){
+		SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseQuests(GClient c, String packet){
+		SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean parseSpells(GClient c, String packet){
+		switch(packet.charAt(1)){
+			case 'B'://onBoost. Ex recevoir: Game: Recv << SB198.  Ex à renvoyer: [Send] >> SUK198~2
+				if(Utils.isParsableInteger(packet.substring(2)) == false){
+					packetCantParse(c, packet, "L'ID du sort est imparsable en int dans le parseSpells.onBoost");
+				}
+				short spellID1 = Short.parseShort(packet.substring(2));
+				GSpell spell = c.getAccount().getCurPerso().getSpellByID(spellID1);
+				if(spell == null){
+					SM.Spells.SUE(c.getSession());
+					packetCantParse(c, packet, "Le personnage ne possède pas le sort demandé ("+spellID1+") dans le parseSpells.onBoost");
+				}
+				byte spellLvl = spell.getSpellLvl(c.getAccount().getCurPerso().getWorld());
+				if(spellLvl > c.getAccount().getCurPerso().getStatistique().getValue(CharacteristicType.SPELL_POINTS.get(), CharacteristicColumn.BASE)){
+					SM.Spells.SUE(c.getSession());
+					packetCantParse(c, packet, "Le personnage ne possède pas assez de points de sorts pour booster le sort demandé ("+spellID1+") jusqu'au niveau "+(spellLvl+1)+" dans le parseSpells.onBoost");
+				}
+				Syn.d("le joueur avait le bon nombre de points.");
+				if(spellLvl >= GlobalWorld.getSpell(c.getAccount().getCurPerso().getWorld(), spellID1).length){
+					SM.Spells.SUE(c.getSession());
+					packetCantParse(c, packet, "Impossible de booster le sort demandé ("+spellID1+") jusqu'au niveau "+(spellLvl+1)+" dans le parseSpells.onBoost, ce sort est déjà boosté au niveau maximum.");
+				}
+				Syn.w("safdgiuhldfjg  Man, le Exception.throwXXXException fait pas toujours déco le perso -.-");
+				c.getAccount().getCurPerso().upgradeSpellByID(spellID1, GlobalWorld.getSpell(c.getAccount().getCurPerso().getWorld(), spellID1)[spellLvl]);
+				SM.Spells.SUK(c.getSession(), spellID1, spellLvl+1);
+				//rien d'autre à renvoyer apparemment.
+				return true;
+			//TODO case 'F': //forgetSpell
+			//	break;
+			case 'M'://onSpellMove -> pour bouger un sort dans les barres de raccourcis  Ex: SM181|1
+				if(Utils.isParsableInteger(packet.substring(2, packet.indexOf("|"))) == false
+					|| Utils.isParsableInteger(packet.substring(1+packet.indexOf("|"))) == false){
+					packetCantParse(c, packet, "L'ID du sort ou l'ID de la nouvelle position sont imparsable en int dans le parseSpells.onMovement");
+				}
+				short spellID = Short.parseShort(packet.substring(2, packet.indexOf("|")));
+				byte positionID = Byte.parseByte(packet.substring(1+packet.indexOf("|")));
+				if(positionID > CSpells.maxSpellPositionID || positionID < CSpells.minSpellPositionID){
+					packetCantParse(c, packet, "Position de sort invalide ("+positionID+") dans le parseSpells.onMovement");
+				}
+				GSpell s = c.getAccount().getCurPerso().removeSpellByID(spellID);
+				if(s == null){
+					packetCantParse(c, packet, "Le personnage ne possède pas le sort demandé ("+spellID+") dans le parseSpells.onMovement");
+				}
+				GSpell old = c.getAccount().getCurPerso().removeSpellByPosition(positionID);
+				c.getAccount().getCurPerso().setSpellByPosition(s, positionID);
+				if(old != null){
+					c.getAccount().getCurPerso().setSpellByID(old, old.getID());
+				}
+				//aucun packet à renvoyer xd
+				return true;
+		}
+		SM.Basics.BN(c.getSession());
+		return false;
+	}
+	
+	
+	
+*/	
+}

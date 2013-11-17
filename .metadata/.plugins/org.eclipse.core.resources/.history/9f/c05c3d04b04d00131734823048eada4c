@@ -1,0 +1,106 @@
+package Handlers;
+
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+import org.fusesource.jansi.Ansi;
+
+import Core.Exceptions;
+import Core.Syn;
+import Handlers.MinaHandler;
+import Tool.TClient;
+import Tool.TServer;
+
+public class THandler extends MinaHandler {
+	
+	public TServer s = null;
+
+	public THandler(TServer s){
+		this.s = s;
+	}
+	
+	@Override
+	public void exceptionCaught(IoSession session, Throwable arg1)
+			throws Exception {
+		// TODO Auto-generated method stub
+		if(session.getAttribute("client") != null){
+			((TClient)session.getAttribute("client")).kick();
+		}
+		System.out.print("T exceptionCaught kicked TClient: ");
+		arg1.printStackTrace();
+		//Syn.w("exceptionCaught : "+arg1.fillInStackTrace(), Ansi.Color.RED);
+	}
+
+	@Override
+	public void messageReceived(IoSession session, Object mess) throws Exception {
+		Syn.w("T Recv << "+mess);
+		if (!(mess instanceof String)) {
+			Exceptions.throwException("THandler.[RECV] : le message recu n'est pas une string.");
+			return;
+		}
+		TClient c = ((TClient)session.getAttribute("client"));
+
+		String packet = mess.toString();
+		
+		boolean nobug =  Syn.Services.dofusClientStrategy.defaultPluginsManager.getParsingManager().parse(c, packet);//ParsingManager.parse(c, packet);
+		//Syn.d("nobug ="+nobug+".");
+		if(!nobug){
+			packetCantParse(c, packet, "Raison inconnue, soit parseur non-créé soit erreur dans un des parseurs.");
+		}
+		return;
+
+	}
+
+	/**
+	 * XXX [À achever!] GGameHandler.packetCantParse(GClient c)   -> que faire si le packet à pârser n'existe pas.
+	 * @param c
+	 */
+	public static void packetCantParse(TClient c, String packet, String additionnalInfo){
+		if(c != null && c.getSession().isConnected()){
+			c.kick();
+			Exceptions.throwException("THandler.packetCantParse : "+packet+". "+additionnalInfo);
+		}
+	}
+	
+
+	@Override
+	public Object send(IoSession session, String packet){
+		Syn.w("[Send] >> "+packet);
+		if(session != null && !session.isClosing() && session.isConnected() && !packet.equals("") && !packet.equals(""+(char)0x00))
+		{
+			session.write(packet+"\n");
+			Syn.w("[Send] >> "+packet);
+		}else if(session == null){
+			Syn.w("[ERROR] SM.Sender.send(PW out).out == null");
+		}
+		return packet;
+	}
+
+
+
+	@Override
+	public void sessionClosed(IoSession session) throws Exception {
+		Syn.w("sessionClosed", Ansi.Color.RED);
+		if(((TClient)session.getAttribute("client")) != null){
+			((TClient)session.getAttribute("client")).kick();
+		}
+	}
+
+	@Override
+	public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
+		Syn.w("l sessionIdle id:"+session.getId(), Ansi.Color.RED);
+		//session.close(false);
+		if(((TClient)session.getAttribute("client")) != null){
+			((TClient)session.getAttribute("client")).kick();
+		}
+	}
+
+	@Override
+	public void sessionOpened(IoSession session) throws Exception {
+		Syn.w("t sessionOpened id:"+session.getId(), Ansi.Color.RED);
+		
+		TClient c = new TClient(session);
+		session.setAttribute("client", c);
+		
+	}
+
+}

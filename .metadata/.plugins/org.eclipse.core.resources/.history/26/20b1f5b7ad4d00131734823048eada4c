@@ -1,0 +1,13 @@
+package Interfaces;
+
+import LoginObjects.LAccount;
+
+public interface IClient {
+
+	protected LAccount account = null;
+	
+	public void kick();
+	public void terminate() throws Throwable;
+	
+
+}

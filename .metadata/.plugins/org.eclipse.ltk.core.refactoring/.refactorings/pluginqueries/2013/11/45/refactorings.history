@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;pack.MainQueries&apos; to &apos;QueriesMain&apos;&#x0D;&#x0A;- Original project: &apos;PluginQueries&apos;&#x0D;&#x0A;- Original element: &apos;pack.MainQueries&apos;&#x0D;&#x0A;- Renamed element: &apos;pack.QueriesMain&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;MainQueries&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;pack{MainQueries.java[MainQueries" matchStrategy="1" name="QueriesMain" qualified="false" references="true" similarDeclarations="false" stamp="1384067513849" textual="false" version="1.0"/>
+</session>

@@ -1,0 +1,17 @@
+package tests;
+
+import tests.Handlers.WakfuEncoder;
+import tests.Handlers.WakfuHandler;
+import Servers.NettyServer;
+
+public class Main {
+
+	public NettyServer s = new NettyServer();
+	
+	public static void main(String[] str){
+
+		s.setEncoder(new WakfuEncoder());
+		s.setHandler(new WakfuHandler(new WakfuLoginClientProvider()));
+	}
+
+}

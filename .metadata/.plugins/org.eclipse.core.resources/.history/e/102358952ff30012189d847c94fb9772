@@ -1,0 +1,19 @@
+package Tests;
+
+public class GlobalObjectSpace {
+	
+	
+	private GlobalObjectSpace(){
+		
+	}
+	
+	
+	public static GlobalObjectSpace create(){
+		return new GlobalObjectSpace();
+	}
+	public static GlobalObjectSpace open(String name){
+		return new GlobalObjectSpace(name);
+	}
+	
+
+}

@@ -1,0 +1,56 @@
+package GameObjects.Fights;
+
+import java.util.ArrayList;
+
+import Abstractions.CombativeCharacter;
+
+public class FightTeam extends ArrayList<CombativeCharacter> {
+	/**  */
+	private static final long serialVersionUID = 1L;
+	
+	private boolean isClosed = false;//si complètement barré (icone de cadedans)
+	private boolean isClosedGroup = false;//si on bloque à tout le monde sauf le groupe
+	private boolean isAllowingSpectators = false;//si on les accepte ou si on bloque les spectateurs 
+	private boolean isAskingHelp = false;
+	
+	public FightTeam(){
+		super();
+	}
+	public FightTeam(int i){
+		super(i);
+	}
+	
+	
+	
+
+
+	public void setClosed(boolean isClosed) {
+		this.isClosed = isClosed;
+	}
+	public boolean isClosed() {
+		return isClosed;
+	}
+
+	public void setClosedGroup(boolean isClosedGroup) {
+		this.isClosedGroup = isClosedGroup;
+	}
+	public boolean isClosedGroup() {
+		return isClosedGroup;
+	}
+
+	public void setAllowingSpectators(boolean isAllowingSpectators) {
+		this.isAllowingSpectators = isAllowingSpectators;
+	}
+	public boolean isAllowingSpectators() {
+		return isAllowingSpectators;
+	}
+
+	public void setAskingHelp(boolean isAskingHelp) {
+		this.isAskingHelp = isAskingHelp;
+	}
+	public boolean isAskingHelp() {
+		return isAskingHelp;
+	}
+	
+	
+}

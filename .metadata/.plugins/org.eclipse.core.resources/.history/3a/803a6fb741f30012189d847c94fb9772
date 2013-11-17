@@ -1,0 +1,430 @@
+package GameObjects;
+
+
+import static Constants.Constants.ONE_SHORT_MINUS;
+import static Constants.Constants.ZERO_SHORT;
+import Abstractions.AbstractCharacter;
+import Core.Exceptions;
+import Core.Syn;
+import Game.GServer;
+import Interfaces.IEffectParam;
+import Interfaces.IExecutable;
+import Interfaces.IObject;
+import Misc.Dice;
+import Misc.Jet;
+import Misc.ParameterHolder;
+import Plugins.Interfaces.IEffectType;
+import Plugins.Managers.EffectsManager;
+
+
+public class GEffect implements IObject, IExecutable{
+	// PARTIE STATIQUE --------------------------------------------------------------------------------------------
+
+	/**
+	 * Pour créer un nouveau GEffect avec des stats 
+	 * <p>Si c'est (p.Ex) un effet de dommage d'arme (DamagingEffect), les valeurs sont gardées telles quelles
+	 * <p>Sinon, on prend un jet aléatoire possible à partir de ces stats et on le set au baseBoost du Dice. Puis On set à 0 le nombre de dés et de faces dans l'objet Dice 
+	 * <p>Donc dans le premier cas, en jeu, ca va afficher X à Y  (Ex 1d50+150). Dans le deuxieme cas ca va afficher X tout cours (Ex 0d0+187).
+	 */
+	public static GEffect createNewEasyBuilder(IEffectType iet, Dice dice, Jet jet, EffectsManager em){
+		GEffect e = new GEffect();
+		if(dice != null) e.setParams(dice);
+		if(jet != null) e.setParams(jet);
+		return e;
+	}
+	
+	/**
+	 * Pour créer un nouveau GEffect avec de nouvelles stats à partir des stats de l'ItemTemplate
+	 * <p>Si c'est (p.Ex) un effet de dommage d'arme (DamagingEffect), les valeurs sont gardées telles quelles
+	 * <p>Sinon, on prend un jet aléatoire possible à partir de ces stats et on le set au baseBoost du Dice. Puis On set à 0 le nombre de dés et de faces dans l'objet Dice 
+	 * <p>Donc dans le premier cas, en jeu, ca va afficher X à Y  (Ex 1d50+150). Dans le deuxieme cas ca va afficher X tout cours (Ex 0d0+187).
+	 */
+	public static GEffect createNew(String stats, boolean jetParfait, EffectsManager em){
+		GEffect e = new GEffect();
+		//Perfs perf = new Perfs();
+		IEffectType et = em.getEffectByHexStringID(stats.substring(0, stats.indexOf("#")));
+		//perf.stopTiming("Prendre un IEffectType dans le plugin grâce à l'EffectManager");
+		if(et == null){
+			//Syn.d("GEffect.createNew. IEffectType == null  String="+stats.substring(0, stats.indexOf("#")));
+			return null;
+		}else{
+			//Syn.d("GEffect.createNew. stats =="+stats+".");
+			e.ID = et.getID();
+			try{
+				String temp[] = stats.split("#");
+				e.setSpecialArg(temp[3]);
+				if(et.hasDice()){
+					String temp2[] = temp[4].substring(temp[4].indexOf("d")+1).split("\\+");
+					e.iep = new Dice(
+							Short.parseShort(temp[4].substring(0, temp[4].indexOf("d"))), 
+							Short.parseShort(temp2[0]), 
+							Short.parseShort(temp2[1])
+							);
+					if(em.isFixEffectBonus(e.ID)){
+						//Ici on enleve le jet aléatoire et met un jet fixe à partir des valeur qu'on a eu
+						if(jetParfait){
+							e.iep = new Jet((short) e.getDice().getBestShot());
+							//e.getDice().setBaseBoost((short) e.getDice().getBestShot());
+						}else{
+							e.iep = new Jet((short) e.getDice().getRandomShot());
+							//e.getDice().setBaseBoost((short) e.getDice().getRandomShot());
+						}
+						//e.getDice().setNumberOfDices(ZERO_SHORT);
+						//e.getDice().setNumberOfFaces(ZERO_SHORT);
+						
+					}//else{} //Ici on garde les valeurs aléatoires car 
+					 //elles serviront pour des dégats d'arme, un heal de potion, un vol de kamas, etc
+				}else{
+					if(temp[1].equals("0") == false && temp[2].equals("0")){
+						e.iep = new Jet(Short.parseShort(temp[1], 16));
+					}else if(temp[2].equals("0") == false && temp[1].equals("0")){
+						e.iep = new Jet(Short.parseShort(temp[2], 16));
+					}else{
+						e.iep = new Jet(ZERO_SHORT);
+					}
+				}
+			}catch(Exception ex){
+				ex.printStackTrace();
+				return null;
+			}
+		}
+		return e;
+	}
+	
+	
+	
+	/**
+	 * Créé un effet du style utilisé sur les sorts. 
+	 * <br>(pas exactement pareil que pour les items du à la mise en forme de la bdd d'ancestra. 
+	 *		C'pas trop grave, ca me dérange pas. 
+	 *		Peut-être optimiser plus tard la bdd et/pour mettre un seul GEffect.createNew)
+	 * @param stats - Ex: 96;9;13;-1;0;0;1d5+8 -> 
+	 * 				      effectID ; min ; max ; morph ; durée ; probabilité ; dice
+	 */
+	public static GEffect createNewForSpell(String stats, EffectsManager em){
+		if(Misc.Utils.isParsableInteger(stats.substring(0, stats.indexOf(";"))) == false){
+			Exceptions.throwException("Impossible de parser un ID d'effet dans les sorts. L'effet est décrit ainsi :"+stats+"...");
+			return null;
+		}
+		GEffect e = new GEffect();
+		IEffectType et = em.getEffect(Short.parseShort(stats.substring(0, stats.indexOf(";"))));
+		if(et == null){
+			return null;
+		}else{
+			e.ID = et.getID();
+			e.specialArg = stats.substring(Misc.StringUtils.indexOf(stats, ";", 3)+1, stats.lastIndexOf(";"));
+			
+			try{
+				if(et.hasDice() && stats.indexOf("d") != -1){
+					e.iep = new Dice(
+							Short.parseShort( stats.substring(stats.lastIndexOf(";")+1, stats.indexOf("d")) ), 
+							Short.parseShort( stats.substring(stats.indexOf("d")+1, stats.indexOf("+")) ), 
+							Short.parseShort( stats.substring(stats.indexOf("+")+1) )
+							);
+				}else{
+					e.specialArg = stats.substring(Misc.StringUtils.indexOf(stats, ";", 3)+1);
+				}
+				if(e.iep == null){
+					String min = stats.substring(Misc.StringUtils.indexOf(stats, ";", 1)+1, Misc.StringUtils.indexOf(stats, ";", 2));
+					String max = stats.substring(Misc.StringUtils.indexOf(stats, ";", 2)+1, Misc.StringUtils.indexOf(stats, ";", 3));
+					e.iep = new Dice(
+							Short.parseShort( min ),
+							Short.parseShort( max ),
+							ONE_SHORT_MINUS 
+							);
+				}
+			}catch(Exception ex){
+				ex.printStackTrace();
+				return null;
+			}
+		}	
+		return e;
+	}
+
+	
+	
+	
+	
+	
+	
+//  PARTIE OBJET --------------------------------------------------------------------------------------------	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	private short ID = 0;
+	private IEffectParam iep = null;
+	private String specialArg = null;//Ex: nom du propriétaire d'un drago, date du dernier repas d'un familier, total de résistance objet d'élevage..
+	
+	
+	
+	/**À NE PAS UTILISER il est là uniquement pour la method createNew*/
+	public GEffect(){}
+	
+	/**
+	 * Pour dans le EffectsShare.getSimilarEffect
+	 */
+	public GEffect(short effectTypeID, String specialArg, IEffectParam iep2){
+		setEffectID(effectTypeID);
+		setSpecialArg(specialArg);
+		iep = iep2;
+	}
+	
+	/**
+	 * Utilisé uniquement pour les constructeurs d'ItemSet
+	 */
+	public GEffect(short ID, short value){
+		this.ID = ID;
+		//this.iep = new Dice(ZERO_SHORT, ZERO_SHORT, value);
+		this.iep = new Jet(value);
+	}
+	
+	/**
+	 * Constructeur pour reconstruire un GEffect déjà existant à partir d'un item fraichement chargé de la bdd à l'inventaire d'un joueur
+	 * @param stats - Les stats de l'effet comme elles étaient avant.
+	 */
+	public GEffect(String stats, EffectsManager em){
+		IEffectType et = em.getEffectByHexStringID(stats.substring(0, stats.indexOf("#")));
+		if(et == null){
+			return;
+		}else{
+			Syn.d("Chargement de l'effet("+ID+")");
+			ID = et.getID();
+			String temp[] = stats.split("#");
+			setSpecialArg(temp[3]);
+			if(et.hasDice()){//S'il y a un dé sur l'effet (0d0+0)
+				try{
+					String temp2[] = temp[4].substring(temp[4].indexOf("d")+1).split("\\+");
+					if(em.isFixEffectBonus(this.ID)){
+						Syn.d("Jet d'effet chargé =("+temp[4]+")");
+						//Ici on enleve le jet aléatoire et met un jet fixe à partir des valeur qu'on a eu
+						this.iep = new Jet(Short.parseShort(temp2[1]));
+					}else{
+						Syn.d("Dé d'effet chargé =("+temp[4]+")");
+						this.iep = new Dice(
+								Short.parseShort(temp[4].substring(0, temp[4].indexOf("d"))), 
+								Short.parseShort(temp2[0]), 
+								Short.parseShort(temp2[1])
+								);
+					}
+				}catch(Exception e){
+					e.printStackTrace();
+					return;
+				}
+			}else{//Si on a pas besoin de dé, de juste une valeur
+				if(temp[1].equals("0") == false && temp[2].equals("0")){
+					this.iep = new Jet(Short.parseShort(temp[1], 16));
+				}else if(temp[2].equals("0") == false && temp[1].equals("0")){
+					this.iep = new Jet(Short.parseShort(temp[2], 16));
+				}else{
+					this.iep = new Jet(ZERO_SHORT);
+				}
+			}
+			
+		}
+	}
+	
+
+	@Override
+	/**
+	 * Même que getEffectID mais override IObject et en int.  Retourne l'ID d'effet et non un id d'objetinstance unique.  Retournera exemple 99 pour un effet de dommage de chais pu quel élément.
+	 */
+	public int getID() {
+		return this.ID;
+	}
+
+	@Override @Deprecated 
+	/** Utilise setEffectID à la place, le setID a besoin d'un cast pour fonctionner. */
+	public void setID(int iD) {
+		this.ID = (short) iD;
+	}
+	
+	/**
+	 * Même que getID mais en short et override rien.  Retourne l'ID d'effet et non un id d'objet unique.  Retournera exemple 99 pour un effet de dommage de chais pu quel élément.
+	 */
+	public short getEffectID(){
+		return ID;
+	}
+	
+	public void setEffectID(short id){
+		ID = id;
+	}
+
+	public String getHexEffectID(){
+		return Integer.toHexString(ID);
+	}
+	
+	public IEffectType getEffectType(EffectsManager em){
+		return em.getEffect(ID);
+	}
+
+	public void setDice(Dice dice) {
+		iep = dice;
+	}
+	public Dice getDice() {
+		return iep.getDice();
+	}
+	public void setJet(Jet dice) {
+		iep = dice;
+	}
+	public Jet getJet() {
+		return iep.getJet();
+	}
+	
+	
+	/**
+	 * Retourne "0" si le specialArg du GEffect est null. Retourne la string specialArg sinon.
+	 * @return
+	 */
+	public String getSpecialArg(){
+		if(this.specialArg == null){
+			return "0";
+		}
+		return this.specialArg;
+	}
+	/**
+	 * Si l'argument == "0", on laisse le specialArg du GEffect à null. Sinon on le set bien.
+	 * @param specialarg
+	 */
+	public void setSpecialArg(String specialarg){
+		if(specialarg.equals("0") == false){
+			this.specialArg = specialarg;
+		}
+	}
+	
+	/**
+	 * Renvoie l'effet sous forme de string. 
+	 * <p>Ex:->  hexID#hexMin#hexMax#specialArg#jetDé -> 9e#97#c8#salut#1d50+150 
+	 * <p>Ou encore hexID#hexMin#hexMax#specialArg tout court s'il n'y a pas de jet de dé (Ex: objet d'élevage, prisme, parcho de charac, ..)
+	 */
+	public String getString(EffectsManager em){
+		if(iep == null){
+			return getHexEffectID()+"#0#0#"+getSpecialArg();
+		}else
+		if(getEffectType(em).hasDice()){//Si on a un dé (1d2+13 ou même 0d0+7)
+			if(iep.isJet()){//Égal à if(isFixEffectBonus(this))  ex. xxxx0d0+7
+				return getHexEffectID()+"#0#"+getJet().getValueHex()+"#"+getSpecialArg()+"#0d0"+(getJet().getValue() < 0 ? "-" : "+")+getJet().getValue();
+			}else 
+			if(iep.isDice()){//ex. xxxxx1d2+13
+				return getHexEffectID()+"#"+getDice().getWorstShotHex()+"#"+getDice().getBestShotHex()+"#"+getSpecialArg()+"#"+getDice().getString();
+			}
+		}else
+		if(iep.isJet()){//Si y'a pas de dé, qu'on a juste besoin d'une seule ptite valeure
+			return getHexEffectID()+"#0#"+getJet().getValueHex()+"#"+getSpecialArg();
+		}//else 
+		//if(iep.isDice()){//Si on a un dé (1d2+13)
+		//	if(getDice().getNumberOfDices() == 0 && getDice().getNumberOfFaces() == 0){//Égal à if(isFixEffectBonus(this)){
+		//		return getHexEffectID()+"#0#"+getDice().getBestShotHex()+"#"+getSpecialArg()+"#"+getDice().getString();
+		//	}
+		//	return getHexEffectID()+"#"+getDice().getWorstShotHex()+"#"+getDice().getBestShotHex()+"#"+getSpecialArg()+"#"+getDice().getString();
+		//}
+		
+		//,3e9#0#0#mysecondscript.js#0d0+0
+		return getHexEffectID()+"#0#"+iep.getString()+"#"+getSpecialArg();
+	}
+	
+	/**
+	 * Renvoie l'effet sous forme de string, mais pour des spells
+	 */
+	public String getStringForSpell(EffectsManager em){
+		/*if(iep == null){
+	//		Syn.d("pass12d here ! ("+(getEffectID()+";-1;-1;"+getSpecialArg()+";0")+")");
+			return getEffectID()+";-1;-1;"+getSpecialArg()+";0";
+		}else
+		if(iep.isJet()){//Si y'a pas de dé, qu'on a juste besoin d'une seule ptite valeure
+	//		Syn.d("pass13d here ! ("+(getEffectID()+";"+"-1"+";-1;"+getSpecialArg()+";"+iep.getJet().getValue())+")");
+			return getEffectID()+";"+iep.getJet().getValue()+";-1;"+getSpecialArg();//+";"+iep.getJet().getValue();
+		}else 
+			*/
+		if(iep.isDice()){//Si on a un dé (1d2+13)
+			String toReturn = getEffectID()+";";
+			if(this.getEffectType(em).hasDice()){
+				toReturn += getDice().getWorstShot()+";";
+				if(getDice().getWorstShot() != getDice().getBestShot()){
+					toReturn += getDice().getBestShot()+";";
+				}else{
+					toReturn += "-1;";
+				}
+				toReturn += getSpecialArg()+";";
+				toReturn += getDice().getString();
+			}else{
+				toReturn += getDice().getNumberOfDices()+";";
+				toReturn += getDice().getNumberOfFaces()+";";
+				toReturn += getSpecialArg();
+			}
+			return toReturn;
+		}
+		return getEffectID()+";-1;-1;"+getSpecialArg()+";0";
+	}
+
+	/**
+	 * IEffectParam est implémenté par Dice et Jet donc ca return un des deux selon l'effet
+	 */
+	public IEffectParam getParams() {
+		return iep;
+	}
+	/**
+	 * IEffectParam est implémenté par Dice et Jet 
+	 */
+	public void setParams(IEffectParam iep) {
+		this.iep = iep;
+	}
+
+	public GEffect copy(){
+		GEffect e = new GEffect();
+		e.setEffectID(ID);
+		e.setSpecialArg(new String(specialArg));
+		if(iep.isDice()){
+			e.setDice(new Dice(getDice().getNumberOfDices(), getDice().getNumberOfFaces(), getDice().getBaseBoost()));
+		}else if(iep.isJet()){
+			e.setJet(new Jet(getJet().getValue()));
+		}
+		return e;
+	}
+
+
+
+	@Override
+	public void terminate() throws Throwable {
+		iep = null;
+		specialArg = null;
+		this.finalize();
+	}
+
+
+	@Override @Deprecated
+	public short getServerID() { return 0; }
+	@Override @Deprecated
+	public GServer getServer() { return null; }
+	@Override @Deprecated
+	public GWorld getWorld() { return null; }
+	@Override @Deprecated
+	public void setServer(GServer s) { }
+
+
+
+	@Override
+	/**
+	 * @param objects - { AbstractCharacterCaster, AbstractCharacterTarget, ParameterHolder };
+	 */
+	public void apply(Object[] objects) {
+		((AbstractCharacter)objects[0]).getServer().getEffectsManager()
+		.applyEffect(this, (AbstractCharacter)objects[0], (AbstractCharacter)objects[1], (ParameterHolder) objects[2]);
+	}
+
+
+
+
+
+
+
+
+	
+	
+}

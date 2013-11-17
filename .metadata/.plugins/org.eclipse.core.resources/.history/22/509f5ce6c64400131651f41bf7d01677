@@ -1,0 +1,19 @@
+package Game;
+
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Login.LServer;
+
+public class WakfuGameServer extends GameServer {
+
+	
+	
+	// Les ConstantWorld ne sont pas les mêmes dans Dofus et dans Wakfu, 
+	//faudrait ptete les surclasser en abstract et faire deux implémentations !
+	//pareillement pour la GConfig, elle n'est pas pareille en dofus qu'en wakfu
+	
+	//Donc ptete les mettre directement dans DofusGS/WakfuGS au lieu de dans l'abstract GS ?
+
+
+
+}

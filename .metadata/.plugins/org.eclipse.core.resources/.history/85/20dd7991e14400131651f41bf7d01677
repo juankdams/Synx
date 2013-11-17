@@ -1,0 +1,31 @@
+package GlobalObjects;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import Abstractions.AbstractWorld;
+import ConfigurationObjects.SimpleIA;
+import Constants.CPerso;
+import Constants.CServers;
+import Constants.CSpells;
+import Core.Syn;
+import Game.GameServer;
+import GameObjects.GArea;
+import GameObjects.GArea.GSubArea;
+import GameObjects.GArea.GSuperArea;
+import GameObjects.GChallenge;
+import GameObjects.GMonster;
+import GameObjects.GSpell;
+import GameObjects.GWorld;
+import Interfaces.IItemTemplate;
+import Login.LServer;
+import Misc.Randomizer;
+import SQL.SConfig;
+
+public class GlobalWorld implements AbstractWorld {
+	
+	
+	
+
+	
+}

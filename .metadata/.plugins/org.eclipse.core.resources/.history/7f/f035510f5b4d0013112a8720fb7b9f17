@@ -1,0 +1,7 @@
+package Wakfu;
+
+import Servers.Netty.Decoder;
+
+public class WakfuDecoder extends Decoder {
+
+}

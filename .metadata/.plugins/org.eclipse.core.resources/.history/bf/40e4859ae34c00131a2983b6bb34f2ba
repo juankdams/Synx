@@ -1,0 +1,5 @@
+package com.velocity.jwakfu.model.packetwriters;
+
+public class GameCharacterPacketWriter {
+
+}

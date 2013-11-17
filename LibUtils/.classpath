@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="script/GroovyInterpreter.java|script/JavaInterpreter.java|script/LuaInterpreter.java|script/PythonInterpreter.java|script/RubyInterpreter.java|Observing/AbstractObservable.java|Observing/IObservable.java|tests/Handlers/WakfuEncoder.java" kind="src" path="src"/>
+	<classpathentry kind="src" path="TCP"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="ZLIBS/mina/dist/mina-core-2.0.5.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/media/Synz/Dropbox/Private/zLIBS/mina/docs/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="ZLIBS/netty-4.0.0.CR2/jar/all-in-one/netty-all-4.0.0.CR2.jar" sourcepath="/ZLIBS/netty-4.0.0.CR2/jar/all-in-one/netty-all-4.0.0.CR2-sources.jar"/>
+	<classpathentry kind="var" path="ZLIBS/rhino1_7R4/js-14.jar"/>
+	<classpathentry kind="var" path="ZLIBS/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="var" path="Synx/Syn/Syn_plugins/PiouLib.jar"/>
+	<classpathentry kind="var" path="ZLIBS/apache_commons_io/commons-io-2.4/commons-io-2.4.jar" sourcepath="/ZLIBS/apache_commons_io/commons-io-2.4/commons-io-2.4-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/media/Synz/Dropbox/Private/zLIBS/apache_commons_io/commons-io-2.4/commons-io-2.4-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="ZLIBS/guava-14.0.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/Z:/Dropbox/Private/zLIBS/guava-14.0.1.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="ZLIBS/javassist-3.18.0-GA/javassist.jar" sourcepath="/ZLIBS/javassist-3.18.0-GA/src"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

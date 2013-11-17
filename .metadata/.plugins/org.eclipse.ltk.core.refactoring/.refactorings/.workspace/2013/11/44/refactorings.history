@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename Java project &apos;PluginInject&apos; to &apos;PluginProviders&apos;&#x0D;&#x0A;- Original element: &apos;PluginInject&apos;&#x0D;&#x0A;- Renamed element: &apos;PluginInject&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename Java project &apos;PluginInject&apos;" flags="7" id="org.eclipse.jdt.ui.rename.java.project" input="=PluginInject" name="PluginProviders" references="true" stamp="1383426515768" version="1.0"/>
+</session>

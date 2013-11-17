@@ -1,0 +1,22 @@
+package Plugins.Abstractions;
+
+import Game.DofusGameClient;
+import Login.DofusLoginClient;
+import Login.LoginClient;
+import Tool.TClient;
+
+public abstract class AbstractPacketParser {
+
+	
+	public boolean parse(DofusGameClient c, String packet){
+		return false;
+	}
+	public boolean parse(LoginClient c, String packet){
+		return false;
+	}
+	public boolean parse(TClient c, String packet){
+		return false;
+	}
+	
+	
+}

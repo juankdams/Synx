@@ -1,0 +1,26 @@
+package GameClientStrategies;
+
+public abstract class GameClientStrategy {
+	
+	private GameClientStrategies strategy;
+	
+	
+	
+	public String getName(){
+		//return strategy.name();
+	}
+
+
+
+	public void setStrategy(GameClientStrategies strategy) {
+		this.strategy = strategy;
+	}
+
+
+
+	public GameClientStrategies getStrategy() {
+		return strategy;
+	}
+	
+
+}

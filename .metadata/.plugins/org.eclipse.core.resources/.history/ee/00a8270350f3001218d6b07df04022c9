@@ -1,0 +1,595 @@
+package pack;
+
+
+//Qui vient d'ici
+import static Enums.CharacteristicType.ENERGY;
+import static GameObjects.GStatistiques.CharacteristicColumn.BASE;
+import static pack.SpellEffectType.COOLDOWN;
+import static pack.SpellEffectType.MAX_LAUNCH_BY_TURN;
+import static pack.SpellEffectType.MAX_LAUNCH_BY_TURN_BY_TARGET;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import pack.SpellEffectType.DamagingEffect;
+import pack.SpellEffectType.HealingEffect;
+import piou.script.Interpreter;
+import piou.script.InterpreterFactory;
+import plugin.event.Event;
+import Abstractions.AbstractCharacter;
+import Abstractions.CombativeCharacter;
+import Applyers.DamagingEffectApplication;
+import Applyers.HealingEffectApplication;
+import Constants.Constants;
+import Core.Syn;
+import Enums.CharacterType;
+import Enums.SynActions;
+import Enums.SynActions.MapAction;
+import GameObjects.GAction;
+import GameObjects.GBuff;
+import GameObjects.GBuff.BuffApplicationType;
+import GameObjects.GEffect;
+import GameObjects.GItem;
+import GameObjects.GPersonnage;
+import GameObjects.GPrism;
+import GameObjects.GSpell;
+import GameObjects.GStatistiques.CharacteristicColumn;
+import GlobalObjects.GlobalWorld;
+import GlobalObjects.Map;
+import Misc.Jet;
+import Misc.ParameterHolder;
+import Misc.Tests.Perfs;
+import Plugins.Abstractions.AbstractEffectPluginListener;
+import Plugins.Interfaces.IEffectType;
+import Plugins.Managers.PluginsManager;
+import XML.Config;
+import ZPlug.MiscEvent;
+
+
+
+public class Application extends AbstractEffectPluginListener{
+	public static Logger log = LoggerFactory.getLogger(Application.class);
+	//private static ScriptEngineManager manager = new ScriptEngineManager();
+	//private static ScriptEngine engine = null;
+	private static Interpreter jsInterpret = InterpreterFactory.getFactory().getScript("javascript");
+
+	private HashMap<Short, Application> applyers = new HashMap<Short, Application>();
+	
+	
+	public EffectsMain main = null;
+	public Application(EffectsMain main){
+		this.main = main;
+	}
+	
+	
+	public void fillApplyers(){
+		Application da = new DamagingEffectApplication(main);
+		for(DamagingEffect de : SpellEffectType.DamagingEffect.values()){
+			applyers.put(de.getID(), da);
+		}
+		Application dh = new HealingEffectApplication(main);
+		for(HealingEffect de : SpellEffectType.HealingEffect.values()){
+			applyers.put(de.getID(), dh);
+		}
+	}
+	
+	/*
+	 paramètres d'effets:
+	 DamagingEffect: casterChar, targetChar, arme, effect, coupCritique 
+	
+	 */
+	
+	
+	
+
+	@Override
+	//public void apply(GEffect e, ICharacter caster, ISprite target, Object... other){
+	public void apply(GEffect e, AbstractCharacter caster, AbstractCharacter target, ParameterHolder ph){
+		
+		
+		if(e == null){
+			log.error("Quelqu'un a tenté d'appliquer un effet null. N'est pas supposé arrivé puisque c'est controlé à la création...");
+			return;
+		}
+		if(caster == null){//
+			log.error("Quelqu'un a tenté d'appliquer un effet avec un caster null. N'est pas supposé arrivé puisque c'est controlé à la cr�ation...");
+			return;
+		}
+		
+		CombativeCharacter targetcombat = null;
+		if(target != null && target instanceof CombativeCharacter){
+			targetcombat = (CombativeCharacter) target;
+		}
+		CombativeCharacter castercombat = null;
+		if(caster != null && caster instanceof CombativeCharacter){
+			castercombat = (CombativeCharacter) caster;
+		}
+		IEffectType et = SpellEffectType.getEffect(e.getEffectID());
+		//Syn.d("passed effect checks");
+		
+		if(applyers.get(et.getID()) != null){
+			applyers.get(et.getID()).apply(e, et, caster, target, ph, castercombat, targetcombat);
+		}else{
+			apply(e, et, caster, target, ph, castercombat, targetcombat);
+		}
+		notice(et, caster, target);
+	}
+	
+	
+	protected void apply(GEffect e, IEffectType et, AbstractCharacter caster, AbstractCharacter target, ParameterHolder ph, CombativeCharacter castercombat, CombativeCharacter targetcombat){
+		/*
+		if(main.pm.getEffectsManager().getDamagingEffect(et.getID()) != null){//Effets de dommages (normal et vols de vie)
+			if(targetcombat == null) return;
+			//Syn.d("passed effect checks in damaging effects ");
+			//int[] result = other.length == 3 ? 
+			int[] result = (ph != null && ph.item != null) ?
+						//FormulingManager.calculateDamageOnTargetByWeaponWithResists((GItem)other[1], e, caster, targetchar, (Boolean)other[2]) 
+						main.pm.getFormulingManager().calculateDamageOnTargetByWeaponWithResists((GItem)ph.item, e, castercombat, targetcombat, (Boolean)ph.coupCritique) 
+						:
+						main.pm.getFormulingManager().calculateDamageOnTargetBySpellWithResists(e, castercombat, targetcombat);
+
+			//Syn.d("passed effect checks, got results");
+			//try{
+				boolean dead = false;
+				//Syn.d("targetcombat.getStatistique() = "+(targetcombat.getStatistique()));
+				if(targetcombat.getStatistique().getPdv() <= result[0]){
+					Syn.d("passed effect, damage > target.pdv");
+					dead = true;
+					result[0] = targetcombat.getStatistique().getPdv();
+				}
+				targetcombat.getStatistique().decrementPdv(result[0]);
+				//Syn.d("passed effect checks decremented pdv");
+				if(result[1] > 0){
+					Syn.d("passed effect going to reduce damages");
+					SM.Messages.MM(caster.getMap(), targetcombat.getName()+" a réduit (au total) les dommages de "+result[1]+".", Constants.COLOR_GREEN);
+				}
+				if(result[2] > 0){
+					//Syn.d("passed effect going to RETURN_X_DAMAGES");
+					GEffect e2 = new GEffect();
+					e2.setEffectID(SpellEffectType.RETURN_X_DAMAGES.getID());
+					e2.setJet(new Jet((short) result[2]));
+					//apply(e2, targetchar, caster, other);
+					apply(e2, targetcombat, caster, ph);
+				}
+				//Syn.d("passed effect going to newPdvChangedAction");
+				GAction a = main.pm.getActionsManager().getFactory().newPdvChangedAction(targetcombat, -result[0]);
+				if(targetcombat.getCharacterType() == CharacterType.PLAYER){
+					((GPersonnage)targetcombat).addAction(a);
+				}
+				SM.Game.GA_LAYER(targetcombat, a);
+				SM.Messages.MM(caster.getMap(), targetcombat.getName()+" a subit une perte de "+result[0]+" pdv.", Constants.COLOR_GREEN);
+				if(dead){
+					SM.Messages.MM(caster.getMap(), targetcombat.getName()+" est mort !", Constants.COLOR_GREEN);
+				}
+				//TODO send packets...
+				//et = SpellEffectType.NO_EFFECT;//permet de passer le switch jusqu'en bas.
+			//}catch(Throwable t){
+			//	t.printStackTrace();
+			//}
+		}
+		
+		if(main.pm.getEffectsManager().getHealingEffect(et.getID()) != null){
+			if(targetcombat == null) return;
+			int heal = main.pm.getFormulingManager().calculateHeal(e, castercombat, targetcombat);
+			if(targetcombat.getStatistique().getPdv() <= heal){
+				heal = targetcombat.getStatistique().getPdv();
+			}
+			targetcombat.getStatistique().incrementPdv(heal);
+			SM.Messages.MM(caster.getMap(), targetcombat.getName()+" a regagné "+heal+" pdv.", Constants.COLOR_GREEN);
+			//TODO send packets...
+			//et = SpellEffectType.NO_EFFECT;//permet de passer le switch jusqu'en bas.
+		}
+		*/
+		switch((SpellEffectType)et){
+			case NO_EFFECT:
+				break;
+			case MINUS_X_LIFE://1000
+			case PLUS_X_LIFE://110
+				int life = e.getParams().isDice() ? e.getDice().getRandomShot() : e.getJet().getValue();
+				if(et.isNegative()) life *= -1;
+				Syn.d("life given in stats.incrementPdv(life) = "+life+"  operateur ="+et.getOperator());
+				targetcombat.getStatistique().incrementPdv(life);
+				break;
+			case PLUS_X_PA:
+			case MINUS_X_PA:
+				short pa = (short) (e.getParams().isDice() ? e.getDice().getRandomShot() : e.getJet().getValue());
+				//if(et.isNegative()) pa *= -1;
+				Syn.d("PA given in BOOST column = "+pa+"  operateur ="+et.getOperator());
+				targetcombat.getStatistique().incrementValue(et.getCharacType(), pa, CharacteristicColumn.BOOST);
+				break;
+			case REGIVE_X_ENERGY://139
+				int energy = e.getParams().isDice() ? e.getDice().getRandomShot() : e.getJet().getValue();
+				castercombat.getStatistique().incrementValue(ENERGY, (short)energy, BASE);
+				break;
+			case MAKE_INVISIBLE://150
+				if(target != null){
+					target.setGfxID(9999);
+					SM.Game.GM_MODIFY(target, target.getMap());
+				}
+				break;
+			case RETURN_X_DAMAGES://220
+				if(targetcombat == null) break;
+				SM.Messages.MM(caster.getMap(), caster.getName()+" a renvoyé "+e.getJet().getValue()+" dommages.", Constants.COLOR_GREEN);
+				boolean dead = false;
+				if(targetcombat.getStatistique().getPdv() <= e.getJet().getValue()){
+					dead = true;
+					e.getJet().setValue(targetcombat.getStatistique().getPdv());
+				}
+				targetcombat.getStatistique().decrementPdv(e.getJet().getValue());
+				SM.Messages.MM(caster.getMap(), targetcombat.getName()+" a subit une perte de "+e.getJet().getValue()+" pdv.", Constants.COLOR_GREEN);
+				if(dead){
+					SM.Messages.MM(caster.getMap(), targetcombat.getName()+" est mort !", Constants.COLOR_GREEN);
+				}
+				//TODO send packets...
+				break;
+			case POSE_PRISME://513
+				//todo, le packet GM des prismes est meme pas fait ^^
+				caster.getMap().updateSpriteList(SynActions.MapAction.ADD_SPRITE, new GPrism());
+				break;
+			case TELEPORT://825
+				caster.getMap().updateSpriteList(MapAction.REMOVE_SPRITE, caster);//Enleve le perso de la map actuelle
+				//Map m = GlobalWorld.getMap(caster.getWorld(), (Integer)other[0]);
+				Map m = GlobalWorld.getMap(caster.getWorld(), ph.mapID);
+				caster.setCellID(ph.cellID);//Set la nouvelle cellID du perso
+				m.updateSpriteList(MapAction.ADD_SPRITE, caster);//Ajoute le perso à la nouvelle map
+				
+				break;
+				
+			/*
+			case DAMAGE_X_WATER:
+			case DAMAGE_X_EARTH:
+			case DAMAGE_X_AIR:
+			case DAMAGE_X_FIRE:
+			case DAMAGE_X_NEUTRAL:
+				try {
+					Syn.d("EffectsPlugin.Application.apply : damagingEffect");
+					engine = manager.getEngineByName("JavaScript");
+					engine.eval(new java.io.FileReader("Syn_scripts/damagingeffects.js"));
+					Invocable inv = (Invocable) engine;
+			        //inv.invokeFunction("hit");   wtf? 
+			        inv.invokeFunction("exe", et, e, caster, targetchar, CharacteristicColumn.TOTAL, false);
+			    	if(targetchar instanceof GPersonnage){
+			    		SM.Account.As(  ((GPersonnage)targetchar).getClient().getSession(), ((GPersonnage)targetchar)  );
+			    	}
+			        engine = null;
+				} catch (FileNotFoundException e1) {e1.printStackTrace();} catch (ScriptException e1) {e1.printStackTrace();} catch (NoSuchMethodException e1) {e1.printStackTrace();}
+				break;*/
+				
+				
+			//Buffs prenant effet sur le coup et gardant effet pendant X tours
+			case DAMAGE_REDUCED_OF_X://265  Armures Féca	
+			case MINIMISE_EFFET_ALEATOIRE://781
+			case MAXIMISE_EFFET_ALEATOIRE://782
+				if(targetcombat == null) break;
+				String SA = e.getSpecialArg();// v c'est le paramètre entre les deux autres:  morph;turns;probabilité
+				Byte tours = Byte.parseByte(e.getSpecialArg().substring(SA.indexOf(";")+1, SA.lastIndexOf(";")));
+				GBuff b = GBuff.createNew(e, tours, BuffApplicationType.OneShot);
+				targetcombat.addBuff(b);
+				if(b.getParams().isDice() && b.getDice().getWorstShot() == b.getDice().getBestShot()){
+					b.setJet(new Jet(b.getDice().getBaseBoost()));
+				}
+				
+				/*for(Object o : other){
+					if(o instanceof GSpell){
+						b.setSpecialArg(""+((GSpell)o).getID());
+						break;//Set le spellID en SpecialArgs à la place du reste.
+						//Utile pour savoir de quelle armure féca vient DAMAGE_REDUCED_OF_X
+					}
+				}*/
+				b.setSpecialArg(""+((GSpell)ph.spell).getID());
+				//Set le spellID en SpecialArgs à la place du reste.
+				//Utile pour savoir de quelle armure féca vient DAMAGE_REDUCED_OF_X
+				break;
+				
+			//TODO Buffs prenant effet seulement à chaque débuts de tours
+				
+			//TODO Buffs prenant effet seulement à chaque fins de tours
+				
+				
+				
+			//TODO Effets d'Invocations.  Ceux-ci sont considérés comme des invocs dans la timeLine (Voir Game.onMovement.bisSummoned)
+			case RESSUCITATE_ALLY:
+			case CREATE_DOUBLE_OFCASTER:
+			case SUMMONS_CREATURE:
+				
+				break;
+			//TODO Invocation statique, n'est pas considérée comme une invocation dans la timeLine.
+			case SUMMONS_CREATURE_STATIC:
+				
+				break;
+				
+				
+			// MY EFFECTS ---------------------------------------	
+				
+			case EXE_JAVASCRIPT://1001
+				//try {
+					Perfs perf = new Perfs();
+					String scriptFile = e.getSpecialArg().substring(0, e.getSpecialArg().indexOf("."));
+					String methodName = e.getSpecialArg().substring(e.getSpecialArg().indexOf(".")+1, e.getSpecialArg().indexOf("@"));
+					boolean reEval = e.getSpecialArg().substring(e.getSpecialArg().indexOf("@")+1).equalsIgnoreCase("true");
+					if(scriptFile.equals("0")){
+						scriptFile = "errornoscript.js"; 
+						methodName = "exe";
+					}//mysecondscript
+					/*
+					engine = manager.getEngineByName("JavaScript");
+					engine.eval(new java.io.FileReader("Syn_scripts/"+scriptFile));
+			        // javax.script.Invocable is an optional interface.
+			        // Check whether your script engine implements or not!
+			        // Note that the JavaScript engine implements Invocable interface.
+			        Invocable inv = (Invocable) engine;
+			        // invoke the global function named "hello"
+			        inv.invokeFunction("hello", caster);
+			        engine = null;
+					*/
+			        if(reEval){
+				        jsInterpret.eval("Syn_scripts/"+scriptFile+".js");
+			        }
+			        if(methodName.equals("") == false){
+			        	jsInterpret.invoke(methodName, caster);
+			        }
+			        
+			        perf.stopTiming("Envoyer 9600 messages");
+				//} catch (FileNotFoundException e1) {} catch (ScriptException e1) {} catch (NoSuchMethodException e1) {}
+		
+				break;
+			case SEND_MESSAGE://1002
+				String msg = e.getSpecialArg().substring(0,e.getSpecialArg().indexOf("@"));
+				msg = msg.replace("%NBR_CO%", caster.getServer().clients.size()+"");
+				msg = msg.replace("%RECORD_CO%", caster.getServer().recordConnexion+"");
+				msg = msg.replace("%EMULATEUR_CREATOR%", Config.emulatorCreatorName);
+				msg = msg.replace("%EMULATEUR_NAME%", Config.emulatorName);
+				msg = msg.replace("%SERVER_NAME%", caster.getServer().getcWorld().name);
+				msg = msg.replace("%UPTIME%", caster.getServer().getUptime()+"ms.");
+				SM.Messages.M((GPersonnage) caster, msg,  e.getSpecialArg().substring(e.getSpecialArg().indexOf("@")+1));
+				break;
+				
+			default:
+				//Si ce n'est ni un effet de dommage ni un effet d'heal, on le déclare comme manquant.
+				if(main.pm.getEffectsManager().getDamagingEffect(et.getID()) == null && main.pm.getEffectsManager().getHealingEffect(et.getID()) == null){
+					log.debug("Manque l'effet "+et.getID()+" "+et.name()+" dans l'EffectsPlugin à Application.apply");
+					SM.Messages.M(((GPersonnage)caster), "L'effet "+et.getID()+" "+et.name()+" n'est pas encore ajouté aux applications !", Constants.COLOR_PINK);
+					return;
+				}
+		}
+	}
+	
+	
+
+	
+	private void notice(IEffectType et, AbstractCharacter caster, AbstractCharacter target){
+		if(caster.getCharacterType() == CharacterType.PLAYER && caster != target){
+			//caster != target pour se sauver un message
+			SM.Messages.M(((GPersonnage)caster), "L'effet "+et.getID()+" "+et.name()+" a été appliqué sur spriteID("+target.getID()+") !", Constants.COLOR_PINK);
+		}
+		if(target.getCharacterType() == CharacterType.PLAYER){
+			//Si l'effet possédais une charactéristique comme la vie, l'énergie, force, chance, sagesse...
+			//Alors on envoit le packet As :D
+			if(et.getCharacType() != null ){//|| et == NO_EFFECT){
+				SM.Account.As(((GPersonnage)target).getClient().getSession(), ((GPersonnage)target));
+			}
+			SM.Messages.M(((GPersonnage)target), "L'effet "+et.getID()+" "+et.name()+" a été appliqué sur vous par "+caster.getName()+"("+caster.getID()+") !", Constants.COLOR_PINK);
+		}
+	}
+
+	
+	
+	
+	
+	@Override  //Get un effet, n'importe lequel
+	public IEffectType getEffect(short effectID) {
+		return SpellEffectType.getEffect(effectID);
+	}
+	@Override  //Get une array de tous les effets
+	public IEffectType[] getEffects() {
+		return SpellEffectType.values();
+	}
+	
+	@Override  //Get un DamagingEffect (ID 91 à 100)
+	public IEffectType getDamagingEffect(short effectID) {
+		return DamagingEffect.getEffect(effectID);
+	}
+	@Override  //Get une array des DamagingEffect (ID 91 à 100)
+	public DamagingEffect[] getDamagingEffects(){
+		return DamagingEffect.values();
+	}
+
+	@Override   //Get un HealingEffect (ID 108 et 81)
+	public IEffectType getHealingEffect(short healingEffectID) {
+		return HealingEffect.getEffect(healingEffectID);
+	}
+	@Override   //Get une array des HealingEffect (ID 108 et 81)
+	public IEffectType[] getHealingEffects() {
+		return HealingEffect.values();
+	}
+	
+	
+	@Override  //Vérifie si l'effet augmente et/ou réduit les pods
+	public boolean isPodsEffect(GEffect e){
+		return (SpellEffectType.AUGMENTS_PODS_X.getID() == e.getEffectID() || SpellEffectType.REDUCE_PODS_X.getID() == e.getEffectID());
+	}
+	@Override  //Vérifie si la liste d'effet contient l'effet de durability pour si c'est une arme éthérée ou objet interactif
+	public boolean containsDurability(ArrayList<GEffect> effects){
+		for(GEffect e : effects){
+			if(e.getEffectID() == SpellEffectType.DURABILITY.getID()){
+				return true;
+			}
+		}
+		return false;
+	}
+	@Override  //Retourne l'effet de durability pour si c'est une arme éthérée ou objet interactif
+	public GEffect getDurabilityEffect(ArrayList<GEffect> effects){
+		for(GEffect e : effects){
+			if(e.getEffectID() == SpellEffectType.DURABILITY.getID()){
+				return e;
+			}
+		}
+		return null;
+	}
+	@Override  //Vérifie si la liste d'effet contient l'effet d'objet d'enclos pour si faut afficher sa durabilité dans l'packet GDO p.ex.
+	public boolean containsEffectObjetEnclos(ArrayList<GEffect> effects){
+		for(GEffect e : effects){
+			if(e.getEffectID() == SpellEffectType.OBJET_ENCLOS.getID()){
+				return true;
+			}
+		}
+		return false;
+	}
+	@Override  //Vérifie si la liste d'effet contient l'effet Poisse
+	public boolean hasPoisse(CombativeCharacter c){
+		if(c.getBuffs() == null){
+			return false;
+		}
+		for(GBuff b : c.getBuffs()){
+			if(b.getEffectID() == SpellEffectType.MINIMISE_EFFET_ALEATOIRE.getID()){
+				return true;
+			}
+		}
+		return false;
+	}
+	@Override  //Vérifie si la liste d'effet contient l'effet Brokle
+	public boolean hasBrokle(CombativeCharacter c){
+		if(c.getBuffs() == null){
+			return false;
+		}
+		for(GBuff b : c.getBuffs()){
+			if(b.getEffectID() == SpellEffectType.MAXIMISE_EFFET_ALEATOIRE.getID()){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	
+	@Deprecated
+	@Override
+	/**
+	 * return isFixEffectBonus(e.getEffectID());
+	 */
+	public boolean isFixEffectBonus(GEffect e){
+		return isFixEffectBonus(e.getEffectID());
+	}
+	@Override
+	public boolean isFixEffectBonus(short effectTypeID){
+		//Si c'tun effet de dommage (d'arme)
+		//Si c'tun effet d'heal (pain,,potion,arme)
+		if(DamagingEffect.getEffect(effectTypeID) != null || HealingEffect.getEffect(effectTypeID) != null){
+			return false;
+		}else //packetclient OAKO176~49e~1~-1~3e8#b#14#allo#1d10+10
+		////TODO Continuer les conditions dans Geffect.isFixEffectBonus
+		//Si c'est une quelconque autre effet qui doit rester avec deux valeurs min/max (un jet aléatoire) ex: Soigne 5 à 10 pdv (Sur une potion)
+		if(effectTypeID == SpellEffectType.REGIVE_X_ENERGY.getID() //Potions d'énergie 
+				|| effectTypeID == SpellEffectType.PLUS_X_LIFE.getID()  //Pains, Potion de mini soin
+				|| effectTypeID == SpellEffectType.MINUS_X_LIFE.getID()
+				){
+			return false;
+		}
+		//Si on peut mettre la valeur de l'effet en une seule valeur statique ex: +20 force. 
+		return true;
+	}
+
+
+
+
+	public void initiateActionListenersAlias(){
+		//Exemple v
+		//ActionsManager.putActionListenerAlias("OM", "ON_ITEM_MOVEMENT");
+	}
+	
+	@Override
+	public Event execute(Event event) {
+		if(event.getEventType() == MiscEvent.Set_PluginsManager){
+			main.pm = (PluginsManager) event.getSource();
+		}else if(event.getEventType() == MiscEvent.Load_Plugins_ActionListenersAlias){
+			this.initiateActionListenersAlias();	
+		}else{
+			Syn.log.error("EffectsPlugin.Application.execute ne devrait jamais être appelé sauf pour l'event Load_Plugins_ActionListenersAlias et/ou Set_PluginsManager ");
+		}
+		return null;
+	}
+	public String toString(){
+		return "EffectApplicationListener";
+	}
+
+
+
+	@Override
+	public boolean isSummonsEffect(GEffect e) {
+		return (e.getEffectID() == SpellEffectType.CREATE_DOUBLE_OFCASTER.getID()//id 180
+				|| e.getEffectID() == SpellEffectType.SUMMONS_CREATURE.getID());//id 181
+	}
+	@Override
+	public boolean isGlyphEffect(GEffect e) {
+		return e.getEffectID() == SpellEffectType.POSE_GLYPHE_RANG_X.getID();//id 401
+	}
+	@Override
+	public boolean isTrapEffect(GEffect e) {
+		return e.getEffectID() == SpellEffectType.POSE_TRAP_RANG_X.getID();//id 400
+	}
+	@Override
+	public boolean isIncarnationEffect(GEffect e) {
+		return e.getEffectID() == SpellEffectType.INCARNATION_LEVEL_X.getID();//id 669
+	}
+	@Override
+	public boolean isElementalArmorEffect(GEffect e) {
+		return e.getEffectID() == SpellEffectType.DAMAGE_REDUCED_OF_X.getID();
+	}
+	@Override
+	public boolean isNormalArmorEffect(GEffect e) {
+		return e.getEffectID() == SpellEffectType.DAMAGE_REDUCT_X.getID();
+	}
+
+
+
+
+
+
+	@Override
+	public IEffectType getCooldownEffect() {
+		return COOLDOWN;
+	}
+	@Override
+	public IEffectType getMaxLaunchByTurnEffect() {
+		return MAX_LAUNCH_BY_TURN;
+	}
+	@Override
+	public IEffectType getMaxLaunchByTurnByTargetEffect() {
+		return MAX_LAUNCH_BY_TURN_BY_TARGET;
+	}
+
+
+	@Override
+	public IEffectType getAddPaEffect() {
+		return SpellEffectType.PLUS_X_PA;
+	}
+	@Override
+	public IEffectType getAddPdvEffect() {
+		return SpellEffectType.PLUS_X_LIFE;
+	}
+	@Override
+	public IEffectType getAddPdvMaxEffect() {
+		return SpellEffectType.PLUS_X_VITALITY;
+	}
+	@Override
+	public IEffectType getAddPmEffect() {
+		return SpellEffectType.PLUS_X_PM;
+	}
+	@Override
+	public IEffectType getAddPoEffect() {
+		return SpellEffectType.PLUS_X_RANGE;
+	}
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+}

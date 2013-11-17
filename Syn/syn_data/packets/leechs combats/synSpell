@@ -1,0 +1,14 @@
+G [RECV] << GA300183;266
+[DEBUG]: hello dans l'apply
+[Send] >> GAS37
+[DEBUG]: SA=(-1;0;0)
+[Send] >> cs<font color='#RED'>Il n'y a aucun targets dans la zone d'effet !</font>
+[Send] >> GA19;300;37;183,266,1001,6,11,1,1
+[Send] >> cs<font color='#009900'>Finit d'appliquer le sort (Moar.applyEffect return true)</font>
+[Send] >> GA20;102;37;-3
+[Send] >> GAF37
+[Send] >> cs<font color='#f702e0'>L'action 300 LANCER_SORT a été appliqué !</font>
+G [RECV] << GKK19
+in parseOnGameActionKorect.   actionID =19.
+G [RECV] << GKK20
+in parseOnGameActionKorect.   actionID =20.

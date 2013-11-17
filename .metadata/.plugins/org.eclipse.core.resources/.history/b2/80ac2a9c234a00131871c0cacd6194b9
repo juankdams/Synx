@@ -1,0 +1,420 @@
+package GlobalObjects;
+
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import Abstractions.AbstractWorld;
+import ConfigurationObjects.SimpleIA;
+import Constants.CPerso;
+import Constants.CServers;
+import Constants.CSpells;
+import Core.Syn;
+import Game.GameServer;
+import GameClientStrategies.GameClientStrategies;
+import GameObjects.GArea;
+import GameObjects.GArea.GSubArea;
+import GameObjects.GArea.GSuperArea;
+import GameObjects.GChallenge;
+import GameObjects.GMonster;
+import GameObjects.GSpell;
+import GameObjects.GWorld;
+import Interfaces.IItemTemplate;
+import Login.LServer;
+import SQL.SConfig;
+
+public class GlobalWorld extends AbstractWorld {
+	
+	public GlobalWorld(){
+		if(getStrategy().get() == GameClientStrategies.DofusClientStrategy){
+			//Perfs p = new Tests.Perfs();
+			
+			//String in = "";
+			for(short classID : CPerso.classesIDsBytes){//Tous les ID de classes
+				for(int id = CPerso.numberOfBasicClassSpells-1; id >= 0; id--){//Tous les ID des sorts de la classe
+					//if(in.length() != 0) in += ","; 
+					if(classID == CPerso.CLASSE_PANDAWA){//sorts panda = 686 a 705
+						addSpell(SQL.Spells.load((short) (705-id), this));
+						//in += 705-id;
+					}else if(classID == CPerso.CLASSE_SACRIEUR){//sorts sacri = 431 a 450
+						addSpell(SQL.Spells.load((short) (450-id), this));
+						//in += 450-id;
+					}else{
+						addSpell(SQL.Spells.load((short) ((classID*CPerso.numberOfBasicClassSpells)-id), null));
+						//in += (short) ((classID*CPerso.numberOfBasicClassSpells)-id);
+					}
+				}
+			}//350 */
+			addSpell(SQL.Spells.load(CSpells.classSpell_ARBRE_VIE, this));
+			addSpell(SQL.Spells.load(CSpells.specialSpell_CAC, this));//Coup de poing !
+			//in += ","+CSpells.classSpell_ARBRE_VIE+","+CSpells.specialSpell_CAC;
+			//System.out.println("ID = ["+in+"]");
+			//SQL.Spells.loadAllSpells(null, "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,446,447,448,449,450,686,687,688,689,690,691,692,693,694,695,696,697,698,699,700,701,702,703,704,705,426,0");
+			//SQL.Spells.loadAllSpells(null);
+			
+			//p.stopTiming("GlobalWorld.static.load Spells "); p.restartTiming();
+			SQL.Areas.loadAllAreasTypes(this, true);
+			//p.stopTiming("GlobalWorld.static.load Areas"); p.restartTiming();
+			//p = null;
+			SConfig.loadIntelligences(this);
+			SQL.Challenges.loadAllChallenges(this);
+			
+		}else if(getStrategy().get() == GameClientStrategies.WakfuClientStrategy){
+			
+		}
+		
+	}
+	
+	
+	
+
+	
+	
+	public GSpell[] getSpell(short spellID){
+		if(spells.get(spellID) == null){
+			return addSpell(SQL.Spells.load(spellID, this));
+		}
+		return spells.get(spellID);
+	}
+	
+	public ItemSet getItemSet(GWorld gw, short itemSetID){
+		if(predicate.apply(itemSetID)){//si id de globalworld
+			return getItemSet(itemSetID);
+		}else{
+			if(gw != null){
+				return gw.getItemSet(itemSetID);
+			}
+		}
+		return null;
+	}
+	
+	
+	
+	/**
+	 * Si le templateID est en haut ou égal à l'ID minimum des ID d'itemTemplate des GWorlds: 
+	 * 		on check dans le world (dans lemu et ensuite dans la bdd)
+	 * Sinon, s'il est en bas du minimum, on check dans le login.
+	 * @param templateID - L'ID du template à rechercher
+	 * @return - L'ItemTemplate
+	 */
+//	* Ensuite il essaie d'abord de prendre l'itemTemplate dans le GWorld donné: Check dans l'arrayList, check dans BDD.
+//	 * <p>S'il existe pas du tout dans le GWorld, on le prend dans l'arrayList du LWorld ou dans la BDD s'il est pas encore chargé.
+//	 * @param gw - Le GWorld dans lequel il faut chercher avant de chercher dans le LWorld
+	public IItemTemplate getItemTemplate(AbstractWorld gw, int templateID){
+		if(templateID >= CServers.minimumWorldObjectID){//minimumIDinWorldItemTemplateTable){
+			if(gw != null){
+				return gw.getItemTemplate(templateID);
+			}
+		}else{
+			return getItemTemplate(templateID);
+		}
+		return null;
+	}
+	
+	
+	
+	/**
+	 * Cherche le monsterTemplate dans l'world ou login dépendant du minimumIDinWorldMonstersTable 
+	 */
+	public GMonster[] getMonsterTemplate(GWorld gw, short monsterTemplateID){
+		//Si le monstre a un ID externe au login, donc propre aux games, on check juste dans le gworld voulu
+		if(monsterTemplateID >= CServers.minimumWorldObjectID){//minimumIDinWorldMonstersTable){
+			if(gw != null){
+				return gw.getMonsterTemplate(monsterTemplateID);
+			}
+		}else{
+			return getMonsterTemplate(monsterTemplateID);
+		}
+		Syn.d("GlobalWorld. got no mob");
+		return null;
+	}
+	
+	
+	/** Renvoi un objet GMonster copié de son template et à un certain grade. */
+	public GMonster getMonsterInstance(GWorld gw, short monsterTemplateID, int grade){
+		return getMonsterTemplate(gw, monsterTemplateID)[grade].copy(gw.getServer());
+	}
+	
+
+	public void setIntelligences(HashMap<Short, SimpleIA> intelligences) {
+		this.intelligences = intelligences;
+	}
+	public HashMap<Short, SimpleIA> getIntelligences() {
+		return intelligences;
+	}
+	public SimpleIA addIntelligence(SimpleIA ia) {
+		if(ia != null){
+			intelligences.put(ia.getID(), ia);
+		}
+		return ia;
+	}
+	public SimpleIA getIntelligence(short id) {
+		return intelligences.get(id);
+	}
+	
+	
+	
+	
+
+	@Override @Deprecated public int getID() { return 0; }
+	@Override @Deprecated public short getServerID() { return 0; }
+	@Override @Deprecated public GameServer getServer() { return null; }
+	@Override @Deprecated public GWorld getWorld() { return null; }
+	@Override @Deprecated public void setID(int iD) { }
+	@Override @Deprecated public void setServer(GameServer s) { }
+
+
+
+
+
+
+	/* *
+	 * Si la mapID est en haut ou égal à l'ID minimum des ID de maps des GWorlds: 
+	 * 		on check dans le world (dans lemu et ensuite dans la bdd)
+	 * Sinon, s'il est en bas du minimum, on check dans le login.
+	 * @param mapID - L'ID de la map à rechercher
+	 * @return - La Map ou null
+	 */
+	/*
+	 * Essaie d'abord de prend la map dans le GWorld donné: Check dans l'arrayList, check dans BDD.
+	 * <p>Si elle n'existe pas du tout dans le GWorld, on la prend dans l'arrayList du LWorld ou dans la BDD si elle n'est pas encore chargée.
+	 * @param gw - Le GWorld dans lequel il faut chercher avant de chercher dans le LWorld
+	 * 
+	 */
+	//public Map getMap(GWorld gw, int mapID){
+		
+		
+		/*
+		//Si c'est une map dont l'ID est dans le login, 
+		//	on check d'abord si un des autres worlds l'a déjà chargée.
+		//  Si oui, on en fait une copie et on la met dans le gworld voulu.
+		//  Si on la trouve qui est déjà dans le bon gworld, on fait juste la retourner direct.
+
+		if(gw != null && predicate.apply(mapID)){//Si c'est une map offi
+			//Si id <= 15000, donc map de l'offiel. 
+			//Essaye de voir si la map est déjà chargée dans un world.
+			if(gw.getMapWithoutAutoLoad(mapID, true) != null){
+				//Syn.d("GlobalWorld. got map ("+mapID+") from Same Game (id < minimumIDinWorldMapTable) to gworld("+gw.getID()+")");
+				return gw.getMapWithoutAutoLoad(mapID, true);
+			}
+			for(LServer s : Syn.Services.serversService.loginServers.values()){
+				for(GameServer gs : s.gameServers){
+					//Syn.d("GlobalWorld. iterate in serv "+gs.getConfig().getServerName()+" to get map (mapID < CServers.minimumIDinWorldMapTable) to gworld("+gw.getID()+")");
+					if(gs.getWorld().getMapWithoutAutoLoad(mapID, false) != null && gs.getID() != gw.getID()){
+						//Syn.d("GlobalWorld. got map ("+mapID+") from Other Game (id < minimumIDinWorldMapTable) to gworld("+gw.getID()+")");
+						return gw.addMap(gs.getWorld().getMapWithoutAutoLoad(mapID, false).copy());
+					}
+				}
+			}
+		}
+		
+		//Si la map a un ID externe au login, donc propre aux games, 
+		//on check juste dans le gworld voulu / load si necéssaire
+		if(gw != null && predicate.apply(mapID) == false){
+			if(gw.getMap(mapID) != null){
+				//Syn.d("GlobalWorld. got map ("+mapID+") from Same Game (id > minimumIDinWorldMapTable) to gworld("+gw.getID()+")");
+				return gw.getMap(mapID);
+			}
+		}else{
+		//Si la map a un ID de global mais n'a pas été trouvée précédemment dans les worlds, 
+		//	on va la chercher dans la bdd du login.	
+			Syn.d("comingFrom GlobalWorld.getMap");
+			Map m = SQL.Maps.load(mapID, gw);
+			if(m != null && gw != null){
+				//Syn.d("GlobalWorld. got loaded map ("+mapID+") from Realm bdd to gworld("+gw.getID()+")");
+				Syn.d("comingFrom GlobalWorld.getMap.load from login . ajoute au gworld avec copy");
+				return gw.addMap(m.copy());
+			}else{
+				Syn.d("comingFrom GlobalWorld.getMap.load from login . sans copy");
+				return m;
+			}
+		
+			//if(LWorld.getMap(mapID) != null){
+			//	Syn.d("GlobalWorld. got map from Realm");
+			//	return gw.addMap(LWorld.getMap(mapID).copy());
+			//}
+		}
+		Syn.d("GlobalWorld. got no map");
+		//Exceptions.throwNullPointerException("GlobalWorld.getMap : map nulle. ID:"+mapID+".");
+		return null;
+		*/
+	//}
+	
+	@Override
+	public Map getMap(int id) {
+		if(maps.get(id) == null){
+			Syn.d("comingFrom GlobalWorld.getmap");
+			return addMap(SQL.Maps.load(id, this));
+		}
+		return maps.get(id);
+	}
+	@Override
+	public Map addMap(Map map) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public HashMap<Integer, Map> getMaps() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	//@Override
+	//public Map getMapWithoutAutoLoad(int id, boolean checkAlsoComplementaries) {
+		// TODO Auto-generated method stub
+	//	return null;
+	//}
+	
+	
+	@Override
+	public HashMap<Short, IItemTemplate> getItemTemplates() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public IItemTemplate addItemTemplate(IItemTemplate template) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public IItemTemplate getItemTemplate(int id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+	@Override
+	public ItemSet addItemSet(ItemSet set) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ItemSet getItemSet(short itemSetID) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public HashMap<Short, ItemSet> getItemSets() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public GSpell[] addSpell(GSpell[] spell) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public void setMonsterTemplates(HashMap<Short, GMonster[]> monsters) {
+		monsterTemplates = monsters;
+	}
+	@Override
+	public HashMap<Short, GMonster[]> getMonsterTemplates() {
+		return monsterTemplates;
+	}
+	@Override
+	public GMonster[] addMonsterTemplate(GMonster[] m) {
+		if(m != null){
+			monsterTemplates.put(m[0].getTemplateID(), m);
+		}
+		return m;
+	}
+	public GMonster[] getMonsterTemplateWithoutAutoLoad(short monsterTemplateID){
+		return monsterTemplates.get(monsterTemplateID);
+	}
+	@Override
+	public GMonster[] getMonsterTemplate(short monsterTemplateID) {
+		if(monsterTemplates.get(monsterTemplateID) == null){
+			SQL.Monsters.load(monsterTemplateID, this); 
+		}
+		return monsterTemplates.get(monsterTemplateID);
+	}
+
+
+
+
+	@Override
+	public GArea getArea(short id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ArrayList<GArea> getAreas() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void setAreas(ArrayList<GArea> areass) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public GSuperArea getSuperArea(short id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ArrayList<GSuperArea> getSuperAreas() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void setSuperAreas(ArrayList<GSuperArea> superAreass) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public GSubArea getSubArea(short id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ArrayList<GSubArea> getSubAreas() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void setSubAreas(ArrayList<GSubArea> subAreass) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	
+	@Override
+	public void setChallenges(ArrayList<GChallenge> challenges) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public ArrayList<GChallenge> getChallenges() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public GChallenge getChallenge(short ID) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public GChallenge addChallenge(GChallenge c) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public GChallenge getChallengeRandom() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
+
+	
+	
+}

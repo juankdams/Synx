@@ -1,0 +1,14 @@
+package GameClientStrategies;
+
+
+public class DofusClientStrategy extends GameClientStrategy {
+
+
+
+	
+	public DofusClientStrategy(){
+		this.strategy = GameClientStrategies.DofusClientStrategy;
+	}
+
+	
+}

@@ -1,0 +1,16 @@
+package GameClientStrategies;
+
+
+public class DofusClientStrategy extends GameClientStrategy {
+
+
+
+	
+	public DofusClientStrategy(){
+		super();
+		//this.strategy = GameClientStrategies.DofusClientStrategy;
+		//this.strategy.set(this);
+	}
+
+	
+}

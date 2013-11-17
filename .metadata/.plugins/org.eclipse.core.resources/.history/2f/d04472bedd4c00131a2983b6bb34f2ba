@@ -1,0 +1,12 @@
+package Providers;
+
+import Login.LServer;
+
+public interface LoginServerProvider {
+	
+	public LServer createNew(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss);
+
+	
+	
+
+}

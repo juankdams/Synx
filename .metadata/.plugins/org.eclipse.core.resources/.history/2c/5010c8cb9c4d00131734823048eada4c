@@ -1,0 +1,12 @@
+package Parsers;
+
+import Game.DofusGameClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class PartyParser extends AbstractPacketParser<DofusGameClient> {
+
+	@Override
+	public boolean parse(DofusGameClient c, String packet) {
+		return false;
+	}
+}

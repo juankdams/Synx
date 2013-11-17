@@ -1,0 +1,171 @@
+package SQL;
+
+import static SQL.SqlServiceMySql.closeResultSet;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import Abstractions.AbstractSqlService;
+import Abstractions.AbstractWorld;
+import Core.Syn;
+import Game.GameServer;
+import GameObjects.GNpc;
+import GlobalObjects.Map;
+import Plugins.Abstractions.AbstractActionListener;
+import Plugins.Managers.ActionsManager;
+
+public class ActionListeners {
+	
+	private static final String loadSomeForWorld = "SELECT * from actions_listeners_world WHERE `ID` IN (?1);";
+	private static final String loadSomeForMap = "SELECT * from actions_listeners_maps WHERE `ID` IN (?1) AND mapID = ?2;";
+	private static final String loadSomeForNpc = "SELECT * from actions_listeners_npcs WHERE `ID` IN (?1) AND npcID = ?2;";
+	
+	
+	
+	/**
+	 * 
+	 * @param IDs - Les ID d'actions_listeners à charger, séparés par des virgules et sans espaces comme:  //id,id2,id3,id4,id5,id6,id7
+	 * @param s - GServer pour avoir la DBName et setter la ref au GWorld dans les listeners
+	 * @param query - Soit: loadSomeForWorld, soit loadSomeForMap, soit loadSomeForNpc.
+	 * @return - Retourne seulement les objets d'actions_listeners sans les setter nul part
+	 */
+	private static ArrayList<AbstractActionListener> loadSomeListeners(String IDs, AbstractWorld w, String query){
+		if(IDs.isEmpty()){
+			return null;
+		}
+		AbstractSqlService sqlService = w.getServer() == null ? w.getStrategy().sqlGlobalService : w.getServer().getSqlService();
+		ActionsManager am =  w.getServer() == null ? w.getStrategy().defaultPluginsManager.getActionsManager() : w.getServer().getActionsManager();
+		try {
+			query = query.replace("?1", IDs);
+			Syn.d("query = "+query);
+			ResultSet RS = sqlService.executeQuery(query);
+			if(RS == null){
+				return null;
+			}
+			ArrayList<AbstractActionListener> aals = new ArrayList<AbstractActionListener>();
+			while(RS.next()){
+				AbstractActionListener a = am.createListener(
+						RS.getInt("ID"),
+						RS.getString("type"), 
+						RS.getString("conditions"),
+						w,
+						RS.getString("actions")
+					);
+				String listenersToAdd = RS.getString("actionsListeners");
+				if(listenersToAdd != null && listenersToAdd.length() > 0){
+					//listeners à l'intérieur d'un container, qu'on pourrait appeler "sub-listeners" j'imagine.
+					ArrayList<AbstractActionListener> toAdd = new ArrayList<AbstractActionListener>();
+					toAdd.addAll(loadSomeListeners(listenersToAdd, w, query));
+					for(AbstractActionListener add : toAdd){
+						a.addListener(add);
+					}
+				}
+				if(a != null){
+					aals.add(a);
+				}
+			}
+			closeResultSet(RS);
+			return aals;
+		} catch (SQLException e) {e.printStackTrace();}
+		return null;
+	}
+	
+	
+	
+	
+	
+	// LOAD SOME ==========================================================================================================================
+	
+	/** Retourne seulement les objets d'actions_listeners sans les setter nul part */
+	public static ArrayList<AbstractActionListener> loadSomeForWorld(String IDs, AbstractWorld w){
+		//TODO -> retourne des listeners précis d'un world précis
+		return loadSomeListeners(IDs, w, loadSomeForWorld);
+	}
+	/** Retourne seulement les objets d'actions_listeners sans les setter nul part */
+	public static ArrayList<AbstractActionListener> loadSomeForMap(String IDs, Map m, AbstractWorld w){
+		//TODO -> retourne des listeners précis d'une map précise
+		return loadSomeListeners(IDs, w, loadSomeForMap.replace("?2", m.getID()+""));
+	}
+	/** Retourne seulement les objets d'actions_listeners sans les setter nul part */
+	public static ArrayList<AbstractActionListener> loadSomeForNpc(String IDs, GNpc npc, AbstractWorld w){
+		//TODO -> charge des listeners précis d'un npc précis
+		return loadSomeListeners(IDs, w, loadSomeForNpc.replace("?2", npc.getID()+""));
+	}
+	
+	
+	
+	
+	
+	// LOAD ALL FROM ONE ===================================================================================================================
+
+
+	/** 
+	 * Retourne seulement les objets d'actions_listeners.
+	 * Fait aussi le setup automatique: world.addActionsListeners(totallist); si setup = true;
+	 * */
+	public static ArrayList<AbstractActionListener> loadWorld(GameServer gameServer, boolean setup){
+		//TODO -> charge tous les listeners d'un world précis
+		ArrayList<AbstractActionListener> totallist = loadSomeForWorld(gameServer.getConfig().getWorldActionsListenersIDs(), gameServer.getWorld());
+		if(setup){
+			for(AbstractActionListener a : totallist){
+				gameServer.getWorld().addListener(a);
+			}
+		}
+		return totallist;
+	}
+
+	/** 
+	 * Retourne seulement les objets d'actions_listeners.
+	 * Fait aussi le setup automatique: map.setActionsListeners(totallist); si setup = true;
+	 * */
+	public static ArrayList<AbstractActionListener> loadMap(Map m, AbstractWorld w, boolean setup){
+		//TODO -> retourne tous les listeners d'une map précise
+		ArrayList<AbstractActionListener> totallist = loadSomeForMap(Maps.getActionsListenersIDs(m, w), m, w);
+		if(setup){
+			m.setActionsListeners(totallist);
+		}
+		return totallist;
+	}
+	/** 
+	 * Retourne seulement les objets d'actions_listeners.
+	 * Fait aussi le setup automatique: npc.setActionsListeners(totallist); si setup = true;
+	 * */
+	public static ArrayList<AbstractActionListener> loadNpc(GNpc npc, AbstractWorld w, boolean setup){
+		//TODO -> retourne tous les listeners d'un npc précis
+		ArrayList<AbstractActionListener> totallist = loadSomeForNpc(Npcs.getActionsListenersIDs(npc, w), npc, w);
+		if(setup){
+			npc.setActionsListeners(totallist);
+		}
+		return totallist;
+	}
+	
+	
+	
+	
+	
+	// LOAD ALL FROM ALL ===================================================================================================================
+
+	/**
+	 * Iterate toutes les maps chargées du world et si le bool setup==true : <br>
+	 * alors charge leurs actions_listeners + les set ->  map.setActionsListeners(loadlisteners);
+	 */
+	public static void loadAllMap(AbstractWorld w, boolean setup){
+		//TODO -> charge tous les listeners de toutes les maps chargées
+		for(Map m : w.getMaps().values()){
+			loadMap(m, w, setup);
+		}
+	}
+	/**
+	 * Iterate toutes les npcs chargés du world et charge leurs actions_listeners + les set ->  npc.setActionsListeners(loadlisteners);
+	 */
+	//TODO public static void loadAllNpc(GServer s){
+		//TODO	 -> charge tous les listeners de tous les npcs chargés
+		//for(GNpc n : s.getWorld().getNpcs().values()){
+		//	n.setActionsListeners(loadNpc(n, s));
+		//}
+	//}
+	
+	
+	
+}

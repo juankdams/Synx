@@ -1,0 +1,35 @@
+package WakfuPackets;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
+import com.velocity.jwakfu.crypto.RSACertificateManager;
+
+public class Approach {
+	private static final long RSA_VERIFICATION_LONG = 0x8000000000000000L;
+	
+	private static Map<Integer, ByteBuf> packets = new HashMap<Integer, ByteBuf>();
+	
+	static {
+		for(int i = 100000; i > 0; i--){
+			packets.put(i, Unpooled.buffer());
+			packets.get(i).writeShort(0); //Size placeholder
+			packets.get(i).writeShort(i);
+		}
+		prepare1032();
+	}
+
+	private static void prepare1032() {
+		packets.get(1032).writeLong(RSA_VERIFICATION_LONG);
+		packets.get(1032).writeBytes(RSACertificateManager.INSTANCE.getPublicKey());
+	}
+	
+	public static ByteBuf getRsaKeyPacket(){
+		return packets.get(1032);
+	}
+	
+	
+}

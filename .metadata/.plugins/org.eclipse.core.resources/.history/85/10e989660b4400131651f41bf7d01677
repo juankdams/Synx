@@ -1,0 +1,172 @@
+package GameObjects;
+
+import piou.scripts.ExecutableScript;
+import Abstractions.CombativeCharacter;
+import Enums.CharacterType;
+import Events.FightEvent;
+import Events.FightEventType;
+import GameObjects.Fights.GFight;
+import static Enums.FightTeamEnum.*;
+
+public class GChallenge {
+
+	/** from  dofus/graphics/gapi/controls/FightChallengeIcon.as : <p>
+	 switch (this.challenge.state) <br>
+    { <br>
+        case 0: <br>
+        { <br>
+            _loc4 = _loc4 + this.api.lang.getText("CURRENT_FIGHT_CHALLENGE"); <br>
+            break; <br>
+        }  <br>
+        case 1: <br>
+        { <br>
+            _loc4 = _loc4 + this.api.lang.getText("FIGHT_CHALLENGE_DONE"); <br>
+            break; <br>
+        }  <br>
+        case 2: <br>
+        { <br>
+            _loc4 = _loc4 + this.api.lang.getText("FIGHT_CHALLENGE_FAILED"); <br>
+            break; <br>
+        }  <br>
+    } // End of switch <br>
+	 */
+	public static enum FightChallengeState {
+		Active,
+		/** This is a Win */
+		Done,
+		Failed;
+		public int get(){
+			return ordinal();
+		}
+	}
+	
+
+	//en template
+	private int templateID = 0;
+	private int bonusXp = 0;
+	private int bonusDrop = 0;
+	private int bonusXpPerAlly = 0;
+	private int bonusDropPerAlly = 0;
+	private FightEventType eventType = null;//le type d'application : au début du tour, à la fin du tour, au lancement d'un sort, etc
+	private ExecutableScript verifierScript = null;
+	
+	//en instance
+	private int targetID = 0;
+	private FightChallengeState state = FightChallengeState.Active;
+	
+	
+	public GChallenge(int id, int bonusxp, int bonusdrop, int bonusxpPerAlly, int bonusdropPerAlly, String eventType, ExecutableScript script){
+		this.templateID = id;
+		this.bonusXp = bonusxp;
+		this.bonusDrop = bonusdrop;
+		this.bonusXpPerAlly = bonusxpPerAlly;
+		this.bonusDropPerAlly = bonusdropPerAlly;
+		this.eventType = FightEventType.valueOf(eventType);
+		this.verifierScript = script;
+	}
+	
+	//Gd10;0;5;1;2;3;4
+	//-> 10 = challengeTemplateID
+	//-> 0 = showTarget
+	//-> 5 = targetID
+	//-> 1 = bonus xp (basicXpBonus)
+	//-> 2 = bonus xp (teamXpBonus)
+	//-> 3 = bonus butin (basicDropBonus)
+	//-> 4 = bonus butin (teamDropBonus)
+	//-> ig, le 1 et le 2 s'additionnent pour afficher "+3% bonus xp"
+	//-> ig, le 3 et le 4 s'additionnent pour afficher "+7% bonus butin"
+	//_global.parseInt(_loc3[0]), _loc3[1] == "1", _global.parseInt(_loc3[2]), _global.parseInt(_loc3[3]), _global.parseInt(_loc3[4]), _global.parseInt(_loc3[5]), _global.parseInt(_loc3[6]));
+    //id, showTarget, targetId, basicXpBonus, teamXpBonus, basicDropBonus, teamDropBonus, state
+    
+	
+	public int getID(){
+		return templateID;
+	}
+	public void setID(int id){
+		templateID = id;
+	}
+	public void setBonusXp(int bonusXP) {
+		this.bonusXp = bonusXP;
+	}
+	public int getBonusXp() {
+		return bonusXp;
+	}
+	public void setBonusDrop(int bonusDrop) {
+		this.bonusDrop = bonusDrop;
+	}
+	public int getBonusDrop() {
+		return bonusDrop;
+	}
+	public void setEventType(FightEventType eventType) {
+		this.eventType = eventType;
+	}
+	public FightEventType getEventType() {
+		return eventType;
+	}
+	public void setTargetID(int targetID) {
+		this.targetID = targetID;
+	}
+	public int getTargetID() {
+		return targetID;
+	}
+	public void setState(FightChallengeState isFailed) {
+		this.state = isFailed;
+	}
+	public FightChallengeState getState() {
+		return state;
+	}
+	public void setScript(ExecutableScript verifierScript) {
+		this.verifierScript = verifierScript;
+	}
+	public ExecutableScript getScript() {
+		return verifierScript;
+	}
+	
+
+	/**
+	 * Vérifie que le challenge soit encore actif ou soit échoué et update le isFailed et envoie les packets en conséquence etc s'il est échoué.
+	 */
+	public void check(FightEvent fe) {
+		if(getScript() != null){
+			this.getScript().apply(new Object[]{this, fe, fe.getFight().getServer()});
+		}
+	}
+
+	/**
+	 * À caller à partir du script.js qui vérifie si le challenge est encore en cours ou réussi ou échoué
+	 */
+	public void onFail(FightEvent fe){
+		state = FightChallengeState.Failed;
+		SM.Game.GdUpdate(fe.getFight(), null, this);  //ça doit être qqc comme ça ?
+	}
+	/**
+	 * À caller à partir du script.js qui vérifie si le challenge est encore en cours ou réussi ou échoué
+	 */
+	public void onWin(FightEvent fe){
+		state = FightChallengeState.Done;
+		SM.Game.GdUpdate(fe.getFight(), null, this);  //ça doit être qqc comme ça ?
+	}
+
+	public int getTeamBonusXp(GFight f) {
+		return bonusXpPerAlly * countAttackerPlayers(f);
+	}
+	public int getTeamBonusDrop(GFight f) {
+		return bonusDropPerAlly * countAttackerPlayers(f);
+	}
+
+	private int countAttackerPlayers(GFight f){
+		int count = 0;
+		for(CombativeCharacter cc : f.getTeams().get(ATTACKER.get())){
+			if(cc.getCharacterType() == CharacterType.PLAYER){
+				count++;
+			}
+		}
+		return count;
+	}
+
+
+	
+	
+	
+	
+}

@@ -1,0 +1,133 @@
+package SQL;
+ 
+import static SQL.SqlServiceMySql.closePreparedStatement;
+import static SQL.SqlServiceMySql.closeResultSet;
+import static SQL.SqlServiceMySql.log;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import Abstractions.AbstractWorld;
+import Game.GameServer;
+import GameObjects.GBank;
+import GameObjects.GItem;
+import GameObjects.GPersonnage;
+
+public class Banks {
+	private static final String insertBankQuery = "INSERT INTO banks ( `accountID` , `kamas` , `items`) VALUES (?,?,?)";
+	private static final String deleteBankQuery = "DELETE FROM `banks` WHERE `accountID` = ?;";
+	private static final String saveBankQuery = "UPDATE `banks` SET `kamas`= ?, `items`= ? WHERE `accountID` = ?;";
+	private static final String loadBankQuery = "SELECT * from banks WHERE `accountID` = ";
+	
+	
+	/**
+	 * Sauvegarde la banque (Kamas+Liste d'items) et chaque items de la banque. (Update leur quantité, position, effets)
+	 * @param inventory
+	 * @param server
+	 */
+	public static void save(GBank bank, int accountID, GameServer server) {
+		// TODO Auto-generated method stub
+		PreparedStatement p = null;
+		try {
+			p = server.getSqlService().newTransact(saveBankQuery);
+			p.setLong(1, bank.getKamas());
+			p.setString(2, bank.getItemsString());
+			p.setInt(3, accountID);
+			p.execute();
+		} catch (SQLException e) {e.printStackTrace();}
+		closePreparedStatement(p);
+		Items.saveStorageComplete(bank, server);
+	}
+	
+	/**
+	 * TODO: SQL.Banks.delete(int accountID, GServ)
+	 */
+	public static void delete(int accountID, GameServer serv){
+		try {
+			PreparedStatement p = serv.getSqlService().newTransact(deleteBankQuery);
+			p.setInt(1, accountID);
+			p.execute();
+			closePreparedStatement(p);
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+	
+	/**
+	 * TODO: SQL.Banks.load(GServ)
+	 * @param serv
+	 * @return
+	 */
+	public static GBank load(GPersonnage p, GameServer serv){
+		if(serv.getWorld().getBanks().get(p.getAccountID()) != null){
+			return null;//Return null si la banque est déjà chargée dans le monde
+		}
+		GBank gb = null;
+		ResultSet RS = null;
+		try {
+			RS = serv.getSqlService().executeQuery(loadBankQuery+p.getAccountID()+";");
+			if(RS != null){
+				if(RS.last() == false){
+					return null;
+				}
+				if(RS.first()){
+					gb = new GBank(/*p.getAccountID(),*/ RS.getLong("kamas"));
+					serv.getWorld().getBanks().put(p.getAccountID(), gb);//Ajoute la banque du GWorld
+				}
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		
+		try {
+			String items = RS.getString("items");
+			if(gb == null || items.equals("")){
+				return null;//Si la banque est nulle ou qu'il n'y a aucun item dedans, on arrete ici et return null.
+			}
+			closeResultSet(RS);
+			//Sinon on load les items de la banque.
+			RS = serv.getSqlService().executeQuery("SELECT * from items WHERE `ID` IN ("+items+");");
+			AbstractWorld w = serv.getWorld();
+			if(RS != null){
+				if(RS.last() == true){
+					while(!RS.isBeforeFirst()){
+						GItem item = GItem.provide(w).reloadInstance(
+								RS.getInt("ID"), 
+								w.getItemTemplate(RS.getInt("templateID")),
+								RS.getString("effects"), 
+								RS.getShort("quantity"),
+								RS.getByte("position"),
+								w
+							);
+						/*GItem item = new GItem(
+								RS.getInt("ID"), 
+								GlobalWorld.getItemTemplate(serv.getWorld(), RS.getInt("templateID")),
+								RS.getString("effects"), 
+								RS.getShort("quantity"),
+								RS.getByte("position"),
+								serv.getEffectsManager()
+							);*/
+		//				serv.getWorld().addItem(item);
+						gb.addItem(item);
+						RS.previous();
+					}
+				}
+				closeResultSet(RS);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		return gb;//Return la bonne banque
+	}
+
+	public static void create(GBank gb, GPersonnage perso) {
+		try {
+			PreparedStatement p = perso.getServer().getSqlService().newTransact(insertBankQuery);
+			p.setInt(1, perso.getAccountID());
+			p.setLong(2, gb.getKamas());
+			p.setString(3, gb.getItemsString());
+			p.execute();
+			closePreparedStatement(p);
+		} catch (SQLException e) {
+			log.error("Game: Creation de banque echouee: SQL ERROR: "+e.getMessage()+"\n  Game: Query: "+insertBankQuery);
+		}
+	}
+	
+	
+	
+}

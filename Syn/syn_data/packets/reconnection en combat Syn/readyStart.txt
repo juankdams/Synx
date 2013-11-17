@@ -1,0 +1,23 @@
+G [RECV] << GR1
+[Send] >> GR141
+
+[Send] >> GIC|-9;229;5|41;249;7
+[Send] >> GS
+[Send] >> GTL|-9|41
+[Send] >> GTM|-9;0;30;5;3;229;;30|41;0;450;6;3;249;;500
+
+
+[DEBUG]: in GFight.startRound
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  36</font>
+[Send] >> GTS-9|30000
+
+[DEBUG]: in GFight.endTurn
+[Send] >> cs<font color='#0019FF'>end  36</font>
+[Send] >> GTF-9
+[Send] >> GTR41
+[DEBUG]: in GFight.startTurn
+[Send] >> cs<font color='#0019FF'>start  Eca</font>
+
+[Send] >> GTS41|30000
+G [RECV] << GT

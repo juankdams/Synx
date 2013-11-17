@@ -1,0 +1,89 @@
+package Game;
+
+import java.util.ArrayList;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import plugin.Plugins;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Core.Syn;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Interfaces.IService;
+import Login.LClient;
+import Login.LServer;
+import Plugins.Managers.ActionsManager;
+import Plugins.Managers.AspectJManager;
+import Plugins.Managers.EffectsManager;
+import Plugins.Managers.FormulingManager;
+import Plugins.Managers.MacroManager;
+import Plugins.Managers.ParsingManager;
+import Plugins.Managers.PluginsManager;
+import Plugins.Managers.ProvidersManager;
+import Plugins.Managers.SystemsManager;
+
+public interface GServer extends IService {
+	
+
+
+	public void setWorld(GWorld world);
+	public GWorld getWorld();
+
+	public ArrayList<LClient> getClients();
+	
+	/** Donne l'uptime du serveur en ms */
+	public long getUptime();
+
+	/**
+	 * SERVER state et non world state comme on pourrait penser
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population  */
+	public byte getState();
+	/**
+	 * SERVER state et non world state comme on pourrait penser. ouin mais fuck off, on va faire que cest pareil pcq sinon ca sert à rien ..
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population  */
+	public void setState(byte state);
+
+	public void setRequiredGM(byte requiredGM);
+	public byte getRequiredGM();
+
+	public GConfig getConfig();
+	public void setConfig(GConfig config);
+
+	public short getID();
+
+	public void setLoginServer(LServer loginServer);
+	public LServer getLoginServer();
+
+	public void setSqlService(AbstractSqlService sqlService);
+	public AbstractSqlService getSqlService();
+
+
+
+	public void setPlugins(Plugins plugins);
+	public Plugins getPlugins();
+
+	public void setScripts(ScriptsService<ExecutableScript> scripts);
+	public ScriptsService<ExecutableScript> getScripts();
+
+	public void setcWorld(CWorld cWorld);
+	public CWorld getcWorld();
+	
+	public PluginsManager getPluginsManager();
+	public ActionsManager getActionsManager();
+	public AspectJManager getAspectJManager();
+	public EffectsManager getEffectsManager();
+	public FormulingManager getFormulingManager();
+	public MacroManager getMacroManager();
+	public ParsingManager getParsingManager();
+	public SystemsManager getSystemsManager();
+	public ProvidersManager getProviders();
+
+	public void setGameClientStrategy(GameClientStrategy gameClientStrategy);
+	public GameClientStrategy getGameClientStrategy();
+
+	
+	
+
+}

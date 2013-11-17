@@ -1,0 +1,146 @@
+package Game;
+
+import java.util.ArrayList;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import plugin.Plugins;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Core.Syn;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Handlers.GHandler;
+import Interfaces.IService;
+import Login.LClient;
+import Login.LServer;
+import Misc.LifeRegenerator;
+import Misc.Tests.Perfs;
+import NewThreads.ThreadsManager;
+import Plugins.Managers.ActionsManager;
+import Plugins.Managers.AspectJManager;
+import Plugins.Managers.EffectsManager;
+import Plugins.Managers.FormulingManager;
+import Plugins.Managers.MacroManager;
+import Plugins.Managers.ParsingManager;
+import Plugins.Managers.PluginsManager;
+import Plugins.Managers.ProvidersManager;
+import Plugins.Managers.SystemsManager;
+import SQL.SConfig;
+import SQL.SqlServiceMySql;
+import Servers.MinaServer;
+import ZPlug.MiscEvent;
+
+public class DofusGameServer extends GameServer { //extends MinaServer /*CServers*/ implements GServer {
+
+
+	public LifeRegenerator lifeRegen = null;
+	
+	
+	public DofusGameServer(LServer s, GConfig config, CWorld cworld){
+		super(s, config, cworld);
+	}
+	
+	@Override
+	/**
+	 * Initialise le GameServer en fonction de la config qui a été donnée.<br>
+	 * Initialize ses propriétés telles le GameWorld, ThreadManager, SqlService, GHandler... <br>
+	 * Charge le reste de sa configuration en BDD SQL.
+	 */
+	public void boot() throws Exception {
+		super.boot();
+		lifeRegen = new LifeRegenerator();
+		setWorld( new GWorld(this) );
+		s.setHandler( new GHandler(this) );
+	}
+
+	@Override
+	/**
+	 * Full reboot! SAuf pour la table game_servers dans le login qui n'est pas rechargée.
+	 * Sauvegarde le GameWorld,<br>
+	 * Off le GameServer,
+	 * Boot.
+	 */
+	public void reboot() throws Exception {
+		this.loginServer.gameServers.remove(this);
+		save();
+		off(false);
+		boot();
+		setState(Constants.CWorld.STATE_ONLINE);
+		this.loginServer.gameServers.add(this);
+	}
+	
+	/** Allume le socket et change l'état du GameServeur en Online. */
+	public void on() {
+		start();
+		setState(Constants.CWorld.STATE_ONLINE);
+	}
+	
+	/** Sauvegarde le GameWorld de ce GameServer.  */
+	public void save() {
+		this.setState(Constants.CWorld.STATE_SAVING);
+		this.getWorld().saveAll();
+		this.setState(Constants.CWorld.STATE_ONLINE);
+	}
+	
+	/** 
+	 * Kick tous les clients. <br>
+	 * Éteind le threadManager <br>
+	 * Éteind le Serveur Mina. <br>
+	 * Terminate si l'argument est true. 
+	 */
+	public void off(boolean terminate){
+		Syn.d("GServer.off 1!");
+		this.setState(Constants.CWorld.STATE_OFFLINE);
+		ArrayList<GClient> copy = new ArrayList<GClient>(clients);
+		//copy.addAll(clients);
+		//Collections.copy(copy,clients);
+		synchronized(clients){
+			Syn.d("GServer.off 2!");
+			for(GClient gc : copy){
+				//Kick tout le monde + créé des sheduledTask pour terminate les perso+compte et les save etc.
+				gc.kick();
+				Syn.d("GServer.off 2.5 !");
+			}
+			Syn.d("GServer.off 3 !");
+			this.clients.clear();
+			Syn.d("GServer.off 4 !");
+			this.threadsManager.waitAndOff();//.off();
+			Syn.d("GServer.off 5 !");
+			
+			//try {
+				//Thread.sleep(10000);
+			//} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			super.stop();
+			Syn.d("GServer.off done !");
+			
+			if(terminate){
+				terminate();
+			}
+			Syn.d("GServer.off done !");
+		}
+	}
+	
+	@Override
+	public void terminate() {
+		super.terminate();
+		this.clients = null;
+		this.config = null;
+		this.world.terminate();
+		this.world = null;
+		this.cWorld = null;
+		this.threadsManager = null;
+		this.lifeRegen = null;
+//		this.connexionQueue = null;
+		this.queue = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+
+}

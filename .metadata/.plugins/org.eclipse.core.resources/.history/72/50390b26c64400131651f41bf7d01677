@@ -1,0 +1,20 @@
+package Providers;
+
+import ConfigurationObjects.SimpleIA;
+import Game.DofusGameServer;
+import Interfaces.IProvider;
+import Misc.MiscUtils;
+
+
+public class IAProvider implements IProvider {
+	
+	/** Créé un objet de SimpleIA 
+	 * @param s */
+	public SimpleIA createNew(GameServer s, short ID, String name, String executables){
+		SimpleIA ia = new SimpleIA();
+		ia.setID(ID);
+		ia.addAll(MiscUtils.parseStringToExecutables(s, executables));
+		return ia;
+	}
+	
+}

@@ -1,0 +1,162 @@
+package Game;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import plugin.Plugins;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Core.Syn;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Interfaces.IService;
+import Login.LServer;
+import Plugins.Managers.ActionsManager;
+import Plugins.Managers.AspectJManager;
+import Plugins.Managers.EffectsManager;
+import Plugins.Managers.FormulingManager;
+import Plugins.Managers.MacroManager;
+import Plugins.Managers.ParsingManager;
+import Plugins.Managers.PluginsManager;
+import Plugins.Managers.ProvidersManager;
+import Plugins.Managers.SystemsManager;
+
+public interface GServer extends IService {
+	
+
+
+	public void setWorld(GWorld world) {
+		this.world = world;
+	}
+	public GWorld getWorld() {
+		return world;
+	}
+	
+	
+	/**
+	 * Donne l'uptime en ms
+	 */
+	public long getUptime() {
+		return System.currentTimeMillis()-uptime;
+	}
+
+	/**
+	 * SERVER state et non world state comme on pourrait penser
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population
+	 */
+	public byte getState(){
+		/*
+		OFFLINE((byte)0),
+        ONLINE((byte)1),
+        SAVING((byte)2);
+		 */
+		//getWorld().getcWorld().update(this);
+		return state;
+	}
+	/**
+	 * SERVER state et non world state comme on pourrait penser. ouin mais fuck off, on va faire que cest pareil pcq sinon ca sert à rien ..
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population
+	 */
+	public void setState(byte state){
+		this.state = state;
+		//getWorld().getcWorld().update(this);
+	}
+
+	public void setRequiredGM(byte requiredGM) {
+		this.requiredGM = requiredGM;
+	}
+	public byte getRequiredGM() {
+		return requiredGM;
+	}
+
+	public GConfig getConfig() {
+		return config;
+	}
+	public void setConfig(GConfig config) {
+		this.config = config;
+	}
+
+	public short getID() {
+		return this.cWorld.id;
+	}
+
+	public void setLoginServer(LServer loginServer) {
+		this.loginServer = loginServer;
+	}
+	public LServer getLoginServer() {
+		return loginServer;
+	}
+
+	public void setSqlService(AbstractSqlService sqlService) {
+		this.sqlService = sqlService;
+	}
+	public AbstractSqlService getSqlService() {
+		return sqlService;
+	}
+
+
+
+	public void setPlugins(Plugins plugins) {
+		this.pluginsManager.plugins = plugins;
+	}
+
+	public Plugins getPlugins() {
+		return pluginsManager.plugins;
+	}
+
+	public void setScripts(ScriptsService<ExecutableScript> scripts) {
+		this.scripts = scripts;
+	}
+
+	public ScriptsService<ExecutableScript> getScripts() {
+		return scripts;
+	}
+
+	public void setcWorld(CWorld cWorld) {
+		this.cWorld = cWorld;
+	}
+
+	public CWorld getcWorld() {
+		return cWorld;
+	}
+	
+	public PluginsManager getPluginsManager(){
+		return this.pluginsManager != null ? this.pluginsManager : Syn.Services.defaultPluginsManager;
+	}
+	public ActionsManager getActionsManager(){
+		return getPluginsManager().getActionsManager();
+	}
+	public AspectJManager getAspectJManager(){
+		return getPluginsManager().getAspectJManager();
+	}
+	public EffectsManager getEffectsManager(){
+		return getPluginsManager().getEffectsManager();
+	}
+	public FormulingManager getFormulingManager(){
+		return getPluginsManager().getFormulingManager();
+	}
+	public MacroManager getMacroManager(){
+		return getPluginsManager().getMacroManager();
+	}
+	public ParsingManager getParsingManager(){
+		return getPluginsManager().getParsingManager();
+	}
+	public SystemsManager getSystemsManager(){
+		return getPluginsManager().getSystemsManager();
+	}
+	public ProvidersManager getProviders(){
+		return getPluginsManager().getProviders();
+	}
+
+	public void setGameClientStrategy(GameClientStrategy gameClientStrategy) {
+		this.gameClientStrategy = gameClientStrategy;
+	}
+
+	public GameClientStrategy getGameClientStrategy() {
+		return gameClientStrategy;
+	}
+
+	
+	
+
+}

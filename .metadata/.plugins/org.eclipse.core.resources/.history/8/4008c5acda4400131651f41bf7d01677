@@ -1,0 +1,93 @@
+package ConfigurationObjects;
+
+import java.util.ArrayList;
+
+import Core.Syn;
+import Game.DofusGameServer;
+import Game.GameServer;
+import Interfaces.IExecutable;
+import Providers.IAProvider;
+
+
+
+public class SimpleIA implements IExecutable {
+
+
+	public static IAProvider provide(GameServer s){
+		if(s != null){
+			s.getLoginServer().getGameClientStrategy();
+		}
+		if(s == null){
+			return Syn.Services.defaultPluginsManager.getProviders().provideIA();
+		}
+		return s.getProviders().provideIA();
+	}
+	
+	
+	
+	
+	
+	private short ID = 0;
+
+	/**
+	 * 
+	 * @param objects - Pour GEffets : { AbstractCharacterCaster, AbstractCharacterTarget, ParameterHolder };
+	 * @param objects - Pour GActions : { GPersonnageCaster, targetSprite, targetCell };
+	 * @param objects - Pour Network : { ElectricalFlow };
+	 * @param objects - Pour ExecutableScript : { On donne souvent le GServer, mais ce sont les arguments qu'on veut donner au script sans compter les MainArgs qui sont des strings loadées en bdd };
+	 * @param objects - Pour AbstractIA / SimpleIA : { GServer, GFight, CombativeCharacter curFighter };
+	 * 
+	 */
+	private ArrayList<IExecutable> exes = new ArrayList<IExecutable>();
+	
+	
+	@Override
+	/**
+	 * 
+	 * @param objects - Pour GEffets : { AbstractCharacterCaster, AbstractCharacterTarget, ParameterHolder };
+	 * @param objects - Pour GActions : { GPersonnageCaster, targetSprite, targetCell };
+	 * @param objects - Pour Network : { ElectricalFlow };
+	 * @param objects - Pour ExecutableScript : { On donne souvent le GServer, mais ce sont les arguments qu'on veut donner au main method du script sans compter les MainArgs qui sont des strings loadées en bdd };
+	 * @param objects - Pour AbstractIA / SimpleIA : { GServer, GFight, CombativeCharacter curFighter };
+	 * 
+	 */
+	public void apply(Object[] objects) {
+		for(IExecutable e : exes){
+			e.apply(objects);
+		}
+	}
+
+	
+	public void setID(short iD) {
+		ID = iD;
+	}
+	public short getID() {
+		return ID;
+	}
+	public void addAll(ArrayList<IExecutable> e){
+		if(e == null){
+			return;
+		}
+		exes.addAll(e);
+	}
+	public void add(IExecutable e){
+		if(e == null){
+			return;
+		}
+		exes.add(e);
+	}
+	public void insert(int index, IExecutable e){
+		if(e == null){
+			return;
+		}
+		exes.add(index, e);
+	}
+	public void empty(){
+		exes.clear();
+	}
+	
+	
+	
+	
+	
+}

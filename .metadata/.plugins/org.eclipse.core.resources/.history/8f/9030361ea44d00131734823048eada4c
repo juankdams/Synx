@@ -1,0 +1,7 @@
+package parsers.wakfu;
+
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class LoginParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf> {
+
+}

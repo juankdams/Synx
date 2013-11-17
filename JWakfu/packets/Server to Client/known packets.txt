@@ -1,0 +1,18 @@
+[Known Server -> Client opcodes]
+
+ 1032: Set RSA encryption key
+ 1024: Login response code
+ 1202: Set current world
+ 2063: Send local current time ms
+ 2048: List characters (char list screen)
+20059: Guild Error Message
+15982: Change pet Item Id
+15980: Pet equipment change
+20090: Haven world info result
+15998: Quest Inventory Change
+13200: Spell Restat needed
+20056: Guild Invitation
+5226:  Equipment Position locked
+13102: Gem Result message
+15999: Temporary Inventory changes
+15990: Change item XP

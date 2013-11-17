@@ -1,0 +1,45 @@
+package Servers.Netty;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+
+import org.slf4j.Logger;
+
+
+public class Encoder implements ChannelHandler {
+	
+
+	public Encoder() {
+		//super(OutPacket.class);
+	}
+	
+    @Override
+    public ByteBuf encode(ChannelHandlerContext ctx, OutPacket msg) throws Exception {
+    	ByteBuf buf = Unpooled.buffer();
+    	msg.finish();
+    	buf.writeBytes(msg.getData());
+        return buf;
+    }
+
+	@Override
+	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
+			throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

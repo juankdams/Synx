@@ -1,0 +1,13 @@
+package Servers.Netty;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.MessageToMessageDecoder;
+
+public abstract class Decoder extends MessageToMessageDecoder<ByteBuf> {
+	
+	public Decoder() {
+		super(ByteBuf.class);
+	}
+
+	
+}

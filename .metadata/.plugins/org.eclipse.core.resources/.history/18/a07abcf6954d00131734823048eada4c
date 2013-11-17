@@ -1,0 +1,12 @@
+package Plugins.Abstractions;
+
+
+public abstract class AbstractPacketParser<T extends IClient> {
+
+	
+	public boolean parse(T c, String packet){
+		return false;
+	}
+	
+	
+}

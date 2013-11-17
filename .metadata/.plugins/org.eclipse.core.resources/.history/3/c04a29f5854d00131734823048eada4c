@@ -1,0 +1,14 @@
+package Parsers;
+
+import Game.GClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class HousesParser extends AbstractPacketParser {
+
+	@Override
+	public boolean parse(GClient arg0, String arg1) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+}

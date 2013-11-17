@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Plugins>
+
+
+
+
+<Plugin Name="Chat" Version="0.0.1" Jar="Syn_plugins/ChatPlugin.jar" Description="chatDesc" Config=""
+			Main="pack.Chat" Enable="true">
+</Plugin>
+
+
+<Plugin Name="Console" Version="0.0.1" Jar="Syn_plugins/ConsolePlugin.jar" Description="consoleDesc" Config=""
+			Main="pack.Console" Enable="true">
+</Plugin>
+
+<Plugin 
+	Name="Effects" 
+	Version="0.0.1" 
+	Jar="Syn_plugins/EffectsPlugin.jar" 
+	Description="effectspluginsDescriptioninutile" 
+	Config=""
+	Main="pack.EffectsMain" 
+	Enable="true">
+</Plugin>
+
+
+<Plugin 
+	Name="Actions" 
+	Version="0.0.1" 
+	Jar="Syn_plugins/ActionsPlugin.jar" 
+	Description="ActionspluginsDescriptioninutile" 
+	Config=""
+	Main="pack.ActionsMain" 
+	Enable="true">
+</Plugin>
+
+
+<Plugin 
+	Name="Parsers" 
+	Version="0.0.1" 
+	Jar="Syn_plugins/ParsingPlugin.jar" 
+	Description="ParsingpluginsDescriptioninutile" 
+	Config=""
+	Main="pack.ParsingMain" 
+	Enable="true">
+</Plugin>
+
+<Plugin 
+	Name="Formuling" 
+	Version="0.0.1" 
+	Jar="Syn_plugins/FormulingPlugin.jar" 
+	Description="FormulingpluginsDescriptioninutile" 
+	Config=""
+	Main="pack.FormulingMain" 
+	Enable="true">
+</Plugin>
+
+<Plugin 
+	Name="Systems" 
+	Version="0.0.1" 
+	Jar="Syn_plugins/SystemsPlugin.jar" 
+	Description="SystemspluginsDescriptioninutile" 
+	Config=""
+	Main="pack.SystemsMain" 
+	Enable="true">
+</Plugin>
+
+<Plugin 
+	Name="AspectJ" 
+	Version="0.0.1" 
+	Jar="Syn_plugins/AspectJPlugin.jar" 
+	Description="AspectJpluginsDescriptioninutile" 
+	Config=""
+	Main="pack.AspectsMain" 
+	Enable="true">
+</Plugin>
+
+
+
+</Plugins>

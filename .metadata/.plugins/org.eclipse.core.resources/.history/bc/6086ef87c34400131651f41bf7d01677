@@ -1,0 +1,12 @@
+package Game;
+
+import Interfaces.IService;
+
+public interface GServer extends IService {
+	
+
+	
+	
+	
+
+}

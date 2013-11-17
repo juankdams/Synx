@@ -1,0 +1,55 @@
+package tests.Handlers;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import Handlers.NettyHandler;
+
+public class WakfuHandler extends NettyHandler {
+	
+	//private AttributeKey<IWakfuClient> CLIENT_ATTR;
+	//private WakfuClientProvider clientProvider;
+	
+	public WakfuHandler() {
+		//clientProvider = provider;
+		//String attKey = clientProvider.getSessionAttributeKey();
+		//CLIENT_ATTR = new AttributeKey<IWakfuClient>(attKey);
+	}
+
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		Misc.Utils.wD("[w] A new channel is active: " + ctx.channel());
+		Channel c = ctx.channel();
+		//c.attr(CLIENT_ATTR).setIfAbsent(clientProvider.createNew(c));
+	}
+	
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		Misc.Utils.wD("[w] Channel inactive: " + ctx.channel());
+		//IWakfuClient sess = ctx.channel().attr(CLIENT_ATTR).get();
+		//sess.kick();
+		//try {
+		//	sess.terminate();
+		//} catch (Throwable e) { e.printStackTrace(); }
+		//TODO: deregister from list
+ 	}
+	
+    @Override
+    public void inboundBufferUpdated(ChannelHandlerContext ctx, ByteBuf msg) {
+    	Misc.Utils.wD("[w] Channel recv: " + ctx.channel());
+    	/*IWakfuClient sess = ctx.channel().attr(CLIENT_ATTR).get();
+    	
+		if (sess != null && msg.readableBytes() > 0) {
+			
+			if(clientProvider instanceof WakfuGameClientProvider)
+				GameClientStrategies.WakfuClientStrategy.get().defaultPluginsManager
+				.getParsingManager().parse((WakfuGameClient)sess, msg);
+			if(clientProvider instanceof WakfuLoginClientProvider)
+				GameClientStrategies.WakfuClientStrategy.get().defaultPluginsManager
+				.getParsingManager().parse((WakfuLoginClient)sess, msg);
+		}*/
+    }
+
+
+}

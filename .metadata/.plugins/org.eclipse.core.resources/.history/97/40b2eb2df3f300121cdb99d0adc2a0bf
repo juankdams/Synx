@@ -1,0 +1,9 @@
+package pack;
+
+public enum GameActionEndType {
+	
+	SPELL(0),
+	MOVEMENT(2);
+	    
+
+}

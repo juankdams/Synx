@@ -1,0 +1,42 @@
+package Login;
+
+import GameClientStrategies.GameClientStrategy;
+import Handlers.NettyHandler;
+import Servers.Netty.NettyServer;
+import Wakfu.WakfuHandler;
+
+public class WakfuLoginServer extends LoginServer {
+
+	public NettyServer s = new NettyServer();
+
+	public WakfuLoginServer(short ID, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss) {
+		super(ID, dbHostIP, dbName, dbUser, dbPass, ownerss);
+	}
+
+	@Override
+	public void boot() throws Exception {
+		super.boot();
+		s.setDecoder(new Decoder());
+		s.setEncoder(new Encoder());
+		s.setHandler(new WakfuHandler());
+	}
+	
+	@Override
+	public void terminate() {
+		super.terminate();
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+
+	@Override
+	public GameClientStrategy getGameClientStrategy(){
+		return GameClientStrategies.GameClientStrategies.WakfuClientStrategy.get();
+	}
+	
+	@Override
+	protected NettyServer get() {
+		return s;
+	}
+	
+}

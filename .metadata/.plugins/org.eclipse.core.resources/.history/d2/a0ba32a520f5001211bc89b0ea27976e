@@ -1,0 +1,796 @@
+package GameObjects.Fights;
+
+import static Enums.ActionListenerType.ON_FIGHT_TURN_END;
+import static Enums.ActionListenerType.ON_FIGHT_TURN_START;
+import static Enums.ActionListenerType.ON_FIGHT_JOIN;
+import static GameObjects.Fights.GFight.FightTeam.ATTACKER;
+import static GameObjects.Fights.GFight.FightTeam.SPECTATOR;
+
+import java.util.ArrayList;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Abstractions.CombativeCharacter;
+import Core.Syn;
+import Enums.CharacterType;
+import Enums.FightState;
+import Enums.FightTeamType;
+import Enums.FightType;
+import Enums.PlayerState;
+import Enums.SynActions.MapAction;
+import Game.GServer;
+import GameObjects.GAction;
+import GameObjects.GBuff;
+import GameObjects.GBuff.BuffApplicationType;
+import GameObjects.GPersonnage;
+import GameObjects.GWorld;
+import GlobalObjects.Map;
+import Interfaces.IObject;
+import NewThreads.Task;
+import NewThreads.FightSchedulingStrategies.FightSchedulingStrategies;
+import Observing.ObservableState;
+
+import GameObjects.Fights.FightTeam;
+
+
+public abstract class GFight implements Delayed, IObject {
+
+	public static Logger log = LoggerFactory.getLogger(GFight.class);
+
+	public static enum FightTeam {
+		ATTACKER(0),//L'équipe qui lance le combat
+		DEFENDER(1),//L'équipe qui se fait proposer le combat par l'autre
+		SPECTATOR(2),//Les spectateurs ._.
+		ELSE(3)//Toute autre équipe qui vient s'ajouter au combat par après
+		;
+		private byte value = 0;
+		private FightTeam(int value){
+			this.value = (byte)value;
+		}
+		public byte get(){
+			return value;
+		}
+	}
+	
+	/*
+	public static aspect tru{
+		//@After("call (* GFight.endTurn(..))")// Ici, si 
+	    //public static void listen(JoinPoint joinPoint) {
+			//GFight f = joinPoint.getSourceLocation().
+	    //}
+		pointcut greetings():
+			 execution(* GFight.startTurn(..));
+			 
+			 after()returning: greetings(){
+				System.out.println(" World !");
+				return 1;
+			 }
+	}
+	*/
+	
+	
+	
+	/*
+	 Liste de packets à peut-être envoyer au démarrage d'un combat (sans ordre) :
+	 
+	 fC: fightCount, affiche l'oeil avec le nombre de combats présent sur la map. à envoyer aux sprites de la map originalle
+	 
+	 GTL: GameTimeLine : affiche la timeLine, à envoyer aux sprites du combat.
+	 
+	 GIC:  //this.aks.Game.onPlayersCoordinates(sData.substr(4));
+	 
+	 GS:
+	 
+	 GTM:  this.aks.Game.onTurnMiddle(sData.substr(4));
+	 
+	 GTS: this.aks.Game.onTurnStart(sData.substr(3));
+	 
+	 Gc: Challenges
+	 
+	 GJK: this.aks.Game.onJoin(sData.substr(3));
+	 
+	 GP: this.aks.Game.onPositionStart(sData.substr(2));
+	 */
+	
+	
+	protected int ID = 0;
+	//private Map fightMap = null;
+	protected byte state = (byte) FightState.INIT.get();//fight state (active, finish, init, place)
+	protected ObservableState inState = new ObservableState(-1);
+	protected long startedFightCurrentMillis = 0;
+	protected long endTurnCurrentNanos = 0;//le temps auquel le tour actuel doit finir (.endTurn())
+	//public ArrayList<ICharacter> fightersBlue = new ArrayList<ICharacter>();
+	//public ArrayList<ICharacter> fightersRed = new ArrayList<ICharacter>();
+	
+	protected byte cursor = 0;//Position du curseur dans la timeLine, sers à déterminer le currentFighter.
+	/** 
+	 * index 0 = Spectator Team 
+	 * index 1 = attacking team
+	 * index 2 = defending team
+	 * index x = other teams
+	 * */
+	protected ArrayList<GameObjects.Fights.FightTeam> teams = new ArrayList<GameObjects.Fights.FightTeam>();
+	protected ArrayList<CombativeCharacter> timeLine = new ArrayList<CombativeCharacter>();
+	//protected Sequencer<GAction> sequencer = null;
+	//protected ArrayList<IListener> listeners = new ArrayList<IListener>();
+	
+	
+	GFight(){
+		//Fights instanciés via la FightFactory. Pour ça que le constructor est limité au scope du package :)
+	}
+
+	@Override
+	public int compareTo(Delayed arg0) {
+		return this == arg0 ? 0 : 1;
+	}
+	@Override
+	public long getDelay(TimeUnit arg0) {
+		//Returns delay in nanoseconds
+		//Syn.w("GFight.getDelay = "+( (getEndTurnTime()-System.nanoTime()) )+" ns");
+		return ( (getEndTurnTime()-System.nanoTime()) );
+	}
+	
+	
+	/**
+	 * Envoie les packets de début de combat
+	 */
+	public void sendInitFightPackets(GPersonnage p){
+		GAction a = p.getServer().getActionsManager().getFactory().newEnterFightAction(p);
+		p.addAction(a);
+		SM.Game.GA(p, a);
+		SM.Game.GJK(p, this);
+		SM.Game.GP(p, this);
+	}
+	
+	public void sendPlacementFightPackets(GPersonnage p){
+		for(ArrayList<CombativeCharacter> team : teams){
+			for(CombativeCharacter cc : team){
+		/*		GAction etat_porte = p.getServer().getActionsManager().getFactory().newStateAction(cc, PlayerState.PORTEE, StateRelation.get(cc.hasState(PlayerState.PORTEE)));
+				GAction etat_porteur = p.getServer().getActionsManager().getFactory().newStateAction(cc, PlayerState.PORTEUR, StateRelation.get(cc.hasState(PlayerState.PORTEUR)));
+				etat_porte.setID(0);
+				etat_porteur.setID(0);
+				//p.addAction(etat_porteur);
+				//p.addAction(etat_porte);
+				
+				SM.Game.GA_LAYER(p, etat_porte);
+				SM.Game.GA_LAYER(p, etat_porteur);	*/
+			}
+		}
+	}
+	
+	public void sendActiveFightPackets(GPersonnage p){
+		SM.Game.GIC(p, this, false);
+		SM.Game.GS(p);
+		SM.Game.GTL(p, this);//XXX
+		//SM.Game.Gc(p); -> challenges
+		SM.Game.GTM(p, this, false);
+	}
+	
+	
+	/**
+	 * TODO Fight.join 
+	 */
+	public void join(CombativeCharacter joiner, int teamID){
+		/*
+		 ERROR_ON_JOIN_FIGHT(903), 
+		ERROR_CANT_BECAUSE_MAP(903,"p"),
+		ERROR_CANT_BECAUSE_ON_RESPAWN(903,"r"),
+		ERROR_CANT_YOU_OCCUPED(903,"o"),
+		ERROR_CANT_YOU_OPPONENT_OCCUPED(903,"z"),
+		ERROR_CANT_FIGHT(903,"h"),
+		ERROR_CANT_FIGHT_NO_RIGHTS(903,"i"),
+		ERROR_ERROR_21(903,"s"),
+		ERROR_SUBSCRIPTION_OUT(903,"n"),
+		ERROR_A_NOT_SUBSCRIB(903,"b"),
+		ERROR_NO_ZOMBIE_ALLOWED(903,"d"),
+		 */
+		synchronized(teams){//lock les teams vs la concurrentModification
+			GameObjects.Fights.FightTeam team = teams.get(teamID);
+			CombativeCharacter starter = team.get(0);
+			if(team.size() == 8){
+				//ERROR_CHALLENGE_FULL(903,"c"),
+				//ERROR_TEAM_FULL(903,"f"),
+				return;
+			}
+			if(team.isClosed() ){//TODO || (team.isClosedGroup() && starter.getGroup() != joiner.getGroup())){
+				//ERROR_TEAM_CLOSED(903,"f"),
+			}
+			if(team.get(0).getAlignementSpecialization() != joiner.getAlignementSpecialization()
+				&& this.getType() != FightType.PVM && this.getType() != FightType.Challenge){
+				//ERROR_TEAM_DIFFERENT_ALIGNMENT(903,"a"),
+			}
+			if(this.getType() == FightType.PVT && teamID != FightTeam.DEFENDER.get()){
+				//ERROR_CANT_DO_BECAUSE_GUILD(903,"g"),
+			}
+			if(this.getState() > FightState.PLACE.get() || this.getDelay(TimeUnit.NANOSECONDS)/1000L/1000L/1000L < 2){
+				//Si le combat n'est plus en phase de placement (donc mtn actif) ou s'il reste moins de 2s...
+				//ERROR_CANT_DO_TOO_LATE(903,"l"),
+			}
+			if(joiner.getCharacterType() == CharacterType.PLAYER){
+				GPersonnage p = (GPersonnage) joiner;
+				if(p.getGfxID() != ((p.getClasse().ID*10) + p.getSexe())){
+					//ERROR_CANT_U_ARE_MUTANT(903,"m"),
+				}
+				if(p.getMap().getSubArea(p.getWorld()).getArea().isSubscriber()){//TODO
+					if(p.getAccount().isPremium() == false){
+						/*
+						 * if(wasPremium) -> ERROR_SUBSCRIPTION_EXPIRED
+						 * else -> ERROR_SUBSCRIPTION_OUT
+						 */
+					}
+					//ERROR_SUBSCRIPTION_EXPIRED(903,"s"), (TODO, il n'est pas dans ma liste, dans les GameActionType)
+						//Action impossible car ton abonnement a expiré.  "s"
+					//ERROR_SUBSCRIPTION_OUT(903,"n"),
+						//Mode découverte   "n"
+						//Pour accéder à la version complète : "n"  (ca vient avec l'autre ligne de "n")
+					//ERROR_A_NOT_SUBSCRIB(903,"b"),
+						//Action impossible ce joueur n'a pas un compte membre.  "b" 
+						//ca cest genre quand on invite qqn à faire qqc qui a besoin d'etre premium.
+				}
+			}
+			
+			
+			//Enleve le perso de l'ancienne map
+			joiner.onRemovedFromMap(getMap());
+			//Affiche le perso dans la liste des membres de la bonne équipe au dessus de l'épée de combat sur la map
+			SM.Game.Gt_LAYER(this, true, starter, joiner);//Update l'affichage des membres de l'équipe au dessus de l'épée http://pbrd.co/15K6Fjf
+			//...
+		}
+	}
+	
+	
+
+	/**
+	 * Trouve l'ID de l'équipe du leader character ( = premier charac de sa team = team.get(0) ), si ce dernier est bien dans le combat. Sinon return -1;
+	 */
+	public int getLeaderTeamID(int characterID){
+		for(int i = teams.size()-1; i >= 0; i--){
+			if(teams.get(i).get(0).getID() == characterID){
+				return i;
+			}
+		}
+		return -1;
+	}
+	/**
+	 * Trouve l'ID de l'équipe du personnage (index), si ce dernier est bien dans le combat. Sinon return -1;
+	 */
+	public int getCharacterTeamID(CombativeCharacter character){
+		for(int i = teams.size()-1; i >= 0; i--){
+			for(CombativeCharacter c : teams.get(i)){
+				if(c.equals(character)){
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	/** Voir getCharacterTeamID(CombativeCharacter character) */
+	public int getCharacterTeamID(int characterID){
+		for(int i = teams.size()-1; i >= 0; i--){
+			for(CombativeCharacter c : teams.get(i)){
+				if(c.getID() == characterID){
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	/**
+	 * Regarde pour voir si le Character est 
+	 *    présent dans les listes de combattants de ce combat.
+	 * <br><code><i>return getCharacterTeamID(character) != -1;</i></code>
+	 * @param characterID - Le character recherché
+	 * @return - True si le character est dans ce combat, false s'il n'y est pas
+	 */
+	public boolean isCharacterInFight(CombativeCharacter character){
+		return getCharacterTeamID(character) != -1;
+	}
+	
+	/** Voir isCharacterInFight(CombativeCharacter character) */
+	public boolean isCharacterInFight(int characterID){
+		return getCharacterTeamID(characterID) != -1;
+	}
+	
+	public boolean isSpectator(CombativeCharacter p){
+		if(teams.get(SPECTATOR.get()).size() == 0){
+			return false;
+		}
+		for(CombativeCharacter cc : teams.get(SPECTATOR.get())){
+			if(cc.equals(p)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isEveryoneReady(){
+		for(int i = teams.size()-1; i >= 0; i--){
+			if(i == SPECTATOR.get()){
+				continue;
+			}
+			for(CombativeCharacter cc : teams.get(i)){
+				if(cc.getCharacterType() == CharacterType.PLAYER 
+					&& !cc.hasState(PlayerState.InFightReady)
+					){
+						return false;
+					}
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public int getID() {
+		return ID;
+	}
+
+	@Override
+	public void setID(int ID){
+		this.ID = ID;
+	}
+	
+	@Override
+	/**
+	 * Peut return 0 si aucun des combattants n'a de serverID
+	 */
+	public short getServerID() {
+		for(ArrayList<CombativeCharacter> fighters : teams){
+			for(CombativeCharacter c : fighters){
+				if(c.getServerID() != 0){
+					return c.getServerID();
+				}
+			}
+		}
+		return 0;
+		/*for(ICharacter c : fightersBlue){
+			if(c.getServerID() != 0){
+				return c.getServerID();
+			}
+		}
+		for(ICharacter c : fightersRed){
+			if(c.getServerID() != 0){
+				return c.getServerID();
+			}
+		}
+		return 0;*/
+	}
+
+	@Override
+	/**
+	 * Peut return null si aucun des combattants n'a de Server
+	 */
+	public GServer getServer() {
+		for(ArrayList<CombativeCharacter> fighters : teams){
+			for(CombativeCharacter c : fighters){
+				if(c.getServer() != null){
+					return c.getServer();
+				}
+			}
+		}
+		return null;
+		/*for(ICharacter c : fightersBlue){
+			if(c.getServer() != null){
+				return c.getServer();
+			}
+		}
+		for(ICharacter c : fightersRed){
+			if(c.getServer() != null){
+				return c.getServer();
+			}
+		}
+		return null;*/
+	}
+
+	@Override
+	/**
+	 * Peut return null si aucun des combattants n'a de World
+	 */
+	public GWorld getWorld() {
+		for(ArrayList<CombativeCharacter> fighters : teams){
+			for(CombativeCharacter c : fighters){
+				if(c.getServer() != null){
+					return c.getWorld();
+				}
+			}
+		}
+		return null;
+		/*for(ICharacter c : fightersBlue){
+			if(c.getWorld() != null){
+				return c.getWorld();
+			}
+		}
+		for(ICharacter c : fightersRed){
+			if(c.getWorld() != null){
+				return c.getWorld();
+			}
+		}
+		return null;*/
+	}
+
+	@Override
+	public void terminate() {
+		// TODO Auto-generated method stub
+	}
+	
+	
+	/**
+	 * Pour setup la TimeLine, l'ordre des combattants par leur initiative.
+	 */
+	public void organizeTimeLine(){
+		int lastTeam = 0;
+		int lastInitiative = 0;
+		CombativeCharacter lastGuy = null;
+		ArrayList<ArrayList<CombativeCharacter>> copy = new ArrayList<ArrayList<CombativeCharacter>>(this.teams.size());
+		
+		//copy.remove(SPECTATOR.get());
+		
+		int timeLineSize = 0;
+		for(int i = teams.size()-1; i >= 0; i--){//For...each Team
+			if(i != SPECTATOR.get()){
+				copy.add(new ArrayList<CombativeCharacter>(teams.get(i)));
+				//copy.set(1, teams.get(i));
+				//copy.get(i).clear();
+				//copy.get(i).addAll(teams.get(i));
+				timeLineSize += this.teams.get(i).size();
+			}
+		}
+		
+		for(int t = timeLineSize-1; t >= 0; t--){ //For...each tant que la TimeLine n'est pas remplie au maximum.
+			for(int i = copy.size()-1; i >= 0; i--){//For...each Team
+				if(/*i != SPECTATOR.get() &&*/ i != lastTeam){
+					for(CombativeCharacter c : copy.get(i)){//For...each Character
+						int init = c.getServer().getFormulingManager().calculateTotalInitiative(c.getStatistique(), c.getLevel());
+						//Syn.d("init="+init+"  id="+c.getID()+";");
+						if(init >= lastInitiative){
+							if(lastGuy == null || lastGuy.getID() != c.getID()){
+								lastInitiative = init;
+								lastGuy = c;
+								lastTeam = i;
+							}
+						}
+					}
+				}
+			}
+			boolean removed = copy.get(lastTeam).remove(lastGuy);
+			//Syn.d("removed="+removed+".");
+			if(copy.get(lastTeam).size() == 0){
+				copy.remove(lastTeam);//Enleve l'équipe lorsqu'elle est vide de fighters.
+			}
+			if(copy.size() == 1){
+				//Syn.d("lastTeam = 9999");
+				lastTeam = 9999;
+				//S'il ne reste que des fighters d'une équipe à parser, 
+				//  j'massure de débloquer le if(i != lastTeam).
+			}
+			if(removed){
+				//Syn.d("timeLineAdded . ID("+lastGuy.getID()+")");
+				this.timeLine.add(lastGuy);//le 1er = le + d'ini.
+				lastInitiative = 0;
+			}
+		}
+		//Syn.d("timeLine.size="+timeLine.size()+". or "+timeLineSize);
+		copy = null;
+		lastGuy = null;
+	}
+	
+	/** return timeLine.get(cursor); */
+	public CombativeCharacter getCurrentFighter(){
+		//Syn.d("cursor("+cursor+") timeLine("+timeLine.size()+")");
+		return timeLine.get(cursor);
+	}
+	
+	/**
+	 * Commence le combat complet quand tous les joueurs sont prêts 
+	 * ou que le temps de placement des joueurs est écoulé.
+	 */
+	public void startFight(){
+		//blabla
+		SM.Game.Gc_LAYER(this, false);
+		organizeTimeLine();
+		for(CombativeCharacter cc : timeLine){
+			cc.removeState(PlayerState.InFightReady);
+		}
+		
+		/*
+		 * send quelques packets dont:
+		 * GIC (GamePlayersCoordinates), 
+		 * GS (GameStart),
+		 * GTL (GameTurnList->TimeLine), 
+		 * TODO Gd (Gamedefi->challenges), 
+		 * GTM (GameTurnMiddle)
+		 */
+		for(CombativeCharacter cc : timeLine){
+			if(cc.getCharacterType() == CharacterType.PLAYER){
+				this.sendActiveFightPackets((GPersonnage)cc);
+			}
+		}
+		
+		startedFightCurrentMillis = System.currentTimeMillis();
+		this.setState((byte) FightState.ACTIVE.get());
+		startRound();
+	}
+
+	/**
+	 * Fini le combat complet quand il ne reste qu'une équipe vivante sur le jeu.
+	 */
+	public void endFight(){
+		//blabla
+		for(ArrayList<CombativeCharacter> team : teams){
+			for(CombativeCharacter cc : team){
+				cc.setLayer(Map.baseLayer);
+				if(cc.getCharacterType() == CharacterType.PLAYER){
+					GPersonnage p = (GPersonnage)cc;
+					SM.Game.GDM(p.getClient().getSession(), p.getMap());
+				}else if(cc.getCharacterType() == CharacterType.MONSTER){
+					cc.getMap().updateSpriteList(MapAction.REMOVE_SPRITE, cc);
+					try {
+						cc.terminate();
+					} catch (Throwable e) { e.printStackTrace(); }
+					cc = null;
+				}else if(cc.getCharacterType() == CharacterType.MONSTER_GROUP){
+					cc.onAddedToMap(getMap());
+				}
+			}
+		}
+	}
+	
+	
+	/** Commence un tour complet de combat. 
+	 * (Quand tous les joueurs sur la timeLine ont passé leur tour et qu'on en commence de noueaux) */
+	public void startRound(){
+		Syn.d("in GFight.startRound");
+		//blabla
+		startTurn();
+	}
+	/** Fini un tour complet de combat. 
+	 * (Quand tous les joueurs sur la timeLine ont passé leur tour) */
+	public void endRound(){
+		Syn.d("in GFight.endRound");
+		//blabla
+		//cursor = 0;
+		startRound();
+	}
+	
+	/** Commence le tour d'une personne */
+	public void startTurn(){
+		Syn.d("in GFight.startTurn");
+		//SM.Messages.MA("start  "+getCurrentFighter().getName(), Constants.Constants.COLOR_BLUE, getWorld());
+		SM.Game.GTS_FIGHT(getCurrentFighter(), this);
+		
+		if(getCurrentFighter().getBuffs() != null){
+			ArrayList<GBuff> copy = new ArrayList<GBuff>();
+			copy.addAll(getCurrentFighter().getBuffs());
+			for(GBuff buff : copy){
+				Syn.w("in startTurn, going to apply buff");
+				buff.apply(getCurrentFighter(), this, BuffApplicationType.TurnBegin);
+			}
+		}
+		
+		//DelayingFights.queue.schedule(this);
+		FightSchedulingStrategies.getStrategy().schedule(this);
+
+		//blabla, laisse jouer le joueur
+		
+		if(getCurrentFighter().getCharacterType() != CharacterType.PLAYER){
+			try { //TODO: for debugging purposes only, waits a certain time before passing the mobs
+				Thread.sleep(300);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if(getCurrentFighter().getIA() != null){
+				Syn.d("ia found");
+				Task<Object> task = this.getServer().threadsManager.getTaskFactory().newFightIATask(getCurrentFighter().getIA(), this.getServer(), this, getCurrentFighter());
+				this.getServer().threadsManager.executeDirectTask(task);
+			}else{
+				endTurn();
+			}
+		}else{
+			inState.set(ON_FIGHT_TURN_START.ordinal()).notifyObservers(getCurrentFighter());
+		}
+	}
+	
+	
+	/** Fini le tour d'une personne */
+	public void endTurn(){
+		Syn.d("in GFight.endTurn");
+		//SM.Messages.MA("end  "+getCurrentFighter().getName(), Constants.Constants.COLOR_BLUE, getWorld());
+		SM.Game.GTF_FIGHT(getCurrentFighter(), this);
+		inState.set(ON_FIGHT_TURN_END.ordinal()).notifyObservers(getCurrentFighter());
+		
+		if(getCurrentFighter().getBuffs() != null){
+			ArrayList<GBuff> copy = new ArrayList<GBuff>();
+			copy.addAll(getCurrentFighter().getBuffs());
+			for(GBuff buff : copy){
+				Syn.w("in endTurn, going to apply buff");
+				buff.apply(getCurrentFighter(), this, BuffApplicationType.TurnEnd);
+				buff.decrementRemainingTurns();
+			}
+		}
+		
+		SM.Game.GTM_FIGHT(this, false); //Affiche correctement les PA/PM/PDV/PDVMAX 
+										//et clear toutes les gameactions qu'il y aurait encore dans les clients
+		
+		ArrayList<CombativeCharacter> deadTeam = areAllPeopleFromATeamDead();//TODO: créer method areAllPeopleFromATeamDead() pour le call à endFight dans le endTurn
+		if(deadTeam != null){ 
+			endFight();
+		}
+		//blabla, termine la round si c'était le dernier joueur, sinon commence le prochain tour.
+		
+		//incrementCursor();
+		cursor++;
+		if(cursor  == timeLine.size()){
+			cursor = 0;
+			SM.Game.GTR_FIGHT(getCurrentFighter(), this);
+			endRound();
+		}else{
+			SM.Game.GTR_FIGHT(getCurrentFighter(), this);
+			startTurn();
+		}
+	}
+	
+	/**
+	 * TODO À caller lorsqu'un combattant meurt.
+	 */
+	public void onKilledCharacter(){
+		ArrayList<CombativeCharacter> deadTeam = areAllPeopleFromATeamDead();//TODO: créer method areAllPeopleFromATeamDead() pour le call à endFight dans le endTurn
+		if(deadTeam != null){ 
+			endFight();
+		}
+	}
+	
+	public ArrayList<CombativeCharacter> areAllPeopleFromATeamDead(){
+		int teamID = 0;
+		ArrayList<CombativeCharacter> deadTeam = null;
+		for(ArrayList<CombativeCharacter> team : this.teams){
+			//Syn.w("Checking if team ("+teamID+") is dead");
+			teamID++;
+			boolean dead = !team.isEmpty();//true de base si la team n'est pas vide. false si la team est vide (ex les spectateurs)
+			for(CombativeCharacter cc :team){
+				//Syn.w("Checking if character ("+cc.getID()+") is dead");
+				if(cc.getStatistique().getPdv() > 1){
+					//Syn.w("teamID not dead");
+					dead = false;
+					break;
+				}
+			}
+			if(dead){
+				//Syn.w("Team is dead ! : "+deadTeam);
+				deadTeam = team;
+				break;
+			}
+		}
+		teamID--;
+		//Syn.w("deadTeam ("+teamID+") = "+deadTeam+"");
+		return deadTeam;
+	}
+
+
+
+	//private void incrementCursor() {
+	//	cursor++;
+	//	if(cursor == timeLine.size()){
+	//		cursor = 0;
+	//	}
+	//}
+
+	@Override @Deprecated
+	public void setServer(GServer s) { }
+
+	/**
+	 * La map originale du combat.
+	 */
+	public Map getMap() {
+		if(teams != null && teams.size() > 0 && teams.get(ATTACKER.get()).size() > 0){
+			return teams.get(ATTACKER.get()).get(0).getMap();
+		}
+		//return GlobalWorld.getMap(getWorld(), getFightMap().getID());
+		return null;
+	}
+	public void setState(byte state) {
+		this.state = state;
+	}
+	public byte getState() {
+		return state;
+	}
+	public ArrayList<CombativeCharacter> getTimeLine(){
+		return timeLine;
+	}
+	public ArrayList<GameObjects.Fights.FightTeam> getTeams(){
+		return teams;
+	}
+	/** Return la durée du combat en millisecondes jusqu'à maintenant. */
+	public long getDuration() {
+		if(startedFightCurrentMillis == 0){
+			return 0;
+		}
+		return System.currentTimeMillis()-startedFightCurrentMillis;
+	}
+	public byte getTeamType(int teamIndex){
+		if(this.teams.get(teamIndex) == null || this.teams.get(teamIndex).size() == 0){
+			return FightTeamType.NORMAL.get();
+		}
+		return FightTeamType.get(this.teams.get(teamIndex).get(0).getCharacterType());
+	}
+	public ObservableState getStateMachine(){
+		return inState;
+	}
+
+	/** @return le temps auquel le tour actuel doit finir (.endTurn()) */
+	public long getEndTurnTime(){
+		return endTurnCurrentNanos;
+	}
+	/** 
+	 * Set le getEndTurnTime à : System.nanoTime() + (delayMillis*1000L*1000L);  
+	 * @param delayMillis - Le temps avant le prochain .endTurn() en millisecondes.  Le delay quoi.  
+	 * 								Au début du combat c'est 45secondes et ensuite30secondes par tour.
+	 */
+	public void setDelay(long delayMillis){
+		this.endTurnCurrentNanos = System.nanoTime() + (delayMillis*1000L*1000L);
+	}
+	
+	/*pointcut great():
+		execution(* GFight.endTurn(..))
+	    //call(void FigureElement.setXY(int,int)) ||
+	    //call(void Point.setX(int))              ||
+	   // call(void Point.setY(int))              ||
+	    //call(void Line.setP1(Point))            ||
+	    //call(void Line.setP2(Point));
+		before(): great() {
+		    System.out.println("about to move");
+		}*/
+		
+		//pointcut greetings():
+		//	 execution(* HelloWorld.sayHello(..));
+			 
+		//	 after()returning: greetings(){
+		//		 System.out.println(" World !");
+		//	 }
+
+	/*
+	@After("execution (* " +
+			"GFight.startFight(..) ||  " +
+			"GFight.endFight(..) ||  " +
+			"GFight.startRound(..) ||  " +
+			"GFight.endRound(..) ||  " +
+			"GFight.startTurn(..) ||  " +
+			"GFight.endTurn(..) || " +
+			")")
+    public void listen(JoinPoint joinPoint) {
+		fireListeners();
+	}
+	*/
+	
+	
+	
+	/*public void fireListenersTyped(ActionListenerType alt){
+		for(IListener l : listeners){
+			if(l.getType() == alt){
+				l.fire();
+			}
+		}
+	}
+	public void fireListenersAll(){
+		for(IListener l : listeners){
+			l.fire();
+		}
+	}
+	*/
+
+	public abstract FightType getType();
+	public abstract boolean getShowCancelButtonOnJoin();
+	public abstract boolean getShowUIOnJoin();
+	public abstract byte getTeamAlignment(int teamIndex);
+
+	public byte getLayer() {
+		return teams.get(0).get(0).getLayer();
+	}
+	
+	
+	
+	
+}

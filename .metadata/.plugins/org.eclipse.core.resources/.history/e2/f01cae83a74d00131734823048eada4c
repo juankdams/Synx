@@ -1,0 +1,67 @@
+package parsers.wakfu;
+
+import java.io.File;
+
+import com.velocity.jwakfu.crypto.RSACertificateManager;
+import com.velocity.jwakfu.model.Player;
+import com.velocity.jwakfu.net.packets.out.Packet1024LoginResponse;
+import com.velocity.jwakfu.net.packets.out.Packet1032RSAKey;
+import com.velocity.jwakfu.net.packets.out.Packet1200ListWorlds;
+import com.velocity.jwakfu.net.packets.out.enums.LoginResponseCode;
+import com.velocity.jwakfu.util.DataUtils;
+
+import io.netty.buffer.ByteBuf;
+import Core.Syn;
+import Login.WakfuLoginClient;
+import LoginObjects.LAccount;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class LoginParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf> {
+
+	
+	@Override
+	public boolean parse(WakfuLoginClient c, ByteBuf buffer) {
+		byte[] b = new byte[buffer.readableBytes()];
+		buffer.readBytes(b);
+
+		byte[] decoded = RSACertificateManager.INSTANCE.decode(b);
+		ByteBuf decbuffer = DataUtils.bufferFromBytes(decoded);
+
+		long rsaVerification = decbuffer.readLong();
+		String username = DataUtils.readString(decbuffer);
+		String password = DataUtils.readString(decbuffer);
+
+		if (rsaVerification != Packet1032RSAKey.RSA_VERIFICATION_LONG) {
+			Syn.d("Error decoding RSA data: invalid verification long!");
+			return false;
+		}
+
+		Syn.d("Login packet: " + username + ", " + password);
+		
+		if (!userExists(username)) {
+			c.getChannel().write(new Packet1024LoginResponse(LoginResponseCode.INVALID_LOGIN));
+			//session.write(new Packet1024LoginResponse(LoginResponseCode.INVALID_LOGIN));
+		} else {
+			LAccount player = SQL.AccountsLAccount.load(username);
+			if (player.getPassword().equals(password)) {
+				c.getChannel().write(new Packet1024LoginResponse(player.getName(), 33965798L, 0L, false));
+				c.getChannel().write(new Packet1200ListWorlds());
+				//session.write(new Packet1024LoginResponse(player.getName(), 33965798L, 0L, false)).write(new Packet1200ListWorlds());
+				c.setAccount(account);
+				//c.setPlayer(player);
+			} else {
+				c.getChannel().write(new Packet1024LoginResponse(LoginResponseCode.INVALID_LOGIN));
+				//session.write(new Packet1024LoginResponse(LoginResponseCode.INVALID_LOGIN));
+			}
+			player.save();
+		}
+		return true;
+	}
+	
+
+	private boolean userExists(String user) {
+		return new File("data/chars/"+user+".xml").exists();
+	}
+	
+
+}

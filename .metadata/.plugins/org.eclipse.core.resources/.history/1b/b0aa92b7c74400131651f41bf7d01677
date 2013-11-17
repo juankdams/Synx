@@ -1,0 +1,1010 @@
+package GameObjects;
+
+import static Constants.CPerso.BOOLEANS_ISSIT;
+import static Constants.CPerso.BYTES_ALIGNMENT;
+import static Constants.CPerso.BYTES_CLASS;
+import static Constants.CPerso.BYTES_ISDEAD;
+import static Constants.CPerso.BYTES_ISINSELLINGMODE;
+import static Constants.CPerso.BYTES_NBRDEATHS;
+import static Constants.CPerso.BYTES_SEX;
+import static Constants.CPerso.LONGS_KAMAS;
+import static Constants.CPerso.LONGS_XP;
+import static Constants.CPerso.SHORTS_MAXLEVELREACHED;
+import static Constants.CPerso.STRINGS_CHANNELS;
+import static Constants.CPerso.STRINGS_NAME;
+import static Constants.Constants.prefixGM;
+
+import java.util.Map.Entry;
+import java.util.Stack;
+import java.util.regex.Pattern;
+
+import org.apache.mina.core.session.IoSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Abstractions.CombativeCharacter;
+import ConfigurationObjects.Classe;
+import Constants.CItems;
+import Constants.CWorld;
+import Constants.Constants;
+import Core.Syn;
+import Enums.ChannelEnum;
+import Enums.CharacterType;
+import Enums.CharacteristicType;
+import Enums.EmoteEnum;
+import Enums.ImPackets;
+import Enums.ImPackets.ImType;
+import Enums.ItemPosition;
+import Game.GClient;
+import Game.DofusGameServer;
+import GameObjects.GStatistiques.CharacteristicColumn;
+import GameObjects.Fights.GFight;
+import GlobalObjects.Map;
+import LoginObjects.LAccount;
+import Misc.Utils;
+import Plugins.Managers.PluginsManager;
+import Providers.GPersonnageProvider;
+
+public class GPersonnage extends CombativeCharacter{
+	public static Logger log = LoggerFactory.getLogger(GPersonnage.class);
+	
+
+	public static GPersonnageProvider provide(DofusGameServer s){
+		if(s == null){
+			return Syn.Services.defaultPluginsManager.getProviders().providePerso();
+		}
+		return s.getProviders().providePerso();
+	}
+	
+	
+	//                   0 = FALSE,,,,,   1 = TRUE
+	
+	/**
+	 * Classe, Sexe, isDead, NbrOfDeaths(heroic), isInSellingMode(marchand), Alignement
+	 */
+	private byte[] bytes = {1,0,0,0,0,0};
+	/**
+	 * isSit, 
+	 */
+	private boolean[] bools = {false};
+	/**
+	 * MaxLvlReached
+	 */
+	private short[] shorts = {1};
+	/* *
+	 * 
+	 */
+	//private int[] ints = {};
+	/**
+	 * XP, Kamas
+	 */
+	private long[] longs = {0,0};
+	/**
+	 * Name,  Channels
+	 */
+	private String[] strings = {"", ""};
+	/**
+	 * Toutes les ID d'emotes possédées par le joueur  (0 = debout. 1 = assit. etc)
+	 * <br>emotes = attitudes = sit,pipo,etc.  les autres (bonhommes), cest des smileys
+	 */
+	private byte[] emotes = {};
+	
+	private GClient client = null;
+	private LAccount account = null;
+	/**Contient la spécialisation, le nombre de quest d'alignement fait, l'ordre et si les ailes sont actives*/
+	private GAlignement alignement = null;
+	private Stack<GAction> actions = new Stack<GAction>();
+	private short title = 0;
+	//private PlayerState states[] = null;
+	//private HashMap<Integer, GSpell> spells = null;
+	//private ArrayList<GBuff> buffs = null;
+	
+	
+	
+	/**
+	 * Quand on se co à un GServer et load les persos, on les init ici. Ou quand on créé un perso.
+	 * Donc utile à lécran de sélection du personnage.
+	 */
+	public void initGPerso(String name, byte classe, byte sexe, int color1, int color2, int color3){
+		//Syn.d("initGPerso Name : "+name+" Color1 :"+color1+" Color2 :"+color2+" Color3 :"+color3);
+		this.setName(name);
+		this.setClasse(classe);
+		this.setSexe(sexe);
+		this.setGfxID(classe*10+sexe);
+		this.setColor1(color1);
+		this.setColor2(color2);
+		this.setColor3(color3);
+	}
+	//TODO: Peut-etre faire un autre constructeur pour la reconnexion en combat
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * OnJoinGame
+	 */
+	public void onSelected(GClient client){
+		setClient(client);
+		IoSession s = client.getSession();
+		
+		//Charge les dernieres données du personnage
+		//Y comprit les GStatistiques qui sont automatiquement ajoutées au GWorld du perso.
+		//Et la banque de ce monde pour ce compte (Si elle n'est pas déjà dans le world)
+		if(isLoaded() == false){ //getWorld().getPerso(getID()) == null){
+			SQL.Personnages.loadRest(this);
+			SQL.Banks.load(this, this.getServer());
+		}
+		//Ajoute le personnage dans la liste de perso connectés du GWorld
+		getWorld().addPerso(this);
+		//Packet d'information sur le joueur: Nom,lvl,race,items,skin,couleurs...
+		SM.Account.ASK(s, this);
+		
+		//Si le perso était auparavant déco en combat, il sera dans cette liste
+		//Donc en se reconnectant, on l'enleve.
+		if(getWorld().isInFightDecoPerso(this)){
+			getWorld().removeInFightDecoPerso(this);
+			//TODO: affichage de la fight. pour la reconnexion en combat
+		}
+		//Update tous les boosts des items sur les stats (charactéristiques) du personnage 
+		//   s'il n'était pas déjà dans le world (c'qui voudrait dire qu'il est en train de se reco en combat)
+		if(getWorld().getPerso(getID()) == null){
+			getStatistique().updateEquipmentStats(getInventory(), this);
+		}
+		SM.chat.cC_A(s, getChannels() + (getMap().isIncarnam()?ChannelEnum.INCARNAM.getValue():"") + (getAccount().getGM() > 0 ? ChannelEnum.ADMIN.getValue()+ChannelEnum.UNKNOWN1.getValue()+ChannelEnum.ADMIN_2.getValue() : ""));
+		SM.Specialization.ZS(s, this.getAlignementSpecialization());//Packet pour connaitre l'alignement du perso
+		SM.areas.al(s);//FIXME: Information sur les area/subarea 
+		SM.Mounts.Rx(s, this.getStatistique());//Montre l'xp donné à la dragodinde.
+		SM.Objects.Ow(s, this);//Montre le nombre de pods utilisés sur le nombre de pods max
+		SM.Account.AR(s, "6bk");//TODO Restrictions dans onSelected + packets ("AR" et "GM")
+		SM.Spells.SL(this);//SpellList
+		SM.emotes.eL(s, getEmotes(), null);//EmotesList
+		if(getInventory().getItemByPosition(ItemPosition.POS_arme.get()) != null
+				&& getInventory().getItemByPosition(ItemPosition.POS_arme.get()).isIncarnation(getServer().getEffectsManager())){
+			SM.Spells.SLo(this.getClient().getSession(), false);//SpellListOptions (Dont Show if incarnation!)
+		}else{
+			SM.Spells.SLo(getClient().getSession(), true);//SpellListOptions (Montre les options dans la spellList, d'habitude on l,envoie comme ça)
+		}
+		if(getStatistique().getPdv() < getStatistique().getPdvMax(this) && getFight() == null){
+			SM.Infos.ILS(this, "1000");//Start le timer de regen au besoin
+		}
+		
+		//TODO FAIRE LES LISTES DE SORTS DES JOUEURS (à la création, à la sélection, à la déconnexion...)
+		
+		//Messages de bienvenue.
+		SM.Infos.Im(this, ImType.ERROR, ImPackets.Welcome, "");   //SM.Infos.Im(this, Constants.Im_Welcome);
+		if(getAccount().getCurIP().equals("") == false){
+			if (!getAccount().getLastConnexion().equals("")){
+				//SM.Infos.Im(this, Constants.Im_WelcomeLastConnexionAndIP + getAccount().getLastConnexion() + "~"+ getAccount().getCurIP());
+				SM.Infos.Im(this, ImType.INFOS, ImPackets.WelcomeLastConnexionAndIP, ";"+getAccount().getLastConnexion() + "~"+ getAccount().getCurIP());
+			}
+			//SM.Infos.Im(this, Constants.Im_WelcomeLastConnexion + getAccount().getCurIP());
+			SM.Infos.Im(this, ImType.INFOS, ImPackets.WelcomeLastConnexion, ";"+getAccount().getCurIP());
+		}
+			//Update la date de derniere connexion du compte.
+		getAccount().setLastConnexion(Utils.getDateString());
+			//Update l'ip courrante sur le compte
+		getAccount().setCurIP(s.getRemoteAddress().toString().split(":")[0].replace("/", ""));
+			//Msg personnalisé de bienvenue.
+		SM.Sender.send(s, this.getServer().getConfig().getStartMessage());
+		//Fin messages de bienvenue
+
+
+		//Map [WorkInProgress]
+		//DD
+		//Guilde
+		//Jobs
+		//SpellList [FAIT]
+		//Envoie des bonus pano si besoin  [FAIT] :D     (dans l'updateEquipemntStats)
+		//Envoie bonus spéciaux de panos de classes [FAIT] :D x)   (dans l'updateEquipemntStats)
+		//Effets spéciaux comme bonbons, 
+					//personnages suiveurs (comme les bandits qu'on attrape contre des kamas: frakacia leukorynthe),  
+					//incarnations, 
+		
+	}
+	
+	/**
+	 * Pour savoir si on l'a déjà sélectionné une fois et déjà chargé dans la ram.
+	 * Donc si on a déjà fait SQL.Personnages.load(this); et chargé ses autres trucs (Banque, stats)
+	 * Ou si on a besoin de le charger.
+	 * @return - True si on a besoin de le loader, false s'il est déjà chargé dans la liste de persos du compte
+	 */
+	public boolean isLoaded(){
+		if(getWorld().getPerso(getID()) == null || 
+			(getWorld().getStatistisque(getID()) == null && this.getStatistique() == null)){
+			return false;
+		}
+		return true;
+	}
+	
+	//Vars
+	/*@Override
+	public void setID(int iD) {
+		this.ints[INTS_PERSOID] = iD;
+	}
+	@Override
+	public int getID() {
+		return this.ints[INTS_PERSOID];
+	}
+	*/
+
+	public void setAccount(LAccount a) {
+		this.account = a; 
+	}
+	public void setAccount(int iD) {
+		//this.ints[INTS_ACCOUNTID] = iD;
+		this.account = getServer().getLoginServer().world.getAccount(iD);
+	}
+
+	public int getAccountID() {
+		return account.getID();
+		//return this.ints[INTS_ACCOUNTID];
+	}
+	
+	public LAccount getAccount() {
+		return account;
+		//return LWorld.getAccount(this.ints[INTS_ACCOUNTID]);
+	}
+
+	public void setName(String name) {
+		this.strings[STRINGS_NAME] = name;
+	}
+	@Override
+	public String getName() {
+		return this.strings[STRINGS_NAME];
+	}
+
+	public void setClasse(byte classe) {
+		this.bytes[BYTES_CLASS] = classe;
+	}
+
+	public byte getClassID() {
+		return bytes[BYTES_CLASS];
+	}
+	public Classe getClasse() {
+		return this.getWorld().getClasse(bytes[BYTES_CLASS]);
+	}
+	
+	/*@Override
+	public GServer getServer(){
+		for(GServer g : Syn.gameServers){
+			if(g.getConfig().getWorldID() == bytes[BYTES_SERVERID]){
+				return g;
+			}
+		}
+		return null;
+	}*/
+	
+	/*@Override
+	public byte getServerID(){
+		return bytes[BYTES_SERVERID];
+	}
+	public void setServerID(byte worldID) {
+		this.bytes[BYTES_SERVERID] = worldID;
+	}
+	*/
+
+	public void setSexe(byte sexe) {
+		this.bytes[BYTES_SEX] = sexe;
+	}
+
+	public byte getSexe() {
+		return bytes[BYTES_SEX];
+	}
+	
+	public void setLevel(short lvl) {
+		this.getStatistique().putCharac(CharacteristicColumn.BASE, CharacteristicType.LEVEL, lvl);
+		//this.shorts[SHORTS_LEVEL] = lvl;
+	}
+
+	public short getLevel() {
+		return this.getStatistique().getValue(CharacteristicType.LEVEL.get(), CharacteristicColumn.BASE);
+		//return this.shorts[SHORTS_LEVEL];
+	}
+	
+	/*
+	@Override
+	public void setGfxID(int gfxID) {
+		this.ints[INTS_GFXID] = gfxID;
+	}
+	@Override
+	public int getGfxID() {
+		return this.ints[INTS_GFXID];
+	}
+	@Override
+	public int getColor1(){
+		return this.ints[INTS_COLOR1];
+	}
+	@Override
+	public int getColor2(){
+		return this.ints[INTS_COLOR2];
+	}
+	@Override
+	public int getColor3(){
+		return this.ints[INTS_COLOR3];
+	}
+	public void setColor1(int color1){
+		 this.ints[INTS_COLOR1] = color1;
+	}
+	public void setColor2(int color2){
+		 this.ints[INTS_COLOR2] = color2;
+	}
+	public void setColor3(int color3){
+		 this.ints[INTS_COLOR3] = color3;
+	}
+	*/
+	public void setXP(long xp){
+		 this.longs[LONGS_XP] = xp;
+	}
+	public void setKamas(long kamas){
+		 this.longs[LONGS_KAMAS] = kamas;
+	}
+	public long getXP(){
+		return this.longs[LONGS_XP];
+	}
+	public long getKamas(){
+		return this.longs[LONGS_KAMAS];
+	}
+	
+	public void setIsDead(byte isdead){
+		 this.bytes[BYTES_ISDEAD] = isdead;
+	}
+	/** 1=true, 0=false*/
+	public byte isDead(){
+		return this.bytes[BYTES_ISDEAD];
+	}
+	
+	public void setNbrDeaths(byte nbr){
+		 this.bytes[BYTES_NBRDEATHS] = nbr;
+	}
+	public byte getNbrDeaths(){
+		return this.bytes[BYTES_NBRDEATHS];
+	}
+	
+	public void setMaxLvlReached(short lvl) {
+		this.shorts[SHORTS_MAXLEVELREACHED] = lvl;
+	}
+
+	public int getMaxLvlReached() {
+		return this.shorts[SHORTS_MAXLEVELREACHED];
+	}
+	
+	public boolean isInSellingMode() {
+		return this.bytes[BYTES_ISINSELLINGMODE] == 1;
+	}
+	public void setInSellingMode(byte boolea) {
+		this.bytes[BYTES_ISINSELLINGMODE] = boolea;
+	}
+	
+	
+	public StringBuilder getALKPacket(){
+		StringBuilder str = new StringBuilder()
+		.append('|')
+		.append(getID()).append(';')//ID
+		.append(strings[STRINGS_NAME]).append(';')//name
+		.append(getLevel()).append(';')//lvl
+		.append(getGfxID()).append(';')//skin
+		.append(Integer.toHexString(getColor1())).append(';')//color1
+        .append(Integer.toHexString(getColor2())).append(';')//color2
+        .append(Integer.toHexString(getColor3())).append(';')//color3
+		.append(getAccessoriesPacket()).append(';')//accessoires apparents : coiffe, cape, obvi, fami
+        .append(bytes[BYTES_ISINSELLINGMODE]).append(';')//mode marchand actif?
+        .append(getServerID()).append(';');//serverID
+		if(this.getServer() == null){
+			log.error("perso.parseALK  gServer null");
+		}
+		if(this.getServer().getcWorld() == null){
+			log.error("perso.parseALK  getcWorld null");
+		}
+		if(this.getServer().getcWorld().type == CWorld.WORLD_TYPE_HEROIC){
+			 str.append(bytes[BYTES_ISDEAD]).append(';') // is dead  (heroic)
+		        .append(bytes[BYTES_NBRDEATHS]).append(';') // nb deaths (heroic)
+		        .append(shorts[SHORTS_MAXLEVELREACHED]); // level max (heroic)
+		}else{
+			str.append(";;");
+		}
+       return str;
+	}
+	
+	
+	/**
+	 * Met les HEX_ID  des template des items accessoires
+	 * du personnage pour les afficher à la liste des perso ou IG sur la map
+	 */
+	@Override
+	public String getAccessoriesPacket(){
+		if(getWorld().getInventory(getID()) == null){
+			//GInventory gi = new GInventory();
+			//log.warn("Dans parseAccessories, l'inventaire du perso est null. Pas supposé.");
+			return ",,,,";
+		}
+		String str = "ar,co,ca,fa,bo";
+		for(GItem i : getInventory().getItems()){
+			if(i == null){
+				continue;
+			}
+			switch(i.getPosition()){
+				case CItems.POS_ARME:
+					str = str.replace("ar", i.getHexTemplateID());
+					break;
+				case CItems.POS_COIFFE:
+					str = str.replace("co", i.getHexTemplateID());
+					break;
+				case CItems.POS_CAPE:
+					str = str.replace("ca", i.getHexTemplateID());
+					break;
+				case CItems.POS_FAMILIER:
+					str = str.replace("fa", i.getHexTemplateID());
+					break;
+				case CItems.POS_BOUCLIER:
+					str = str.replace("bo", i.getHexTemplateID());
+					break;
+			}
+		}
+		return str.replace("ar", "").replace("co", "").replace("ca", "").replace("fa", "").replace("bo", "");
+	}
+	
+	/**
+	 * Prépare un packet contenant des infos sur tous les items de l'inventaire du perso.
+	 * <p>- À envoyer quand le personnage rejoind le jeu (onSelected)
+	 * @return
+	 */
+	public StringBuilder getASKItemsPacket(){
+		StringBuilder str = new StringBuilder("");
+		if(this.getWorld().getInventory(getID()) != null){
+			if(this.getWorld().getInventory(getID()).getItems() == null){
+				return str;
+			}else if(getWorld().getInventory(getID()).getItems().size() == 0){
+				return str;
+			}
+		}else{
+			return str;
+		}
+		for(GItem item : this.getWorld().getInventory(getID()).getItems()){
+			if(item == null){
+				continue;
+			}
+			if(str.length() != 0){
+				str.append(';');
+			}
+			str.append(item.getHexID()).append('~')
+			.append(item.getHexTemplateID()).append('~')
+			.append(item.getHexQuantity()).append('~')
+			.append(item.getHexPosition()).append('~')
+			.append(item.getEffectsPacket(getServer().getEffectsManager()));
+			
+		}
+		return str;
+	}
+
+	public void setClient(GClient client) {
+		this.client = client;
+	}
+
+	public GClient getClient() {
+		return client;
+	}
+	
+	/*
+	@Override
+	public void setMap(Map m) {
+		this.ints[INTS_MAPID] = m.getID();
+	}
+	public void setMapID(int iD) {
+		this.ints[INTS_MAPID] = iD;
+	}
+	@Override
+	public int getMapID() {
+		return this.ints[INTS_MAPID];
+	}
+	public GlobalObjects.Map getMap() {
+		//Syn.d("mapID = "+this.ints[INTS_MAPID]);
+		return GlobalWorld.getMap(getWorld(), this.ints[INTS_MAPID]);
+	}
+	
+	public void setCellID(short iD) {
+		this.shorts[SHORTS_CELLID] = iD;
+	}
+	@Override
+	public short getCellID() {
+		return this.shorts[SHORTS_CELLID];
+	}
+	*/
+	
+	public void setChannels(String channels) {
+		this.strings[STRINGS_CHANNELS] = channels;
+	}
+	public String getChannels(){
+		return this.strings[STRINGS_CHANNELS];
+	}
+	
+	public void addChanel(String chan) {
+		if (this.strings[STRINGS_CHANNELS].indexOf(chan) == -1){
+			this.strings[STRINGS_CHANNELS] += chan;
+			SM.chat.cC_A(this.getClient().getSession(), chan);
+		}
+	}
+
+	public void removeChanel(String chan) {
+		this.strings[STRINGS_CHANNELS] = this.strings[STRINGS_CHANNELS].replace(chan, "");
+		SM.chat.cC_R(this.getClient().getSession(), chan);
+	}
+	
+	public void setAlignement(byte align) {
+		this.bytes[BYTES_ALIGNMENT] = align;
+	}
+	@Override
+	public byte getAlignementSpecialization() {
+		if(alignement == null){
+			return 0;
+		}
+		return alignement.getSpecialization();
+		//return bytes[BYTES_ALIGNMENT];
+	}
+
+	public boolean isSit(){
+		return bools[BOOLEANS_ISSIT];
+	}
+
+	public void sit() {
+		//TODO
+		//de base: boolean isSit = false;
+		//this.isSit = b;
+		if(isSit()){
+			//Le lifeRegen.remove() = le nombre de points de vie rendus au total
+			int pdv = getServer().lifeRegen.removePerso(this);
+			short curpdv = this.getStatistique().getPdv();
+			int pdvmax = this.getStatistique().getPdvMax(this);
+			if(pdvmax-curpdv < pdv){
+				pdv = pdvmax-curpdv;
+			}
+			SM.Infos.ILF(getClient(), pdv, false);//Finish regen
+			getStatistique().incrementPdv(pdv, this);
+			if(this.getFight() == null && this.getStatistique().getPdv() < getStatistique().getPdvMax(this)){
+				SM.Infos.ILS(this, "1000");//Restart le timer de regen en mode "debout" si possible/besoin
+			}
+		}else{
+			SM.Infos.ILS(this, "500");//Start
+			getServer().lifeRegen.addPerso(this);//Start regen
+		}
+		bools[BOOLEANS_ISSIT] = !bools[BOOLEANS_ISSIT];
+	}
+
+	@Override
+	public String getSpritePacket(PluginsManager pm, String prefix) {
+		return getSpritePacket(prefix);
+	}
+	@Override
+	public String getSpritePacket(String prefix){
+		if(prefix.indexOf(prefixGM) == -1){
+			return "";
+		}
+		GFight f = this.getFight();
+		if(f == null){//hors-combat
+			StringBuilder str = new StringBuilder(prefix)
+			.append(getCellID()).append(';')
+			.append(getOrientation()).append(';')
+			.append('0').append(';')// _loc34.bonusValue=_loc13; c'est pour les étoiles des monsterGroups
+			.append(getID()).append(';')
+			.append(getName()).append(';')
+			.append(getClassID())//CharacterType = la ClassID pour les Personnages. Voir l'enum pour les autres types
+			.append((title > 0 ? ("," + title + ';') : (';')))
+			.append(getGfxID()).append('^').append(getSize()).append(';')// gfxID^size
+
+			
+			.append(getSexe()).append(';')
+			.append(getAlignementSpecialization()).append(",")// 1,0,0,4055064
+			.append("0,")// FIXME personnage.GMPacket : 0?
+			//FIXME personnage.GMPacket : showWings/Alignement.
+			.append("0,")//.append((_showWings ? getPvpGrade() : "0")).append(",")
+			.append(getLevel()).append(';') // _loc33.powerLevel = _loc10[7];
+			.append((getColor1() == -1 ? "-1" : Integer.toHexString(getColor1()))).append(';')
+			.append((getColor2() == -1 ? "-1" : Integer.toHexString(getColor2()))).append(';')
+			.append((getColor3() == -1 ? "-1" : Integer.toHexString(getColor3()))).append(';')
+			.append(getAccessoriesPacket()).append(';') // _loc33.accessories = _loc10[11];
+			.append((getLevel() > getServer().getConfig().getAura100lvl() ? (getLevel() > getServer().getConfig().getAura200lvl() ? '2' : '1') : '0')).append(';')
+			
+			.append(';')// Emote
+			.append(';')// Emote timer
+			/*
+		FIXME : personnage.GMPacket: parametres de restrictions, de guilde et de dragodinde.
+			
+			if (this._guildMember != null&& this._guildMember.getGuild().getMembers().size() >= Zen.MEMBRE_MINI_GUILDE_VALIDE) {
+				str.append(this._guildMember.getGuild().get_name()).append(';').append(this._guildMember.getGuild().get_emblem()).append(';');
+			} else{
+				str.append(";;");
+			}
+			str.append(Long.toString(get_GMrestrictions(), 36)).append(';');// Restrictions
+			
+			 
+			if(hasMount()){
+				if(getMount().getCapabilities().isCameleon()){
+					str.append(getMount().getID()).append(',')
+					.append((getMount().getColor1() == -1 ? "-1" : Integer.toHexString(getMount().getColor1()))).append(';')
+					.append((getMount().getColor2() == -1 ? "-1" : Integer.toHexString(getMount().getColor2()))).append(';')
+					.append((getMount().getColor3() == -1 ? "-1" : Integer.toHexString(getMount().getColor3()))).append(';');
+				}else{
+					str.append(getMount().getID());
+				}
+			}
+			
+			str.append(';');
+			*/
+			.append(";;0;;");
+			return str.toString();
+		}else{
+			StringBuilder str = new StringBuilder(prefix)
+			.append(getCellID()).append(';')
+			.append(getOrientation()).append(';')
+			.append('0').append(';')// _loc34.bonusValue=_loc13; c'est pour les étoiles des monsterGroups
+			.append(getID()).append(';')
+			.append(getName()).append(';')
+			.append(getClassID())//CharacterType = la ClassID pour les Personnages. Voir l'enum pour les autres types
+			.append((title > 0 ? ("," + title + ';') : (';')))
+			.append(getGfxID()).append('^').append(getSize()).append(';')// gfxID^size
+			
+			
+			.append(getSexe()).append(';')
+			.append(getLevel()).append(';')
+			.append(getAlignementSpecialization()).append(",")// 1,0,0,4055064
+			.append("0,")// FIXME personnage.GMPacket : 0?
+			//FIXME personnage.GMPacket : showWings/Alignement.
+			.append("0,")//.append((_showWings ? getPvpGrade() : "0")).append(",")
+			.append(getLevel()).append(';')
+			.append((getColor1() == -1 ? "-1" : Integer.toHexString(getColor1()))).append(';')
+			.append((getColor2() == -1 ? "-1" : Integer.toHexString(getColor2()))).append(';')
+			.append((getColor3() == -1 ? "-1" : Integer.toHexString(getColor3()))).append(';')
+			.append(getAccessoriesPacket()).append(';')
+			.append(getStatistique().getPdv()).append(';')
+			.append(getStatistique().getPA(getClasse())).append(';')
+			.append(getStatistique().getPM(getClasse())).append(';')
+			.append(getStatistique().getValue(CharacteristicType.RESIST_NEUTRE_PERCENT.get(), CharacteristicColumn.TOTAL)).append(';')
+			.append(getStatistique().getValue(CharacteristicType.RESIST_TERRE_PERCENT.get(), CharacteristicColumn.TOTAL)).append(';')
+			.append(getStatistique().getValue(CharacteristicType.RESIST_FEU_PERCENT.get(), CharacteristicColumn.TOTAL)).append(';')
+			.append(getStatistique().getValue(CharacteristicType.RESIST_EAU_PERCENT.get(), CharacteristicColumn.TOTAL)).append(';')
+			.append(getStatistique().getValue(CharacteristicType.RESIST_AIR_PERCENT.get(), CharacteristicColumn.TOTAL)).append(';')
+			.append(getStatistique().getValue(CharacteristicType.ESQUIVE_PA.get(), CharacteristicColumn.TOTAL)).append(';')
+			.append(getStatistique().getValue(CharacteristicType.ESQUIVE_PM.get(), CharacteristicColumn.TOTAL)).append(';')
+			
+			.append(f.getCharacterTeamID(this)).append(';');
+			/* TODO
+			if(hasMount()){
+				if(getMount().getCapabilities().isCameleon()){
+					str.append(getMount().getID()).append(',')
+					.append((getMount().getColor1() == -1 ? "-1" : Integer.toHexString(getMount().getColor1()))).append(';')
+					.append((getMount().getColor2() == -1 ? "-1" : Integer.toHexString(getMount().getColor2()))).append(';')
+					.append((getMount().getColor3() == -1 ? "-1" : Integer.toHexString(getMount().getColor3()))).append(';');
+				}else{
+					str.append(getMount().getID());
+				}
+				
+			}
+			*/
+			
+			return str.toString();
+		}
+		
+	}
+	
+	/*
+	@Override
+	public byte getOrientation() {
+		return bytes[BYTES_ORIENTATION];
+	}
+
+	public void setOrientation(byte orientation){
+		bytes[BYTES_ORIENTATION] = orientation;
+	}
+
+	@Override
+	public void setOrientation(Orientation o) {
+		bytes[BYTES_ORIENTATION] = o.getValue();
+	}
+	
+	@Override
+	public short getSize() {
+		return shorts[SHORTS_SIZE];
+	}
+	@Override
+	public void setSize(short size){
+		shorts[SHORTS_SIZE] = size;
+	}
+	*/
+	
+	
+	@Override
+	public CharacterType getCharacterType() {
+		return CharacterType.PLAYER;//getClasse();
+	}
+	
+	
+	/**
+	 * TODO : GPerso.terminate(): Save et ensuite Terminatoriser toutes les variables du perso 
+	 */
+	@Override
+	public void terminate() throws NullPointerException, Throwable{
+		if(isSit()){
+			sit();//Dé-assis s'il était assit.
+		}
+		GWorld w = getWorld();
+		Syn.d("Terminating GPerso "+getName());
+
+		//S'occupe du personnage lui même
+		if(w.getPerso(getID()) != null){
+			SQL.Personnages.save(this, this.getServer());
+		}
+		//S'occupe de l'inventaire et des items du perso.
+		GInventory i = w.getInventory(getID());
+		if(i != null){
+			SQL.Items.saveStorageComplete(w.getInventory(getID()), this.getServer());
+			i.terminate(); 		
+			w.removeInventory(getID());
+		}
+		//Soccupe des statistiques du perso
+		GStatistiques s = w.getStatistisque(getID());
+		if(s != null){
+			SQL.Personnages.saveStatistiques(this, this.getServer());
+			s.terminate();		
+			w.removeStatistiques(getID());
+		}
+		//Soccupe de la banque du compte de ce monde-ci
+		GBank b = w.getBank(getAccountID());
+		if(b != null){
+			SQL.Banks.save(w.getBank(getAccountID()), getAccountID(), getServer());
+			b.terminate();  	
+			w.removeBank(getAccountID());
+		}
+		
+		//TODO : perso.terminate (tous les w.removeItems, removeMount, etc)
+		//w.setMount(mountID, null);
+		//w.removeMount(mountID);
+		//w.
+		//if(getMap.getPersos.lenght == 0){
+		//   w.removeMap(mapID);  //->Ou dans les maps du login
+		//}
+		//
+		
+		//Enleve le perso du world + finalize
+		w.removePerso(this);
+		this.finalize();
+	}
+
+	/**
+	 * Va chercher les statistiques du joueur dans le GWorld
+	 * <p> Va les chercher dans la bdd si elles étaient pas dans le GWorld 
+	 * <p> Ban le compte si elles sont toujours pas trouvées
+	 * @return
+	 */
+	public GStatistiques getStatistique() {
+		if(getWorld().getStatistisque(getID()) == null){
+			SQL.Personnages.loadStatistiquesBase(this);
+			if(getWorld().getStatistisque(getID()) == null){
+				Syn.d("set banned because gstats null");
+				this.getAccount().setBanned(true, true);
+				this.client.kick();
+			}
+		}
+		return getWorld().getStatistisque(getID());
+	}
+
+	public GInventory getInventory() {
+		return getWorld().getInventory(getID());
+	}
+
+	/**
+	 * Vérifie que le personnage a bien l'emote demandée
+	 * @param EE - L'Emote demandée.
+	 * @return - True s'il l'a ET qu'elle n'est pas nulle. False s'il l'a pas OU qu'elle est nulle.
+	 */
+	public boolean hasEmote(EmoteEnum EE) {
+		if(EE == null){
+			return false;
+		}
+		for(byte b : emotes){
+			if(b == EE.getValue()){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Set l'array d'id d'emotes apprises par le personnage (au chargement du perso, avec le sql.perso.load)
+	 * @param strEmotes
+	 */
+	public void setEmotes(String[] strEmotes) {
+		byte index = 0;
+		emotes = new byte[strEmotes.length];
+		for(String s : strEmotes){
+			if(Pattern.matches(Constants.isNumberPattern, s)){
+				emotes[index] = Byte.parseByte(s);
+				index++;
+			}
+		}
+	}
+
+	/**
+	 * Set l'array d'id d'emotes apprises par le personnage (à la création du perso, avec le getClass.getStartEmotes)
+	 */
+	public byte[] setEmotes(byte[] emotess) {
+		this.emotes = emotess;
+		return emotes;
+	}
+	
+	public byte[] getEmotes() {
+		return emotes;
+	}
+
+	/**
+	 * Pour sauvegarder les emotes du perso dans la bdd
+	 * @return
+	 */
+	public String getEmotesString() {
+		String e = "";
+		if(emotes != null && emotes.length > 0){
+			for(byte b : emotes){
+				if(e.length() > 0){
+					e += ",";
+				}
+				e += (""+b);
+			}
+		}
+		return e;
+	}
+	
+	/**
+	 * Ajoute l'emote à la liste d'emote apprise par le personnage et envoie le packet associé à cet apprentissage. (Si elle y était)
+	 * @param EE - L'Emote qu'on veut ajouter. Return true si elle est nulle.
+	 * @return - True si l'emote était déjà dedans et qu'on fait rien. False si elle n'y était pas et qu'on l'ajoute.
+	 */
+	public boolean addEmote(EmoteEnum EE){
+		if(EE == null || hasEmote(EE)){
+			return true;
+		}
+		emotes = Utils.addByteToArray(emotes, EE.getValue());
+		SM.emotes.eA(getClient().getSession(), EE.getValue(), true);
+		return false;
+	}
+	/**
+	 * Enleve l'emote de la liste d'emote apprise par le personnage et envoie le packet associé à cet oubli. (Si elle y était)
+	 * @param EE - L'Emote qu'on veut enlever. Return false si elle est nulle.
+	 * @return - True si l'emote était dedans et qu'on l'enleve. False si elle n'y était pas.
+	 */
+	public boolean removeEmote(EmoteEnum EE){
+		if(EE != null && hasEmote(EE)){
+			emotes = Utils.removeByteFromArray(emotes, EE.getValue());
+			SM.emotes.eR(getClient().getSession(), EE.getValue(), true);
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void onAddedToMap(Map m) {
+		SM.Game.GM_ADD(this, m);
+		SM.Game.showAllSprites(this, m);
+	}
+
+	@Override
+	public void onRemovedFromMap(Map m) {
+		SM.Game.GM_REMOVE(m, this);
+	}
+
+	
+	public GAlignement getAlignement() {
+		return alignement;
+	}
+	public void setAlignement(GAlignement alignement) {
+		this.alignement = alignement;
+	}
+
+
+	//public GAction getAction(int actionIndex){
+	//	return actions[actionIndex];
+	//}
+	//public void setActions(GAction[] action) {
+	//	this.actions = action;
+	//}
+	public Stack<GAction> getActions() {
+		return actions;
+	}
+	public Stack<GAction> addAction(GAction a){
+		actions.push(a);
+		return actions;
+	}
+	public GAction getAction(int actionid){
+		for(GAction a : actions){
+			if(a.getID() == actionid){
+				return a;
+			}
+		}
+		return null;
+	}
+
+	public void setTitle(short title) {
+		this.title = title;
+	}
+
+	public short getTitle() {
+		return title;
+	}
+
+	/**
+	 * Ajoute de l'XP au personnage <br>
+	 * + monte son niveau si nécéssaire  <br>
+	 * + update les nouvelles stats  <br>
+	 * + met la vie au maximum <br>
+	 * + envoie aussi tous les packets de level/sorts/stats
+	 */
+	public void addXP(long xp) {
+		this.setXP(getXP() + xp);
+		
+		short level = getLevel();
+		short newLevel = level;
+		long minXp = getWorld().persoXPLevels[level];
+		while(this.getXP() >= minXp){
+			newLevel++;
+			minXp = getWorld().persoXPLevels[level];
+		}
+		
+		if(newLevel == level){
+			return;
+		}
+
+		for(short i = level; i <= newLevel; i++){
+			GSpell s = getClasse().getSpellLearningAtLevel(i);
+			if(s != null){
+				setSpellByID(s, s.getID());//Apprend les sorts.
+			}
+		}
+		
+		for(Entry<CharacteristicType, Double> entry : getClasse().gainedStatsPerLevel.entrySet()){
+			getStatistique().decrementValue(entry.getKey(), (short) (level*entry.getValue()), CharacteristicColumn.BASE);
+			getStatistique().incrementValue(entry.getKey(), (short) (newLevel*entry.getValue()), CharacteristicColumn.BASE);
+		}
+		setLevel(newLevel);
+		getStatistique().setPdv(getStatistique().getPdvMax(this), this);
+		SM.Account.As(getClient().getSession(), this);
+		SM.Account.AN(getClient().getSession(), newLevel);
+		SM.Spells.SL(this);//update les spell gagnés
+		//TODO quand on level up : update guilde, groupe, mariage, amis ?
+	}
+	
+	/*
+	 public void levelUp(short newLevel){
+		short level = getLevel();
+		for(short i = level; i <= newLevel; i++){
+			GSpell s = getClasse().getSpellLearningAtLevel(i);
+			if(s != null){
+				setSpellByID(s, s.getID());//Apprend les sorts.
+			}
+		}
+		
+		for(Entry<CharacteristicType, Double> entry : getClasse().gainedStatsPerLevel.entrySet()){
+			getStatistique().decrementValue(entry.getKey(), (short) (level*entry.getValue()), CharacteristicColumn.BASE);
+			getStatistique().incrementValue(entry.getKey(), (short) (newLevel*entry.getValue()), CharacteristicColumn.BASE);
+		}
+		setLevel(newLevel);
+		getStatistique().setPdv(getStatistique().getPdvMax(this), this);
+		SM.Account.As(getClient().getSession(), this);
+		SM.Account.AN(getClient().getSession(), newLevel);
+		SM.Spells.SL(this);//update les spell gagnés
+		//TODO quand on level up : update guilde, groupe, mariage, amis ?
+	}
+	 */
+	
+	public GMount getMount(){
+		GItem mount = getInventory().getItemByPosition(ItemPosition.POS_mount.get());
+		if(mount != null){
+			for(GEffect e : mount.getEffects()){
+				if(getServer().getEffectsManager().isMountSheetEffect(e)){//effet de monture qui donne son ID ... xd
+					return getWorld().getMount(e.getJet().getValue());
+				}
+			}
+		}
+		return null;
+	}
+
+}

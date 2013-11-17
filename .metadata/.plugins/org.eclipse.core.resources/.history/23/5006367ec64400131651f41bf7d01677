@@ -1,0 +1,16 @@
+package Game;
+
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Login.LServer;
+
+public class WakfuGameServer extends GameServer {
+
+	
+	public WakfuGameServer(LServer s, GConfig config, CWorld cworld) {
+		super(s, config, cworld);
+	}
+
+
+
+}

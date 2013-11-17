@@ -1,0 +1,582 @@
+package SQL;
+
+import static Constants.CItems.PARAM_ID;
+import static Constants.CItems.PARAM_LEVEL;
+import static Constants.CItems.PARAM_PODS;
+import static Constants.CItems.PARAM_TYPE;
+import static Constants.Constants.ONE_SHORT;
+import static SQL.SqlServiceMySql.closePreparedStatement;
+import static SQL.SqlServiceMySql.closeResultSet;
+import static SQL.SqlServiceMySql.log;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+
+import Abstractions.AbstractSqlService;
+import Abstractions.AbstractWorld;
+import Core.Syn;
+import Game.GameServer;
+import GameObjects.GInventory;
+import GameObjects.GItem;
+import GameObjects.GPersonnage;
+import GameObjects.GWorld;
+import GlobalObjects.ItemSet;
+import GlobalObjects.ItemTemplates.ItemTemplateFactory;
+import Interfaces.IItemTemplate;
+import Interfaces.IItemTemplate.ItemTemplateType;
+import Interfaces.IStorage;
+
+public class Items {
+	private static final String insertItem = "INSERT INTO items ( `ID` , `templateID` , `quantity` , `position` , `effects`) VALUES (?,?,?,?,?)";
+	private static final String deleteItem = "DELETE FROM items WHERE `ID` = ?";
+	private static final String saveItem = "UPDATE `items` SET `quantity`= ?, `position`= ?, `effects`= ? WHERE `ID` = ?;";
+	
+	private static final String insertItemTemplate = "INSERT INTO item_templates ( `ID` , `ItemTemplateType`, `type`, `level`, `pods`, `itemSet`, `conditions`, `effects`, `PA`, `tauxCC`, `tauxEC`, `bonusCC`, `poMin`, `poMax`, `needsTwoHands`, `price`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private static final String updateItemTemplateName = "UPDATE `item_templates` SET `name`= ?  WHERE `ID` = ?;";
+	
+	/*
+	public static GInventory loadInventoryAccessories(GPersonnage p, String IDs, GServer gs){
+		GInventory gi = new GInventory();
+		
+		ResultSet RS = null;
+		try {
+			RS = SQL.executeQuery("SELECT * from items WHERE `ID` IN ("+IDs+") AND `position` IN ("+CItems.POS_ARME+","+CItems.POS_COIFFE+","+CItems.POS_CAPE+","+CItems.POS_FAMILIER+","+CItems.POS_BOUCLIER+");", p.getServer().getConfig().getDBName());
+			if(RS != null){
+				RS.last();
+				while(RS.previous()){
+					GItem item = new GItem(
+							RS.getInt("ID"), 
+							RS.getInt("templateID"), 
+							RS.getString("effects"), 
+							RS.getShort("quantity"),
+							RS.getByte("position")
+						);
+					gs.getWorld().addItem(item);
+					gi.addItem(RS.getInt("ID"), gs.getWorld());
+				}
+				gs.getWorld().addInventory(p.getID(), gi);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		return gi;
+	}
+	*/
+	
+	
+	/**
+	 * <p>Charge les items du personnage, 
+	 * <p>Créé l'inventaire du personnage à partir de ceux-ci
+	 * <p>Ajoute les items et le GInventory au GWorld
+	 */
+	public static GInventory loadInventoryComplete(GPersonnage p, String IDs, GameServer gs){
+		GInventory gi = gs.getWorld().getInventory(p.getID());
+		if(gi == null){
+			//Syn.d("loadInventoryComplete gi == null.  donc gi = new GInventory");
+			gi = new GInventory();
+		}
+		//Syn.d("loadInventoryComplete ajoute l'inventory au monde.   String IDs:"+IDs);
+		//Dérange pas ici si y'avait déjà un inventaire d'initialisé
+		//   dans le world, ca va l'overwrite. (C.f. doc. method put())
+		gs.getWorld().addInventory(p.getID(), gi);
+		if(IDs.length() == 0){
+			return gi;
+		}
+		ResultSet RS = null;
+		try {
+			RS = gs.getSqlService().executeQuery("SELECT * from items WHERE `ID` IN ("+IDs+");");
+			if(RS != null){
+				if(RS.last() == false){
+					return gi;
+				}
+				while(!RS.isBeforeFirst()){
+					GItem item = GItem.provide(gs.getWorld()).reloadInstance(
+							RS.getInt("ID"), 
+							p.getWorld().getItemTemplate(RS.getInt("templateID")),
+							RS.getString("effects"), 
+							RS.getShort("quantity"),
+							RS.getByte("position"),
+							gs.getWorld()
+						);
+					/*GItem item = new GItem(
+							RS.getInt("ID"), 
+							GlobalWorld.getItemTemplate(gs.getWorld(), RS.getInt("templateID")),
+							RS.getString("effects"), 
+							RS.getShort("quantity"),
+							RS.getByte("position"),
+							gs.getEffectsManager()
+						);*/
+					if(item.getTemplate() != null){
+						//				gs.getWorld().addItem(item);
+						//Syn.d("En train d'ajouter des items à un inventaire pname:"+p.getName()+" ItemID = "+item.getID());
+						gi.addItem(item);//.addItem(RS.getInt("ID"), gs.getWorld());
+					}else{
+						Items.delete(item, gs);
+					}
+					RS.previous();
+				}
+			}
+			closeResultSet(RS);
+		} catch (SQLException e) {e.printStackTrace();}
+		//gs.getWorld().addInventory(p.getID(), gi);
+		return gi;
+	}
+	
+
+
+	
+	/**TODO*/
+	public static void reLoadAllItemTemplates(AbstractWorld w, boolean onlyReload){
+		AbstractSqlService sqlService = (w.getServer() != null ? w.getServer().getSqlService() : w.getStrategy().sqlGlobalService);
+		ResultSet RS = null;
+		
+		String query = "SELECT * from item_templates;";
+		if(onlyReload){
+			StringBuilder IDs = new StringBuilder();
+			HashMap<Short, IItemTemplate> ks = w.getItemTemplates();
+			//if(gs != null){
+			//	ks = new HashMap<Short, IItemTemplate>(gs.getWorld().getItemTemplates());
+			//}else{
+			//	ks = GlobalWorld.itemTemplates;
+			//}
+			for(IItemTemplate k : ks.values()){
+				if(k == null){
+					continue;
+				}
+				if(IDs.length() > 0){
+					IDs.append(',');
+				}
+				IDs.append(k.getID());
+			}
+			query = "SELECT * from item_templates WHERE `ID` IN ("+IDs+");";
+		}
+		try {
+			RS = sqlService.executeQuery(query);
+			if(RS != null){
+				//if(gs != null){
+					//gs.getWorld().getItemTemplates().clear();
+				//}else{
+					//LWorld.itemTemplates.clear();
+					//LWorld.itemTemplates.ensureCapacity(CServers.minimumIDinWorldItemTemplateTable);
+					//while(LWorld.itemTemplates.size() <= CServers.minimumIDinWorldItemTemplateTable){
+					//	LWorld.itemTemplates.add(null);
+					//}
+				//}
+				while(RS.next()){
+					IItemTemplate it = createIItemTemplateFromResultSet(RS);
+					if(w.getItemTemplates().get(it.getID()) != null){
+						//S'il était déjà chargé, modifie l'ancien pour être comme le nouveau.
+						w.getItemTemplates().get(it.getID()).setLike(it);
+					}else{
+						w.addItemTemplate(it);
+					}/*
+					if(gs != null){
+						if(gw.getItemTemplate(w, it.getID()) != null){
+							//S'il était déjà chargé, modifie l'ancien pour être comme le nouveau.
+							GlobalWorld.getItemTemplate(w, it.getID()).setLike(it);
+						}else{
+							gs.getWorld().addItemTemplate(it);
+						}
+					}else{
+						if(GlobalWorld.getItemTemplate(null, it.getID()) != null){
+							//S'il était déjà chargé, modifie l'ancien pour être comme le nouveau.
+							GlobalWorld.getItemTemplate(null, it.getID()).setLike(it);
+						}else{
+							GlobalWorld.addItemTemplate(it);
+						}
+					}*/
+				}
+				closeResultSet(RS);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+	
+	
+	
+	
+	
+	/**
+	 * 
+	 * TODO
+	 * 
+	 */
+	public static IItemTemplate loadTemplate(int templateID, AbstractWorld abstractWorld){
+		//LWorld.addItemTemplate(null);
+		IItemTemplate it = null;
+		ResultSet RS = null;
+		try {
+			RS = abstractWorld.executeQuery("SELECT * from item_templates WHERE `ID` = '"+templateID+"' ;");
+			if(RS != null){
+				if(RS.first()){
+					it = createIItemTemplateFromResultSet(RS);
+					closeResultSet(RS);
+					return it;
+				}
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		Syn.log.warn("SQL.Items.loadTemplate: return NULL. templateID="+templateID);
+		return null;
+	}
+	
+	
+	private static IItemTemplate createIItemTemplateFromResultSet(ResultSet RS) throws SQLException{
+		IItemTemplate it = null;
+		short itemSet = RS.getShort("itemSet");
+		int price = RS.getInt("price");
+		/**  ID, Lvl, Type, Pods*/ 
+		short params[] = {
+				RS.getShort("ID"),
+				RS.getShort("level"), 
+				RS.getShort("type"), 
+				RS.getShort("pods")
+				};
+		
+		if(params[PARAM_ID] < 0 || params[PARAM_ID] > Short.MAX_VALUE){
+			params[PARAM_ID] = 0;
+			Syn.d("SQL.Items.loadTemplate: return NULL because of ID");
+			return null;
+		}
+		if(params[PARAM_LEVEL] < 0 || params[PARAM_LEVEL] > Short.MAX_VALUE){
+			params[PARAM_LEVEL] = 0;
+		}
+		if(params[PARAM_TYPE] < 0 || params[PARAM_TYPE] > Short.MAX_VALUE){
+			params[PARAM_TYPE] = 0;
+		}
+		if(params[PARAM_PODS] < 0 || params[PARAM_PODS] > Short.MAX_VALUE){
+			params[PARAM_PODS] = 0;
+		}
+		if(itemSet < 0 || itemSet > Short.MAX_VALUE){
+			itemSet = 0;
+		}
+		if(price < 0 || price > Integer.MAX_VALUE){
+			price = 0;
+		}
+		ItemTemplateType itt =  ItemTemplateType.getItemTemplateType(RS.getByte("ItemTemplateType"));
+		if(itt == ItemTemplateType.EQUIPMENT){
+			/**  ID, Lvl, Type, Pods, ItemSet */ 
+			it = ItemTemplateFactory.createNewEquipment(
+					itemSet, //Item de panoplie si true. Item normal sinon.
+					RS.getString("effects"), 
+					params,
+					price,
+					RS.getString("conditions")
+					);
+			
+		}else if(itt == ItemTemplateType.WEAPON){
+			/** ID, Lvl, Type, Pods, ItemSet, PA, TauxCC, TauxEC, BonusCC, POmin, POmax*/ 
+			params = new short[]{
+					RS.getShort("ID"),
+					RS.getShort("level"), 
+					RS.getShort("type"), 
+					RS.getShort("pods"),
+					RS.getShort("PA"),
+					RS.getShort("tauxCC"),
+					RS.getShort("tauxEC"),
+					RS.getShort("bonusCC"),
+					RS.getShort("poMin"),
+					RS.getShort("poMax")
+					};
+			for(int i = 4; i < params.length; i++){//Control les valeurs dans l'array à partir de PA jusqu'à fin
+				if(params[i] < 1 || params[i] > Short.MAX_VALUE){
+					params[i] = 1;
+				}
+			}
+			//Syn.d("SQL.Items.needsTwoHands = "+RS.getBoolean("needsTwoHands"));
+			//Syn.d("SQL.Items.needsTwoHands = "+RS.getString("needsTwoHands"));
+			//Syn.d("SQL.Items.needsTwoHands = "+RS.getByte("needsTwoHands"));
+			it = ItemTemplateFactory.createNewWeapon(
+						itemSet, 	//Arme de panoplie si vrai. Arme normale sinon. 
+						RS.getString("effects"), 
+						params, 
+						RS.getBoolean("needsTwoHands"),
+						price,
+						RS.getString("conditions")
+					);
+			
+		}/*else if(itt == ItemTemplateType.SELLINGITEM){
+			/** ID, Lvl, Type, Pods, ItemSet, price, averagePrice/
+			it = new SellingItemTemplate(
+					RS.getString("effects"), 
+					params, 
+					price
+				);
+		}*/
+		//Syn.d("SQL.Items.loadTemplate: return IT");
+		return it;
+	}
+	
+	
+	
+	
+	/*
+	public static GItem loadItem(int id, GWorld gWorld) {
+		ResultSet RS = null;
+		try {
+			RS = SQL.executeQuery("SELECT * from items WHERE `ID` = '"+id+"' ;", gWorld.getServer().getConfig().getDBName());
+			if(RS != null){
+				if(RS.first()){
+					GItem item = new GItem(
+							RS.getInt("ID"), 
+							GlobalWorld.getItemTemplate(gWorld, RS.getInt("templateID")),
+							RS.getString("effects"), 
+							RS.getShort("quantity"),
+							RS.getByte("position")
+						);
+	//				gWorld.addItem(item);
+					return item;
+				}
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		return null;
+	}
+	*/
+	
+	/**
+	 * @return - Le plus haut ID d"item
+	 */
+	public static int loadLastItemID(GameServer gameServer) {
+		ResultSet RS = null;
+		int ID = 0;
+		try {
+			RS = gameServer.getSqlService().executeQuery("SELECT MAX(ID) AS ID from items;");
+			if(RS != null){
+				RS.first();
+				ID = RS.getInt("ID");
+				closeResultSet(RS);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		return ID;
+	}
+
+
+	public static void create(GItem i, GWorld w){
+		try {
+			PreparedStatement p = w.getServer().getSqlService().newTransact(insertItem);
+			p.setInt(1,i.getID());
+			p.setInt(2, i.getTemplate().getID());
+			p.setShort(3,i.getQuantity());
+			p.setByte(4,i.getPosition());
+			p.setString(5,i.getEffectsPacket(w.getServer().getEffectsManager()));
+			p.execute();
+			closePreparedStatement(p);
+		} catch (SQLException e) {
+			log.error("Game: Creation d'item echouee: SQL ERROR: "+e.getMessage()+"\n  Game: Query: "+insertItem);
+		}
+		
+	}
+
+
+	/**
+	 * L'objet GItem est utilisé UNIQUEMENT pour avoir l'ID de l'item.
+	 */
+	public static void delete(GItem i, GameServer s) {
+		try {
+			PreparedStatement p = s.getSqlService().newTransact(deleteItem);
+			p.setInt(1, i.getID());
+			p.execute();
+			closePreparedStatement(p);
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+
+
+	/**
+	 * Sauvegarde chaque items du IStorage(Update leur quantité, position, effets)
+	 * @param storage - IStorage: soit une banque, soit un inventaire, soit etc
+	 * @param server
+	 */
+	public static void saveStorageComplete(IStorage storage, GameServer server) {
+		if(storage.getItems() == null){
+			return;
+		}
+		PreparedStatement p = null;
+		try {
+			p = server.getSqlService().newTransact(saveItem);
+		} catch (SQLException e) {e.printStackTrace();}
+		//Sauvegarde les item dans l'ordre inverse 
+		//pour que les nouveaux items soient au début au lieu d'à la fin quand on déco et revient sul perso
+		for(int i = storage.getItems().size()-1; i >= 0; i--){
+			//if(storage.getItems().get(i) == null){
+			//	Syn.d("Dans SQL.Items.saveStorageComplete : storage.getItems().get(i) = null.  i="+i);
+			//	continue;
+			//}
+			try {
+				p.setInt(1, storage.getItems().get(i).getQuantity());
+				p.setInt(2, storage.getItems().get(i).getPosition());
+				p.setString(3, storage.getItems().get(i).getEffectsPacket(server.getEffectsManager()));
+				p.setInt(4, storage.getItems().get(i).getID());
+				p.execute();
+			} catch (SQLException e) {e.printStackTrace();}
+		}
+		closePreparedStatement(p);
+	}
+	
+	
+	/**
+	 * Pour transférer la table itemTemplate de Zen jusqu'à celle de Syn, vu qu'elles sont différentes.
+	 */
+	public static void transferItemTemplateFromZenToSyn(){
+		ResultSet RS = null;
+		try {
+			RS = Syn.Services.sqlZenService.executeQuery("SELECT * from item_template;");
+			if(RS != null){
+				RS.last();
+				while(!RS.isBeforeFirst()){
+					Syn.d("ID :"+RS.getInt("id"));
+					/*//Cette partie en comments vient de Zen, au chargement des ItemTemplates
+					new ObjTemplate
+					(
+						RS.getInt("id"),
+						RS.getString("statsTemplate"),
+                        //RS.getString(5),
+						RS.getString("name"),
+						RS.getInt("type"),
+						RS.getInt("level"),
+						RS.getInt("pod"),
+						RS.getInt("prix"),
+						RS.getInt("panoplie"),
+						RS.getString("condition"),
+						RS.getString("armesInfos"),
+						RS.getInt("sold"),
+						RS.getInt("avgPrice"),
+						RS.getInt("pointso")
+					)*/
+					if(RS.getInt("id") > 10677){
+						RS.previous();
+						continue;
+					}
+					try {
+						PreparedStatement p = Syn.Services.dofusClientStrategy.sqlGlobalService.newTransact(insertItemTemplate);
+						p.setShort(1, (short)RS.getInt("id"));
+						p.setByte(2, (byte) (RS.getString("armesInfos").trim().equals("")?ItemTemplateType.EQUIPMENT.get():ItemTemplateType.WEAPON.get()));
+						p.setShort(3, (short) RS.getInt("type"));
+						p.setShort(4, (short) RS.getInt("level"));
+						p.setShort(5, (short) RS.getInt("pod"));
+						p.setShort(6, (short) RS.getInt("panoplie"));
+						p.setString(7, RS.getString("condition"));
+						p.setString(8, RS.getString("statsTemplate"));
+						if(RS.getString("armesInfos").trim().equals("") == false){
+							String weaponInfo[] = RS.getString("armesInfos").split(";");
+							p.setShort(9, Short.parseShort(weaponInfo[0]));//PA
+							p.setShort(10, Short.parseShort(weaponInfo[3]));//TauxCC
+							p.setShort(11, Short.parseShort(weaponInfo[4]));//TauxEC
+							p.setShort(12, Short.parseShort(weaponInfo[5]));//BonusCC
+							p.setShort(13, Short.parseShort(weaponInfo[1]));//PoMin
+							p.setShort(14, Short.parseShort(weaponInfo[2]));//PoMax
+							p.setBoolean(15, weaponInfo[6].equals("1"));//needsTwoHands
+						}else{
+							p.setShort(9, ONE_SHORT);//PA
+							p.setShort(10, ONE_SHORT);//TauxCC
+							p.setShort(11, ONE_SHORT);//TauxEC
+							p.setShort(12, ONE_SHORT);//BonusCC
+							p.setShort(13, ONE_SHORT);//PoMin
+							p.setShort(14, ONE_SHORT);//PoMax
+							p.setBoolean(15, false);//needsTwoHands
+						}
+						p.setInt(16, RS.getInt("prix"));
+						p.execute();
+						closePreparedStatement(p);
+					} catch (SQLException e) {e.printStackTrace();}
+					RS.previous();
+				}
+				closeResultSet(RS);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+	
+	/**
+	 * Pour prendre les noms des itemTemplate dans la bdd de Zen et les mettre dans la bdd Syn
+	 */
+	public static void transferItemTemplateNamesFromZenToSyn(){
+		ResultSet RS = null;
+		try {
+			RS = Syn.Services.sqlZenService.executeQuery("SELECT * from item_template;");
+			if(RS != null){
+				RS.last();
+				while(!RS.isBeforeFirst()){
+					Syn.d("ID :"+RS.getInt("id"));
+					if(RS.getInt("id") > 10677){
+						RS.previous();
+						continue;
+					}
+					try {
+						PreparedStatement p = Syn.Services.dofusClientStrategy.sqlGlobalService.newTransact(updateItemTemplateName);
+						p.setString(1, RS.getString("name"));
+						p.setShort(2, (short)RS.getInt("id"));
+						p.execute();
+						closePreparedStatement(p);
+					} catch (SQLException e) {e.printStackTrace();}
+					RS.previous();
+				}
+				closeResultSet(RS);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+	
+
+	public static ItemSet loadItemSet(short itemSetID, AbstractWorld w) {
+		AbstractSqlService sqlService = (w.getServer() != null ? w.getServer().getSqlService() : w.getStrategy().sqlGlobalService);
+		try {
+			ResultSet RS = sqlService.executeQuery("SELECT * from item_sets WHERE ID = "+itemSetID+";");
+			if(RS != null){
+				if(RS.first()){
+					return ItemSet.provide(w).createNew(
+							itemSetID, 
+							RS.getString("items"), 
+							RS.getString("bonus"),
+							w
+					);
+				}
+				closeResultSet(RS);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+		return null;
+	}
+	
+	/**
+	 * Charge tous les item_sets.
+	 * <br>Si le gs != null, ca va le charger dans ce gameserveur précis,
+	 * <br>Sinon ca va charger celles du login.
+	 * @param gs
+	 */
+	public static void loadAllItemSets(AbstractWorld w){
+		AbstractSqlService sqlService = (w.getServer() != null ? w.getServer().getSqlService() : w.getStrategy().sqlGlobalService);
+		try {
+			ResultSet RS = sqlService.executeQuery("SELECT * from item_sets;");
+			if(RS != null){
+				//if(gs != null){
+				//	gs.getWorld().getItemSets().clear();
+				//}else{
+				//	GlobalWorld.itemSets.clear();
+				//}
+				w.getItemSets().clear();
+				while(RS.next()){
+					ItemSet is = ItemSet.provide(w).createNew(
+							RS.getShort("ID"), 
+							RS.getString("items"), 
+							RS.getString("bonus"),
+							w
+					);
+					//if(gs != null){
+					//	gs.getWorld().addItemSet(is);
+					//}else{
+					//	GlobalWorld.addItemSet(is);
+					//}
+					w.addItemSet(is);
+				}
+				closeResultSet(RS);
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+
+	/**
+	 * Pour updater la colonne needsTwoHands dans itemTemplates à true. (Donc pour save le template en arme à deux main)
+	 */
+	public static void updateTwoHandsWeapon(int iD, SqlServiceMySql sqlService) {
+		try {
+			PreparedStatement p = sqlService.newTransact("UPDATE item_templates SET needsTwoHands = 1 WHERE ID = ?;");
+			p.setInt(1, iD);
+			p.execute();
+			closePreparedStatement(p);
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+}

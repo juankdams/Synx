@@ -1,0 +1,15 @@
+package Login;
+
+public class WakfuLoginClient extends LoginClient {
+
+	@Override
+	public void kick() {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void terminate() {
+		// TODO Auto-generated method stub
+	}
+
+}

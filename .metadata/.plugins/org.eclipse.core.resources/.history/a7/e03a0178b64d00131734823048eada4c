@@ -1,0 +1,9 @@
+package parsers.wakfu;
+
+import io.netty.buffer.ByteBuf;
+import Login.WakfuLoginClient;
+import Plugins.Abstractions.AbstractPacketParser;
+
+public class VersionParser extends AbstractPacketParser<WakfuLoginClient, ByteBuf> {
+
+}

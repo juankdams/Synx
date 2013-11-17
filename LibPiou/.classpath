@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="fr/piou/script/GroovyInterpreter.java|fr/piou/script/JavaInterpreter.java|fr/piou/script/LuaInterpreter.java|fr/piou/script/PythonInterpreter.java|fr/piou/script/RubyInterpreter.java|piou/script/GroovyInterpreter.java|piou/script/JavaInterpreter.java|piou/script/LuaInterpreter.java|piou/script/PythonInterpreter.java|piou/script/RubyInterpreter.java|com/sun/script/jruby/|com/sun/script/jhyton/" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="var" path="ZLIBS/apache_commons_io/commons-io-2.4/commons-io-2.4.jar"/>
+	<classpathentry kind="var" path="ZLIBS/rhino1_7R4/js-14.jar"/>
+	<classpathentry kind="var" path="ZLIBS/jython-2.5.3.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

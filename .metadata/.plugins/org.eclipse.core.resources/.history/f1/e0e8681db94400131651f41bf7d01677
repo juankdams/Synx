@@ -1,0 +1,908 @@
+package GameObjects;
+
+import static Enums.ChannelEnum.ALIGNMENT;
+import static Enums.ChannelEnum.GENERAL;
+import static Enums.ChannelEnum.RECRUITMENT;
+import static Enums.ChannelEnum.TRADING;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ScheduledFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ConfigurationObjects.Classe;
+import ConfigurationObjects.Command;
+import ConfigurationObjects.SimpleIA;
+import Core.Syn;
+import Enums.ChannelEnum;
+import Enums.SynActions;
+import Enums.SynActions.ChatBufferA;
+import Game.DofusServer;
+import GameObjects.GArea.GSubArea;
+import GameObjects.GArea.GSuperArea;
+import GlobalObjects.ItemSet;
+import GlobalObjects.Map;
+import Interfaces.IItemTemplate;
+import Interfaces.IObject;
+import Misc.Tests.Perfs;
+import Plugins.Abstractions.AbstractActionListener;
+import SQL.SConfig;
+
+
+public class GWorld implements IObject{
+
+	public static Logger log = LoggerFactory.getLogger(GWorld.class);
+	
+	private DofusServer server = null;
+	
+	//private TitleManager titleManager = null;
+	private ArrayList<GChallenge> challenges = new  ArrayList<GChallenge>();
+	private ArrayList<SimpleIA> intelligences = new  ArrayList<SimpleIA>();
+	private ArrayList<Classe> classes = new ArrayList<Classe>();
+	private HashMap<String, Command> commands = new HashMap<String, Command>();
+	private HashMap<SynActions, AbstractActionListener> listeners = new HashMap<SynActions, AbstractActionListener>();
+	
+	private int lastCharacterID = 0;// le get ->  @return :  --lastCharacterID;  .  Oui c'est en négatif.
+	private int lastPersoID = 0;
+	private int lastItemID = 0;
+	private int lastActionID = 3;//Commence à 3 pcq y'a les EndGameAction 0 et 2 qui se font renvoyer des GKK0/2 à ignorer
+	private int lastFightID = 0;
+	
+	public long[] persoXPLevels = null;
+	public long[] honorXPLevels = null;
+	public long[] mountsXPLevels = null;
+	public long[] guildXPLevels = null;
+	public long[] jobXPLevels = null;
+	public long[] banditsXPLevels = null;
+	//**Combien d'xp il faut pour monter le level d'alignement (Constante aussi présente dans CPerso)* /
+	//public static final byte xpForAlignmentLevel = 20; 
+	
+	//ChatFlooders
+	//private ChatParser chatParser = null;
+	private HashMap<GPersonnage, ScheduledFuture<Object>> generalFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	private HashMap<GPersonnage, ScheduledFuture<Object>> commerceFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	private HashMap<GPersonnage, ScheduledFuture<Object>> recrutementFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	private HashMap<GPersonnage, ScheduledFuture<Object>> alignementFlooders = new HashMap<GPersonnage, ScheduledFuture<Object>>();
+	
+	
+	/** les persos listés dans la map sont tous connectés */
+	private HashMap<Integer, GPersonnage> persos = new HashMap<Integer, GPersonnage>();
+	
+	/**Les banques de ce monde triées par leur AccountID*/
+	private HashMap<Integer, GBank> banks = new HashMap<Integer, GBank>();
+	
+	/** les persos listés dans cette map sont en état de déco/reco en combat*/
+	private HashMap<Integer, GPersonnage> inFightPersos = new HashMap<Integer, GPersonnage>();
+	
+	/**
+	 * En gros ces maps là c'est les maps 
+	 * que les créateurs vont ajouter à leur serveurs, chargées par leur game
+	 * et disponibles uniquement sur leur serveur.
+	 */
+	private HashMap<Integer, Map> maps = new HashMap<Integer, Map>();
+	
+	/**
+	 * En gros ces maps là c'est les itemsTemplates 
+	 * que les créateurs vont ajouter à leur serveurs, chargées par leur game
+	 * et disponibles uniquement sur leur serveur. 
+	 */
+	private HashMap<Short, IItemTemplate> itemTemplates = new HashMap<Short, IItemTemplate>();
+	/**
+	 * En gros ces maps là c'est les itemSets 
+	 * que les créateurs vont ajouter à leur serveurs, chargées par leur game
+	 * et disponibles uniquement sur leur serveur. 
+	 */
+	private HashMap<Short, ItemSet> itemSets = new HashMap<Short, ItemSet>();
+	/**
+	 * Spells que les créateurs ajouteront à leur serveurs, chargés par leur game.
+	 * et disponibles uniquement sur leur serveur. 
+	 */
+	private HashMap<Short, GSpell[]> spells = new HashMap<Short, GSpell[]>();
+	/* *
+	 * Liste tous les combats du monde
+	 */
+	//private HashMap<Integer, GFight> fights = new HashMap<Integer, GFight>();
+	
+	/**
+	 * Liste tous les inventaires des personnages.
+	 * <persoID, inventaire>
+	 */
+	private HashMap<Integer, GInventory> inventories = new HashMap<Integer, GInventory>();
+	/**
+	 * Liste tous les statistiques des characters. (ID positif pour personnage, négatif pour autre character)
+	 * <characterID, statistique>
+	 */
+	private HashMap<Integer, GStatistiques> statistiques = new HashMap<Integer, GStatistiques>();
+	/**
+	 * TODO Liste des SuperArea (continents) 
+	 */
+	private ArrayList<GSuperArea> areas_super = new ArrayList<GSuperArea>();
+	/**
+	 * TODO Liste des Area (zone) 
+	 */
+	private ArrayList<GArea> areas = new ArrayList<GArea>();
+	/**
+	 * TODO Liste des SubArea (sous-zone) 
+	 */
+	private ArrayList<GSubArea> areas_sub = new ArrayList<GSubArea>();
+	
+	/**
+	 * Environ 1313 monstres sur l'officiel mais j'va mettre un minimum de 5000 pour les monstres personalisés des serveurs
+	 */
+	private HashMap<Short, GMonster[]> monsterTemplates = new HashMap<Short, GMonster[]>();
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public GWorld(DofusServer server){
+		this.setServer(server);
+		server.setWorld(this);
+		//chatParser = new ChatParser();
+		//titleManager = new TitleManager();
+		this.lastPersoID = SQL.Personnages.loadLastPersoID(server);
+		this.lastItemID = SQL.Items.loadLastItemID(server);
+		//Les données .
+		Perfs p = new Perfs();
+		SConfig.loadXP(this);//Configuration de l'XP
+		p.stopTiming("Loading XP"); p.restartTiming();
+		//SConfig.loadTitles(this);//Chargement des titles des gens
+		SConfig.loadClasses(this);//Configuration des Classes par bdd
+		p.stopTiming("Loading Classes"); p.restartTiming();
+		SConfig.loadCommands(this);//Configuration des Commands par bdd
+		p.stopTiming("Loading Commands"); p.restartTiming();
+		SConfig.loadIntelligences(this);//Configuration des Intelligences Artificielles par bdd
+		p.stopTiming("Loading IAs"); p.restartTiming();
+		SQL.Challenges.loadAllChallenges(this);//Bleh, c'est léger à charger quand même
+		p.stopTiming("Loading Challenges"); p.restartTiming();
+		
+		SQL.ActionListeners.loadWorld(server, true);
+		p.stopTiming("Loading ActionListeners"); p.restartTiming();
+		SQL.Areas.loadAllAreasTypes(this, true);
+		p.stopTiming("Loading Areas"); p.restartTiming();
+		SQL.Maps.loadAllOfficialMapsSupplementaries(this, true);
+		p.stopTiming("Loading MapOverrides"); p.restartTiming();
+	}
+	
+	/**
+	 * TODO: GWorld.saveALL
+	 */
+	public void saveAll(){
+		
+	}
+	
+	/**
+	 * TODO: GWorld.cleanAll
+	 */
+	public void clearAll(){
+		//if(cWorld != null) cWorld.  rien à clear en rapport au cWorld
+		if(persos != null) this.persos.clear(); 	
+		if(areas != null) this.areas.clear();
+		if(banks != null) this.banks.clear();
+		if(classes != null) this.classes.clear();
+		if(commands != null) this.commands.clear();
+		if(inFightPersos != null) this.inFightPersos.clear();
+		if(inventories != null) this.inventories.clear();
+		if(itemSets != null) this.itemSets.clear();
+		if(itemTemplates != null) this.itemTemplates.clear();
+		if(maps != null) this.maps.clear();
+		if(spells != null) this.spells.clear();
+		if(statistiques != null) this.statistiques.clear();
+		if(intelligences != null) intelligences.clear();
+		if(challenges != null) challenges.clear();
+		
+		this.clearFlooders();	//this.chatParser.clear();
+		//this.titleManager.modifyTitlesList(CommonAction.CLEAN, null, 0);
+		
+		this.persoXPLevels = new long[0];
+		this.honorXPLevels = new long[0];
+		this.mountsXPLevels = new long[0];
+		this.guildXPLevels = new long[0];
+		this.jobXPLevels = new long[0];
+		this.banditsXPLevels = new long[0];
+	}
+	/**
+	 * TODO: GWorld.rebuildAll
+	 */
+	public void rebuildAll(){
+		//persos = new HashMap<Integer, GPersonnage>();
+	}
+	
+	@Override
+	public void terminate() {
+		clearAll();//TODO GWorld.cleanALL et .rebuildALL
+		this.persos = null;
+		this.areas = null;
+		this.banks = null;
+		this.classes = null;
+		this.commands = null;
+		this.inFightPersos = null;
+		this.inventories = null;
+		this.itemSets = null;
+		this.itemTemplates = null;
+		this.maps = null;
+		this.spells = null;
+		this.statistiques = null;
+		this.intelligences = null;
+		this.challenges = null;
+
+		this.server = null;
+		this.nullFlooders();	//this.chatParser = null;
+		//this.titleManager = null;
+		this.persoXPLevels = null;
+		this.honorXPLevels = null;
+		this.mountsXPLevels = null;
+		this.guildXPLevels = null;
+		this.jobXPLevels = null;
+		this.banditsXPLevels = null;
+
+		
+		//this.patente = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+	
+	public void setServer(DofusServer server) {
+		this.server = server;
+	}
+
+	@Override
+	public DofusServer getServer() {
+		return server;
+	}
+
+	public void setServerID(int serverID) { 
+		for(DofusServer s : server.getLoginServer().gameServers){
+			if(s.getID() == serverID){
+				this.server = s;
+			}
+		}
+	}
+
+
+	
+	public HashMap<Integer, GPersonnage> getPersos(){
+		return persos;
+	}
+	
+	public GPersonnage getPerso(int id){
+		return persos.get(id);
+	}
+	
+	
+	public synchronized int getNextPersoID() {
+		if(lastPersoID == Integer.MAX_VALUE){
+			lastPersoID = 0;
+		}
+		return ++lastPersoID;
+	}
+	/**
+	 * @return :  --lastCharacterID;   .   Oui c'est en négatif.
+	 */
+	public synchronized int getNextCharacterID(){
+		if(lastCharacterID == Integer.MIN_VALUE){
+			lastCharacterID = 0;
+		}
+		return --lastCharacterID;
+	}
+	public synchronized int getNextItemID() {
+		if(lastItemID == Integer.MAX_VALUE){
+			lastItemID = 0;
+		}
+		return ++lastItemID;
+	}
+	public synchronized int getNextActionID(){
+		if(lastActionID == 10000){//Integer.MAX_VALUE){  //10 000 est prit de ank.utils.Sequencer.getActionIndex()
+			lastActionID = 3;
+		}
+		return ++lastActionID;
+	}
+	public synchronized int getNextFightID(){
+		if(lastFightID == Integer.MAX_VALUE){
+			lastFightID = 0;
+		}
+		return ++lastFightID;
+	}
+	
+	//useless pas mal
+	//public synchronized void setNextPersoID(int id) {
+	//	this.lastPersoID = id;
+	//}
+	
+	
+	/** index = id .<p>
+	 * ATTENTION. S'il y a déja un objet a l'index, il est remplac� par le nouveau.
+	 * While l'id de la map >= la size de l'arrayList; -> maps.add(null);
+	 */
+	public Map addMap(Map map){
+		if(map != null){
+			//Syn.d("GWorld.addMap, map != null.  mapID=("+map.getID()+"),  maps.sizeBefore("+maps.size()+")  mapAlreadyExists=("+(maps.get(map.getID()) != null)+")");
+			maps.put(map.getID(), map);
+		}else{
+			//Syn.d("GWorld.addMap, map = null.  maps.size("+maps.size()+")");
+		}
+		return map;
+	}
+	/** index = id */
+	public Map getMap(int id){
+		if(maps.get(id) == null){
+			Syn.d("comingFrom GWorld.getmap");
+			return addMap(SQL.Maps.load(id, server.getSqlService(), this));
+		}
+		return maps.get(id);
+	}
+	
+	/** index = id */
+	public Map getMapWithoutAutoLoad(int id, boolean checkAlsoComplementaries){
+		if(checkAlsoComplementaries){
+			if(maps.get(-id) != null){
+				return maps.get(-id);
+			}
+		}
+		return maps.get(id);
+	}
+	public HashMap<Integer, Map> getMaps(){
+		return maps;
+	}
+	
+	public GPersonnage getPersoByName(String name){
+		for(GPersonnage p : persos.values()){
+			if(p.getName().equals(name)){
+				return p;
+			}
+		}
+		return null;
+	}
+	
+	public void addPerso(GPersonnage p){
+		persos.put(p.getID(), p);
+	}
+
+	public GPersonnage removePerso(GPersonnage perso){
+		return persos.remove(perso.getID());
+	}
+	
+	
+	public void addInFightDecoPerso(GPersonnage p){
+		inFightPersos.put(p.getID(), p);
+	}
+	
+	public void removeInFightDecoPerso(GPersonnage perso){
+		inFightPersos.remove(perso.getID());
+	}
+	/**
+	 * @return - Si le personnage est dans la liste de persos déconnectés en combat
+	 */
+	public boolean isInFightDecoPerso(GPersonnage p){
+		if(inFightPersos.containsKey(p.getID())){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	/* *
+	 * Get une fight par son ID
+	 * @param id - L'ID de la fight qu'on cherche
+	 * @return - Null si l'id de fight existe pas.
+	 * /
+	public GFight getFight(int id){
+		for(GFight f : fights){
+			if(f.ID == id){
+				return f;
+			}
+		}
+		return null;
+	}
+	*/
+
+	/* *
+	 * Get une fight par l'id d'un character qui est dedans 
+	 * @param characterID - ID du character dont on veut la fight
+	 * @return - Null si le character est dans aucune fight. Sinon la fight du character.
+	 * 
+	 * À la place, 
+	 * 		on pourrait faire une HashMap à la place de larraylist et mettre une Entry par personnage:
+	 * 		Au début du combat, tous les personnages sont ajoutés dans cette HashMap avec leur ID et la fight 
+	 * 			Et ils sont tous retirés à la fin du combat.
+	 * 		Donc beaucoup plus simple et autant efficiant coté ram 
+	 * 			puisque ca se vide facilement (meme qu'une hashmap se modifie beaucoup mieux)
+	 * /
+	public GFight getFightByCharacter(int characterID){
+		//for(GFight f : fights){
+		//	if(f.isCharacterInFight(characterID)){
+		//		return f;
+		//	}
+		//}
+		return fights.get(characterID);
+		//return null;
+	}*/
+	
+	
+	/* *
+	 * @return - Le nombre de combat sur la map
+	 * /
+	public int getMapFightCount(int mapID){
+		int n = 0;
+		for(GFight f : fights){
+			if(f.mapID == mapID){
+				n++;
+			}
+		}
+		
+		return n;
+	}*/
+	
+	public GInventory getInventory(int persoID){
+		return inventories.get(persoID);
+	}
+	public void addInventory(int persoID, GInventory i){
+		inventories.put(persoID, i);
+	}
+
+	public void removeInventory(int persoID){
+		inventories.remove(persoID);
+	}
+	
+	/*
+	public GItem getItem(int id){
+		//S'il a déjà été chargé dans l'HashMap
+		if(items.get(id) != null){
+			return items.get(id);
+		}else{//Sinon, on le charge en lazy :3
+			return SQL.Items.loadItem(id, this);
+		}
+	}
+	public void addItem(GItem i){
+		items.put(i.getID(), i);
+	}
+	
+	public void removeItem(GItem i){
+		items.remove(i.getID());
+	}
+	 */
+	public HashMap<Integer, GStatistiques> getStatistiques(){
+		return statistiques;
+	}
+	public GStatistiques getStatistisque(int persoID){
+		return statistiques.get(persoID);
+	}
+	public void addStatistique(int persoID, GStatistiques statistique){
+		Syn.d("ADDED STAT TO WORLD : characterID:"+persoID);
+		this.statistiques.put(persoID, statistique);
+	}
+	
+	public void removeStatistiques(int persoID){
+		Syn.d("REMOVED STAT FROM WORLD : characterID:"+persoID);
+		this.statistiques.remove(persoID);
+	}
+
+	
+	//public void setChatParser(ChatParser chatParser) {
+	//	this.chatParser = chatParser;
+	//}
+
+	//public ChatParser getChatParser() {
+	//	return chatParser;
+	//}
+
+	/*
+	public void setTitleManager(TitleManager titleManager) {
+		this.titleManager = titleManager;
+	}
+
+	public TitleManager getTitleManager() {
+		return titleManager;
+	}
+	*/
+	
+	public HashMap<Short, IItemTemplate> getItemTemplates() {
+		return itemTemplates;
+	}
+
+	/** index = id .<p>
+	ATTENTION. S'il y a déja un objet a l'index, il est remplacé par le nouveau.*/
+	public IItemTemplate addItemTemplate(IItemTemplate template){
+		if(template != null){
+			itemTemplates.put(template.getID(), template);
+		}
+		return template;
+	}
+	/** 
+	 * index dans l'arrayList= id
+	 * S'il existe pas dans l'arrayList, on essaie de le charger dans la bdd et de l'ajouter.
+	 * S'il existe pas dans la bdd, alors là on return null. 
+	 */
+	public IItemTemplate getItemTemplate(int id){
+		if(itemTemplates.get(id) == null){
+			return addItemTemplate(SQL.Items.loadTemplate(id, this.getServer().getSqlService()));
+		}
+		return itemTemplates.get(id);
+	}
+	
+
+	public void setBanks(HashMap<Integer, GBank> banks) {
+		this.banks = banks;
+	}
+	public HashMap<Integer, GBank> getBanks() {
+		return banks;
+	}
+	public GBank getBank(int accountID){
+		return banks.get(accountID);
+	}
+	public void addBank(int accountID, GBank gb){
+		banks.put(accountID, gb);
+	}
+	public GBank removeBank(int accountID){
+		return banks.remove(accountID);
+	}
+	
+
+	public HashMap<Short, ItemSet> getItemSets() {
+		return itemSets;
+	}
+	public ItemSet getItemSet(short itemSetID) {
+		if(itemSets.get(itemSetID) == null){
+			return addItemSet(SQL.Items.loadItemSet(itemSetID, this.getServer()));
+		}
+		return itemSets.get(itemSetID);
+	}
+	
+	public ItemSet addItemSet(ItemSet set){
+		if(set == null){
+			return null;
+		}
+		itemSets.put(set.getID(), set);
+		return set;
+	}
+	
+	/**
+	 * @return - Une array contenant tous les niveaux du sort
+	 */
+	public GSpell[] getSpell(short spellID) {
+		if(spells.get(spellID) == null){
+			return addSpell(SQL.Spells.load(spellID, this.getServer()));
+		}
+		return spells.get(spellID);
+	}
+	
+	/**
+	 * @param spell - Une array qui contient tous les niveaux du sort (4, 5 ou 6 maximum)
+	 * @return - La même array
+	 */
+	public GSpell[] addSpell(GSpell spell[]){
+		if(spell == null){
+			return null;
+		}
+		spells.put(spell[0].getID(), spell);
+		return spell;
+	}
+
+	public Command getCommand(String commandName) {
+		return commands.get(commandName);
+	}
+	public void addCommand(Command command) {
+		commands.put(command.getName(), command);
+	}
+	public HashMap<String, Command> getCommands(){
+		return commands;
+	}
+	
+
+	public void addClasse(Classe classe) {
+		this.classes.add(classe);
+	}
+
+	public Classe getClasse(byte b) {
+		return this.classes.get(b);
+	}
+	public ArrayList<Classe> getClasses(){
+		return classes;
+	}
+	
+	
+
+	//Utilise l'id de la classe dans CPerso
+	public short getStartCell(int classID){
+		return classes.get(classID).startCell;
+	}
+	public long getStartKamas(int classID){
+		return classes.get(classID).startKamas;
+	}
+	//Utilise l'id de la classe dans CPerso
+	public short getStartMap(byte classID){
+		return classes.get(classID).startMap;
+	}
+	public short getStartLvl(int classID){
+		return classes.get(classID).startLevel;
+	}
+	public int[][] getStartItems(int classID){
+		return classes.get(classID).startItems;
+	}
+	public GSpell[] getStartSpells(int classID){
+		return classes.get(classID).startSpells;
+	}
+	public HashMap<Integer, GSpell> getStartSpellsAsMapWithPositions(int classID){
+		HashMap<Integer, GSpell> spells = new HashMap<Integer, GSpell>();
+		int pos = 1;
+		for(GSpell s : getStartSpells(classID)){
+			spells.put(pos++, s);
+		}
+		return spells;
+	}
+
+	
+	/** return this.cWorld.id;   (fait pareil que this.getServerID) */
+	@Override
+	public int getID() {
+		return this.server.getcWorld().id;
+	}
+	/** return this.getServer().getConfig().getWorldID();     (fait pareil que this.getID) */
+	@Override
+	public short getServerID() {
+		return this.server.getcWorld().id;
+	}
+
+	@Override
+	public void setID(int iD) {
+		this.server.getcWorld().id = (short) iD;
+	}
+	
+	
+
+	/**
+	 * return this;
+	 */
+	@Override
+	public GWorld getWorld() {
+		return this;
+	}
+
+	public void setListeners(HashMap<SynActions, AbstractActionListener> listeners) {
+		this.listeners = listeners;
+	}
+
+	public HashMap<SynActions, AbstractActionListener> getListeners() {
+		return listeners;
+	}
+
+	/**
+	 * Ajoute le listener à un container s'il y a déjà un listener du meme type.
+	 * <p>Ajoute le listener directement à l'hashmap de listeners du world sinon.
+	 */
+	public void addListener(AbstractActionListener aa){
+		AbstractActionListener a = listeners.get(aa.getType());
+		if(a == null){
+			listeners.put(aa.getType(), aa);
+		}else{
+			listeners.put(aa.getType(), a.addListener(aa));
+		}
+	}
+
+	public AbstractActionListener getListener(SynActions type){
+		return listeners.get(type);
+	}
+	public AbstractActionListener getListener(int ID){
+		if(listeners != null && listeners.size() > 0){
+			for(AbstractActionListener aal : listeners.values()){
+				if(aal.getID() == ID){
+					return aal;
+				}
+				if(aal.isContainer()){
+					for(AbstractActionListener aall : aal.getListeners()){
+						if(aall.getID() == ID){
+							return aall;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	
+	//ChatFlooders HashMaps
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getGeneralFlooders() {
+		return generalFlooders;
+	}
+	public void setGeneralFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> generalFlooders) {
+		this.generalFlooders = generalFlooders;
+	}
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getCommerceFlooders() {
+		return commerceFlooders;
+	}
+	public void setCommerceFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> commerceFlooders) {
+		this.commerceFlooders = commerceFlooders;
+	}
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getRecrutementFlooders() {
+		return recrutementFlooders;
+	}
+	public void setRecrutementFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> recrutementFlooders) {
+		this.recrutementFlooders = recrutementFlooders;
+	}
+	public HashMap<GPersonnage, ScheduledFuture<Object>> getAlignementFlooders() {
+		return alignementFlooders;
+	}
+	public void setAlignementFlooders(HashMap<GPersonnage, ScheduledFuture<Object>> alignementFlooders) {
+		this.alignementFlooders = alignementFlooders;
+	}
+	/**
+	 * Vide toutes les HashMap de floodeurs
+	 */
+	public void clearFlooders(){
+		if(alignementFlooders != null) 	this.alignementFlooders.clear();
+		if(commerceFlooders != null) 	this.commerceFlooders.clear();
+		if(generalFlooders != null) 	this.generalFlooders.clear();
+		if(recrutementFlooders != null) this.recrutementFlooders.clear();
+	}
+	/**
+	 * Nullalize les HashMaps de Flooders
+	 */
+	public void nullFlooders(){
+		this.alignementFlooders = null;
+		this.commerceFlooders = null;
+		this.generalFlooders = null;
+		this.recrutementFlooders = null;
+	}
+	/**
+	 * Enleve ou Ajoute un personnage Ã  une flood List avec un ScheduledFuture qui s'occupe de l'enlever au bon moment et de dire combien de temps il reste avant qu'il puisse parler.
+	 */
+	public synchronized void modifyFloodLists(ChannelEnum ce, ChatBufferA actionID, GPersonnage p, ScheduledFuture<Object> sf){
+		if(actionID == ChatBufferA.ADD_FLOODER){
+			if(ce == GENERAL){
+				generalFlooders.put(p, sf);
+			}else
+			if(ce == TRADING){
+				commerceFlooders.put(p, sf);
+			}else 
+			if(ce == RECRUITMENT){
+				recrutementFlooders.put(p, sf);
+			}else 
+			if(ce == ALIGNMENT){
+				alignementFlooders.put(p, sf);
+			}
+		}else
+		if(actionID == ChatBufferA.REMOVE_FLOODER){
+			if(ce == GENERAL){
+				generalFlooders.remove(p);
+			}else
+			if(ce == TRADING){
+				commerceFlooders.remove(p);
+			}else 
+			if(ce == RECRUITMENT){
+				recrutementFlooders.remove(p);
+			}else 
+			if(ce == ALIGNMENT){
+				alignementFlooders.remove(p);
+			}
+		}
+	}
+	
+	
+
+
+	public void setMonsterTemplates(HashMap<Short, GMonster[]> monsters) {
+		monsterTemplates = monsters;
+	}
+	public HashMap<Short, GMonster[]> getMonsterTemplates() {
+		return monsterTemplates;
+	}
+	public GMonster[] addMonsterTemplate(GMonster[] m){
+		if(m == null){
+			return null;
+		}
+		monsterTemplates.put(m[0].getTemplateID(), m);
+		return m;
+	}
+	public GMonster[] removeMonsterTemplate(short monsterTemplateID){
+		return monsterTemplates.remove(monsterTemplateID);
+	}
+	public GMonster[] getMonsterTemplateWithoutAutoLoad(short monsterTemplateID){
+		return monsterTemplates.get(monsterTemplateID);
+	}
+	public GMonster[] getMonsterTemplate(short monsterTemplateID){
+		if(monsterTemplates.get(monsterTemplateID) == null){
+			SQL.Monsters.load(monsterTemplateID,server); 
+		}
+		return monsterTemplates.get(monsterTemplateID);
+	}
+	
+	public void setSuperAreas(ArrayList<GSuperArea> superAreas) {
+		this.areas_super = superAreas;
+	}
+
+	public ArrayList<GSuperArea> getSuperAreas() {
+		return areas_super;
+	}
+
+	public void setSubAreas(ArrayList<GSubArea> subAreas) {
+		this.areas_sub = subAreas;
+	}
+
+	public ArrayList<GSubArea> getSubAreas() {
+		return areas_sub;
+	}
+
+	public ArrayList<GArea> getAreas() {
+		return areas;
+	}
+
+	public void setAreas(ArrayList<GArea> areas) {
+		this.areas = areas;
+	}
+	public GSuperArea getSuperArea(short id){
+		for(GSuperArea a : this.areas_super){
+			if(a.getID() == id){
+				return a;
+			}
+		}
+		return null;
+	}
+	public GArea getArea(short id){
+		for(GArea a : this.areas){
+			if(a.getID() == id){
+				return a;
+			}
+		}
+		return null;
+	}
+	public GSubArea getSubArea(short id){
+		for(GSubArea a : this.areas_sub){
+			if(a.getID() == id){
+				return a;
+			}
+		}
+		return null;
+	}
+
+	public void setIntelligences(ArrayList<SimpleIA> intelligences) {
+		this.intelligences = intelligences;
+	}
+
+	public ArrayList<SimpleIA> getIntelligences() {
+		return intelligences;
+	}
+
+	public SimpleIA addIntelligence(SimpleIA ia) {
+		if(ia == null){
+			return null;
+		}
+		intelligences.add(ia);
+		return ia;
+	}
+	
+
+	public void setChallenges(ArrayList<GChallenge> challenges) {
+		this.challenges = challenges;
+	}
+
+	public ArrayList<GChallenge> getChallenges() {
+		return challenges;
+	}
+
+	public GChallenge addChallenge(GChallenge ia) {
+		if(ia == null){
+			return null;
+		}
+		challenges.add(ia);
+		return ia;
+	}
+
+	public GMount getMount(short value) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	
+	
+}

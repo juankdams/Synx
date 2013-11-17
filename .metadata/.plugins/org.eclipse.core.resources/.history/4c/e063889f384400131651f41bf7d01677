@@ -1,0 +1,14 @@
+package Providers;
+
+import Interfaces.IProvider;
+
+public class GMountProvider implements IProvider {
+	
+	
+	
+	public GMount createNew(){
+		
+	}
+	
+
+}

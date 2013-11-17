@@ -1,0 +1,5 @@
+package WakfuPackets;
+
+public enum OutPacketsEnum {
+	
+}

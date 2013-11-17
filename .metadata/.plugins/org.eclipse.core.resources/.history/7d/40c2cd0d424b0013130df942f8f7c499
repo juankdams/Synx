@@ -1,0 +1,314 @@
+package ConfigurationObjects;
+
+import static Enums.CharacteristicType.INVOCATIONS_MAX;
+import static Enums.CharacteristicType.LIFE_POINTS;
+import static Enums.CharacteristicType.PA;
+import static Enums.CharacteristicType.PM;
+import static Enums.CharacteristicType.PROSPECTION;
+import static Enums.CharacteristicType.SPELL_POINTS;
+import static Enums.CharacteristicType.STATS_POINTS;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import Constants.CItems;
+import Constants.Constants;
+import Core.Syn;
+import Enums.CharacteristicType;
+import GameObjects.GSpell;
+import GameObjects.GWorld;
+import Misc.Utils;
+
+public class Classe {
+	public static Logger log = LoggerFactory.getLogger(Classe.class);
+	
+	
+	
+	//Variables-----------------------------------------------------------------------------------------------------
+	
+	public byte ID = 1;//Genre féca =1 , osa = 2, enu = 3, etc
+	public String name = "Feca";
+	public GSpell[] startSpells = null;
+	public GSpell[] learnableSpells = null;
+	public short[] spellLearningLevels = {1,3,6,9,13,17,21,26,31,36,42,48,54,60,70,80,90,100,200};
+	public byte[] startEmotes = {0,1};
+	public short maxEnergy = 10000;
+	public short startPods = 1000;
+	public long startKamas = 0;
+	public short startLevel = 1;
+	public short startMap = 7411;
+	public short startCell = 315;
+	//public String startChannels = "*#%!pi$:?";
+	/**TemplateID, Qty ; etc*/
+	public int startItems[][] = new int[0][0];
+	/**Rates de : Damage, Armure, Soin, esquivePA, esquivePM, tacle, CC, EC*/
+	public double[] specialRates = {1,1,1,1,1,1,1,1}; 
+	
+	/** { CharacteristicTypeID,  Quantity } */
+	public HashMap<CharacteristicType, Short> startStats2 = new HashMap<CharacteristicType, Short>();
+	//public double[][] startStats = {{PROSPECTION.get(),100}, {PA.get(),6}, {PM.get(),3}, {LIFE_POINTS.get(),50}, {INVOCATIONS_MAX.get(),1}};
+	
+	/** { CharacteristicTypeID,  Quantity/Level } */
+	// v Ici, 1PA/100lvl, ensuite les statsPoints ensuite les spellPoint et les LifePoint (5/lvl, 1/lvl, 5/lvl)
+	//public double[][] gainedStatsPerLevel = {{PA.get(), 1/100}, {STATS_POINTS.get(),5}, {SPELL_POINTS.get(),1}, {LIFE_POINTS.get(),5}};
+	public HashMap<CharacteristicType, Double> gainedStatsPerLevel = new HashMap<CharacteristicType, Double>();
+	public short paliersStats[][][] = 
+		{//Classe Feca
+			{{0, 2}, {50, 3}, {150, 4}, {250, 5}},//Force
+			{{0, 1}},//Vitalite
+			{{0, 3}},//Sagesse
+			{{0, 1}, {20, 2}, {40, 3}, {60, 4}, {80, 5}},//Chance
+			{{0, 1}, {20, 2}, {40, 3}, {60, 4}, {80, 5}},//Agilite
+			{{0, 1}, {100, 2}, {200, 3}, {300, 4}, {400, 5}}//Intelligence
+		};
+	/** { { minPA, minPM }, { maxPA, maxPM } } (min 0 et max 126 par défaut)*/
+	public byte minMaxPaPm[][] = {{0,0},{126,126}};
+	/** Bâton Baguette Epée Marteau	Dague Pelle	Arc	Hâche */
+	public byte weaponDamageMultiplicators[] = {100,100,100,100,100,100,100,100};
+	
+	
+	
+	//Constructors-----------------------------------------------------------------------------------------------------
+	
+	public Classe(GWorld w, ResultSet rs) throws SQLException {
+		//Perfs p = new Perfs();
+		this.ID = Byte.parseByte(rs.getString("ID"));
+		this.name = rs.getString("name");
+		this.setStartSpells(w, rs.getString("startSpells").split(","));
+		this.setLearnableSpells(w, rs.getString("learnableSpells").split(","));
+		this.setSpellLearningLevels(rs.getString("spellLearningLevels").split(","));
+		this.setEmotes(rs.getString("startEmotes").split(","));
+		this.maxEnergy = Short.parseShort(rs.getString("maxEnergy"));
+		this.startPods = Short.parseShort(rs.getString("startPods"));
+		this.startKamas = Long.parseLong(rs.getString("startKamas"));
+		this.startLevel = Short.parseShort(rs.getString("startLevel"));
+		this.startMap = Short.parseShort(rs.getString("startMap"));
+		this.startCell = Short.parseShort(rs.getString("startCell"));
+		//this.startChannels = rs.getString("startChannels");
+		this.setStartItems(rs.getString("startItems").split(";"));
+		this.setSpecialRates(rs.getString("rates").split(";"));
+		this.setStartStats(rs.getString("startStats").split(";"));
+		this.setGainedStatsPerLevel(rs.getString("gainedStatsPerLevel").split(";"));
+		this.setMinMaxPaPm(rs.getString("minMaxPaPm"));
+		this.setWeaponDamageMultiplicators(rs.getString("WeaponDamageMultiplicators").split(","));
+		//p.stopTiming("Parsing Classes"); p.restartTiming();
+		//p = null;
+		//TODO setPaliersStats
+	}
+	
+	
+	
+	//Functions-----------------------------------------------------------------------------------------------------
+	
+	
+	
+	
+	//Getters-----------------------------------------------------------------------------------------------------
+
+
+	public short getStartStat(CharacteristicType ct){
+		if(startStats2.get(ct) == null){
+			Syn.w("la startStat est null");
+			return 0;
+		}
+		return startStats2.get(ct);
+	}
+	public Double getCharacBoostPerLevel(CharacteristicType ct){
+		if(gainedStatsPerLevel.get(ct) == null){
+			return 0.0;
+		}
+		return gainedStatsPerLevel.get(ct);
+	}
+	/** Bâton Baguette Epée Marteau	Dague Pelle	Arc	Hache */
+	public int getWeaponDamageMultiplicator(short weaponTypeID){
+		switch(weaponTypeID){
+			case CItems.ITEM_TYPE_BATON: 	return weaponDamageMultiplicators[0];
+			case CItems.ITEM_TYPE_BAGUETTE: return weaponDamageMultiplicators[1];
+			case CItems.ITEM_TYPE_EPEE: 	return weaponDamageMultiplicators[2];
+			case CItems.ITEM_TYPE_MARTEAU: 	return weaponDamageMultiplicators[3];
+			case CItems.ITEM_TYPE_DAGUES: 	return weaponDamageMultiplicators[4];
+			case CItems.ITEM_TYPE_PELLE: 	return weaponDamageMultiplicators[5];
+			case CItems.ITEM_TYPE_ARC: 		return weaponDamageMultiplicators[6];
+			case CItems.ITEM_TYPE_HACHE: 	return weaponDamageMultiplicators[7];
+			default: return 90;
+		}	
+	}
+
+	public GSpell getSpellLearningAtLevel(short level){
+		for(int i = spellLearningLevels.length-1; i >= 0; i--){
+			if(spellLearningLevels[i] == level){
+				return learnableSpells[i];
+			}
+		}
+		return null;
+	}
+	
+	//Setters-----------------------------------------------------------------------------------------------------
+
+	
+	private void setWeaponDamageMultiplicators(String[] wdm){
+		byte index = 0;
+		weaponDamageMultiplicators = new byte[wdm.length];
+		for(String s : wdm){
+			if(Pattern.matches(Constants.isNumberPattern, s)){
+				weaponDamageMultiplicators[index] = Byte.parseByte(s);
+				index++;
+			}
+		}
+	}
+	
+	private void setEmotes(String[] strEmotes) {
+		byte index = 0;
+		startEmotes = new byte[strEmotes.length];
+		for(String s : strEmotes){
+			if(Pattern.matches(Constants.isNumberPattern, s)){
+				startEmotes[index] = Byte.parseByte(s);
+				index++;
+			}
+		}
+	}
+	
+	private void setLearnableSpells(GWorld w, String[] split){
+		try{
+			learnableSpells = new GSpell[split.length];
+			for(int i = split.length-1; i >= 0; i--){
+				this.learnableSpells[i] = w.getSpell(Short.parseShort(split[i]))[0];
+			}
+		}catch(Exception e){
+			log.error("Classe.setLearnableSpells: une des valeurs de learnableSpell n'est pas parsable, on met les valeures par défaut");
+			this.learnableSpells = new GSpell[]{};
+		}
+	}
+	
+	private void setStartSpells(GWorld w, String[] split){
+		try{
+			startSpells = new GSpell[split.length];
+			for(int i = split.length-1; i >= 0; i--){
+				if(Utils.isParsableInteger(split[i])){
+					this.startSpells[i] = w.getSpell(Short.parseShort(split[i]))[0];
+				}else{
+					Syn.d("");
+				}
+			}
+		}catch(Exception e){
+			log.error("Classe.setStartSpells: une des valeurs de startSpell n'est pas parsable, on met les valeures par défaut");
+			this.startSpells = new GSpell[]{};
+		}
+	}
+	
+	private void setGainedStatsPerLevel(String[] split) {
+		gainedStatsPerLevel.put(PA, 0.01);
+		gainedStatsPerLevel.put(SPELL_POINTS, 1.0);
+		gainedStatsPerLevel.put(STATS_POINTS, 5.0);
+		gainedStatsPerLevel.put(LIFE_POINTS, 5.0);
+		try{
+			for(int i = split.length-1; i >= 0; i--){
+				gainedStatsPerLevel.put(CharacteristicType.valueOf(split[i].substring(0, split[i].indexOf(","))), Double.parseDouble(split[i].substring(split[i].indexOf(",")+1)));
+				//this.gainedStatsPerLevel[i][0] = CharacteristicType.valueOf(split[i].substring(0, split[i].indexOf("_"))).get();
+				//this.gainedStatsPerLevel[i][1] = Double.parseDouble(split[i].substring(split[i].indexOf("_")+1));
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			log.error("Classe.setGainedStatsPerLevel: une des valeurs de startStat n'est pas parsable en Double, on met les valeures par défaut");
+			//gainedStatsPerLevel = new double[][]{{PA.get(), 1/100}, {STATS_POINTS.get(),5}, {SPELL_POINTS.get(),1}, {LIFE_POINTS.get(),5}};
+		}
+	}
+	
+	private void setStartStats(String[] split) {
+		startStats2.put(PROSPECTION, (short)100);
+		startStats2.put(PA, (short)6);
+		startStats2.put(PM, (short)3);
+		startStats2.put(INVOCATIONS_MAX, (short)1);
+		startStats2.put(LIFE_POINTS, (short)50);
+		try{
+			for(int i = split.length-1; i >= 0; i--){
+				//this.startStats[i][0] = CharacteristicType.valueOf(split[i].substring(0, split[i].indexOf(","))).get();
+				//this.startStats[i][1] = Double.parseDouble(split[i].substring(split[i].indexOf(",")+1));
+				startStats2.put(
+						CharacteristicType.valueOf(split[i].substring(0, split[i].indexOf(","))), 
+						Short.parseShort(split[i].substring(split[i].indexOf(",")+1)));
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			log.error("Classe.setStartStats: une des valeurs de startStat n'est pas parsable en Short, on met les valeures par défaut");
+			//{PA.get(),6}, {PM.get(),3}, {LIFE_POINTS.get(),50}};
+			//startStats = new double[][]{{PROSPECTION.get(),100}, {PA.get(),6}, {PM.get(),3}, {LIFE_POINTS.get(),50}, {INVOCATIONS_MAX.get(),1}};
+		}
+	}
+
+	private void setSpecialRates(String newRates[]){
+		try{
+			if(newRates.length != specialRates.length){
+				throw new Exception();
+			}
+			for(int i = newRates.length-1; i >= 0; i--){
+				this.specialRates[i] = Double.parseDouble(newRates[i]);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			log.error("Classe.setRates une des valeurs de rates est pas parsable en Double, on les set toutes a 1");
+			for(int i = 0; i <= specialRates.length-1; i++){
+				specialRates[i] = 1;
+			}
+		}
+	}
+	
+	/**
+	 * Set à null si la String[].lenght est 0 (Donc si on ne met aucun startItem)
+	 * Peut aussi setter à null si une exception est lancée.
+	 * @param items - [ID,qty] [ID2,qty2] [ID3,qty3] [ID4,qty4]
+	 */
+	private void setStartItems(String items[]){
+		if(items.length == 0 || items[0].equals("")){
+			startItems = null;
+		}else{
+			try{
+				startItems = new int[items.length][2];
+				for(int i = items.length-1; i >= 0; i--){
+					this.startItems[i][0] = Integer.parseInt(items[i].substring(0, items[i].indexOf(",")));
+					this.startItems[i][1] = Integer.parseInt(items[i].substring(items[i].indexOf(",")+1));
+				}
+			}catch(Exception e){
+				e.printStackTrace();
+				log.debug("Problème à parser les startItems dans le Classe.setStartItems, set à 0 de length avec aucune valeur");
+				startItems = new int[][]{};
+			}
+		}
+	}
+
+	private void setSpellLearningLevels(String[] spellLearningLevels) {
+		try{
+			for(int i = spellLearningLevels.length-1; i >= 0; i--){
+				this.spellLearningLevels[i] = Short.parseShort(spellLearningLevels[i]);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			log.error("Classe.setSpellLearningLevels une des valeurs de rates est pas parsable en Short alors on les set aux valeures par défaut.");
+			this.spellLearningLevels = new short[]{1,3,6,9,13,17,21,26,31,36,42,48,54,60,70,80,90,100,200};
+		}
+	}
+
+	private void setMinMaxPaPm(String maxpapm){
+		try{
+			this.minMaxPaPm[0][0] = Byte.parseByte(maxpapm.substring(0, maxpapm.indexOf(",")));//min pa
+			this.minMaxPaPm[0][1] = Byte.parseByte(maxpapm.substring(maxpapm.indexOf(",")+1, maxpapm.indexOf(";")));//min pm
+			
+			this.minMaxPaPm[1][0] = Byte.parseByte(maxpapm.substring(maxpapm.indexOf(";")+1, maxpapm.lastIndexOf(",")));//max pa
+			this.minMaxPaPm[1][1] = Byte.parseByte(maxpapm.substring(maxpapm.lastIndexOf(",")+1));//max pm
+			//for(int i = maxpapm.length-1; i >= 0; i--){
+			//	this.minMaxPaPm[i] = Byte.parseByte(maxpapm[i]);
+			//}
+		}catch(Exception e){
+			e.printStackTrace();
+			log.error("Classe.setMaxPaPm une des valeurs de pa/pm est pas parsable en Byte alors on les set aux valeures par défaut qui sont max 126pa et max 126pm.");
+			this.minMaxPaPm = new byte[][]{{0,0},{126,126}};
+		}
+	}
+	
+	
+}

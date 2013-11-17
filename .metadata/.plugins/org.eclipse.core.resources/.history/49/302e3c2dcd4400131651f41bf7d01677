@@ -1,0 +1,392 @@
+package Game;
+
+import java.util.ArrayList;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import plugin.Plugins;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Core.Syn;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Handlers.GHandler;
+import Interfaces.IObject;
+import Interfaces.IService;
+import Login.LServer;
+import Misc.LifeRegenerator;
+import Misc.Tests.Perfs;
+import NewThreads.ThreadsManager;
+import Plugins.Managers.ActionsManager;
+import Plugins.Managers.AspectJManager;
+import Plugins.Managers.EffectsManager;
+import Plugins.Managers.FormulingManager;
+import Plugins.Managers.MacroManager;
+import Plugins.Managers.ParsingManager;
+import Plugins.Managers.PluginsManager;
+import Plugins.Managers.ProvidersManager;
+import Plugins.Managers.SystemsManager;
+import SQL.SConfig;
+import SQL.SqlServiceMySql;
+import Servers.Server;
+import ZPlug.MiscEvent;
+
+public abstract class GameServer implements IService, IObject {
+
+		
+	private LServer loginServer = null;
+	private GConfig config = null;
+	private GWorld world = null;
+	private CWorld cWorld = null;
+	private AbstractSqlService sqlService = null;
+	private ScriptsService<ExecutableScript> scripts = null;
+	private PluginsManager pluginsManager = null;
+	
+	private long uptime = System.currentTimeMillis();
+	private byte state = 0;
+	private byte requiredGM = 0;//On peut bloquer l'acces au server pour accepter seulment les GM > requiredGM
+	public int recordConnexion = 0;
+
+	public ArrayList<GClient> clients = null;
+	public ThreadsManager threadsManager = null;
+	public LifeRegenerator lifeRegen = null;
+	public Queue queue = null;
+
+	public ConnexionQueue connexionQueue = null;//TODO objet de ConnexionQueue dans GServer
+	
+	
+	public GameServer(LServer s, GConfig config, CWorld cworld){
+		super();
+		this.loginServer = s;
+		this.config = config;//TODO : continuer la refonte du system de configs
+		this.cWorld = cworld;
+	}
+	
+	@Override
+	/**
+	 * Initialise le GameServer en fonction de la config qui a été donnée.<br>
+	 * Initialize ses propriétés telles le GameWorld, ThreadManager, SqlService, GHandler... <br>
+	 * Charge le reste de sa configuration en BDD SQL.
+	 */
+	public void boot() throws Exception {
+		final GameServer thizRef = this;
+		
+		clients = new ArrayList<GClient>();
+		threadsManager = new ThreadsManager();
+		threadsManager.boot();
+		lifeRegen = new LifeRegenerator();
+		queue = new Queue();
+		
+		Perfs p = new Perfs();
+		sqlService = new SqlServiceMySql(){
+			@Override public void boot() throws Exception{
+				this.c = createConnection(config.getDBIP(), config.getDBName(), config.getDBUser(), config.getDBPass());
+				//this.TIMER(false);
+				c.setAutoCommit(true);
+			}
+		};
+		sqlService.boot();
+		p.stopTiming("Booting de la connection sql d'un GameServer."); p.restartTiming();
+		
+		scripts = new ScriptsService<ExecutableScript>(){
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void boot() throws Exception {
+				SQL.SConfig.loadScripts(thizRef, null);
+			}
+		};
+		scripts.boot();
+		
+		pluginsManager = new PluginsManager(){
+			@Override public void loadPlugins() {
+				SConfig.loadPlugins(thizRef, null);
+				SConfig.loadMacros(thizRef, null);
+				/*if(config.isUseDefaultPlugins()){
+					for(Plugin plug : Syn.Services.defaultPluginsManager.plugins.getPluginManager().getEnablePlugins().values()){
+						if(pluginsManager.plugins.getPluginManager().getPlugin(plug.getInformation().getName()) == null){
+							pluginsManager.plugins.getPluginManager().addPlugin(plug);
+							pluginsManager.plugins.getPluginManager().enablePluginWithoutNotice(plug.getInformation().getName());
+						}
+					}
+					for(Plugin plug : Syn.Services.defaultPluginsManager.plugins.getPluginManager().getDisablePlugins().values()){
+						if(pluginsManager.plugins.getPluginManager().getPlugin(plug.getInformation().getName()) == null){
+							pluginsManager.plugins.getPluginManager().addPlugin(plug);
+						}
+					}
+				}*/
+			}
+		};
+		pluginsManager.boot();
+		pluginsManager.plugins.getPluginManager().callEvent(MiscEvent.Set_GameServer, this);
+		pluginsManager.plugins.getPluginManager().callEvent(MiscEvent.Set_PluginsManager, pluginsManager);
+
+		
+		if(config.ConnexionQueue){ 
+			connexionQueue = new ConnexionQueue(); 
+		}
+		p.stopTiming("Instanciation des objets d'un GameServer."); p.restartTiming();
+		
+		SConfig.load(this);//Champs config par bdd, Charge aussi les données pour le CWorld
+		p.stopTiming("Chargements des donnnées sql d'un GameServer."); p.restartTiming();
+		
+		Syn.d("Finit de créer le GServer id("+this.getID()+") Vous pouvez maintenant le .on();");
+		p.stopTiming("GameServer done.");
+		p = null;
+	}
+
+	@Override
+	/**
+	 * Full reboot! SAuf pour la table game_servers dans le login qui n'est pas rechargée.
+	 * Sauvegarde le GameWorld,<br>
+	 * Off le GameServer,
+	 * Boot.
+	 */
+	public void reboot() throws Exception {
+		this.loginServer.gameServers.remove(this);
+		save();
+		off(false);
+		boot();
+		setState(Constants.CWorld.STATE_ONLINE);
+		this.loginServer.gameServers.add(this);
+	}
+	
+	/** Allume le socket et change l'état du GameServeur en Online. */
+	public void on() {
+		get().start();
+		setState(Constants.CWorld.STATE_ONLINE);
+	}
+	
+	/** Sauvegarde le GameWorld de ce GameServer.  */
+	public void save() {
+		this.setState(Constants.CWorld.STATE_SAVING);
+		this.getWorld().saveAll();
+		this.setState(Constants.CWorld.STATE_ONLINE);
+	}
+	
+	/** 
+	 * Kick tous les clients. <br>
+	 * Éteind le threadManager <br>
+	 * Éteind le Serveur Mina. <br>
+	 * Terminate si l'argument est true. 
+	 */
+	public void off(boolean terminate){
+		Syn.d("GServer.off 1!");
+		this.setState(Constants.CWorld.STATE_OFFLINE);
+		ArrayList<GClient> copy = new ArrayList<GClient>(clients);
+		//copy.addAll(clients);
+		//Collections.copy(copy,clients);
+		synchronized(clients){
+			Syn.d("GServer.off 2!");
+			for(GClient gc : copy){
+				//Kick tout le monde + créé des sheduledTask pour terminate les perso+compte et les save etc.
+				gc.kick();
+				Syn.d("GServer.off 2.5 !");
+			}
+			Syn.d("GServer.off 3 !");
+			this.clients.clear();
+			Syn.d("GServer.off 4 !");
+			this.threadsManager.waitAndOff();//.off();
+			Syn.d("GServer.off 5 !");
+			
+			//try {
+				//Thread.sleep(10000);
+			//} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			get().stop();
+			Syn.d("GServer.off done !");
+			
+			if(terminate){
+				terminate();
+			}
+			Syn.d("GServer.off done !");
+		}
+	}
+	
+	@Override
+	public void terminate() {
+		get().terminate();
+		this.clients = null;
+		this.config = null;
+		this.world.terminate();
+		this.world = null;
+		this.cWorld = null;
+		this.threadsManager = null;
+		this.lifeRegen = null;
+		//this.connexionQueue = null;
+		this.queue = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+
+	
+	public void setWorld(GWorld world) {
+		this.world = world;
+	}
+	public GWorld getWorld() {
+		return world;
+	}
+	
+	
+	/**
+	 * Donne l'uptime en ms
+	 */
+	public long getUptime() {
+		return System.currentTimeMillis()-uptime;
+	}
+
+	/**
+	 * SERVER state et non world state comme on pourrait penser
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population
+	 */
+	public byte getState(){
+		/*
+		OFFLINE((byte)0),
+        ONLINE((byte)1),
+        SAVING((byte)2);
+		 */
+		//getWorld().getcWorld().update(this);
+		return state;
+	}
+	/**
+	 * SERVER state et non world state comme on pourrait penser. ouin mais fuck off, on va faire que cest pareil pcq sinon ca sert à rien ..
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population
+	 */
+	public void setState(byte state){
+		this.state = state;
+		//getWorld().getcWorld().update(this);
+	}
+
+	public ArrayList<GClient> getClients() {
+		return clients;
+	}
+
+	public void setRequiredGM(byte requiredGM) {
+		this.requiredGM = requiredGM;
+	}
+	public byte getRequiredGM() {
+		return requiredGM;
+	}
+
+	public GConfig getConfig() {
+		return config;
+	}
+	public void setConfig(GConfig config) {
+		this.config = config;
+	}
+
+	
+
+	public void setLoginServer(LServer loginServer) {
+		this.loginServer = loginServer;
+	}
+	public LServer getLoginServer() {
+		return loginServer;
+	}
+
+	public void setSqlService(AbstractSqlService sqlService) {
+		this.sqlService = sqlService;
+	}
+	public AbstractSqlService getSqlService() {
+		return sqlService;
+	}
+
+
+
+	public void setPlugins(Plugins plugins) {
+		this.pluginsManager.plugins = plugins;
+	}
+
+	public Plugins getPlugins() {
+		return pluginsManager.plugins;
+	}
+
+	public void setScripts(ScriptsService<ExecutableScript> scripts) {
+		this.scripts = scripts;
+	}
+
+	public ScriptsService<ExecutableScript> getScripts() {
+		return scripts;
+	}
+
+	public void setcWorld(CWorld cWorld) {
+		this.cWorld = cWorld;
+	}
+
+	public CWorld getcWorld() {
+		return cWorld;
+	}
+
+	public Queue getQueue() {
+		return queue;
+	}
+	public void setQueue(Queue queue) {
+		this.queue = queue;
+	}
+	
+	public PluginsManager getPluginsManager(){
+		return this.pluginsManager != null ? this.pluginsManager : Syn.Services.defaultPluginsManager;
+	}
+	public ActionsManager getActionsManager(){
+		return getPluginsManager().getActionsManager();
+	}
+	public AspectJManager getAspectJManager(){
+		return getPluginsManager().getAspectJManager();
+	}
+	public EffectsManager getEffectsManager(){
+		return getPluginsManager().getEffectsManager();
+	}
+	public FormulingManager getFormulingManager(){
+		return getPluginsManager().getFormulingManager();
+	}
+	public MacroManager getMacroManager(){
+		return getPluginsManager().getMacroManager();
+	}
+	public ParsingManager getParsingManager(){
+		return getPluginsManager().getParsingManager();
+	}
+	public SystemsManager getSystemsManager(){
+		return getPluginsManager().getSystemsManager();
+	}
+	public ProvidersManager getProviders(){
+		return getPluginsManager().getProviders();
+	}
+
+	public short getPort() {
+		return get().getPort();
+	}
+	public void setPort(short port) {
+		get().setPort(port);
+	}
+	
+	protected abstract Server get();
+
+	public WakfuGameServer asWakfu(){
+		return (WakfuGameServer) this;
+	}
+	public DofusGameServer asDofus(){
+		return (DofusGameServer) this;
+	}
+
+	/**
+	 * Ce getServerID() est mieux que getID() pcq il renvoie un short au lieu d'un int 
+	 * Donc on évite des éventuels casts en (short) :)
+	 */
+	@Override
+	public short getServerID() { 
+		return this.cWorld.id; 
+	}
+	
+	/** Voir getServerID() */
+	@Override @Deprecated public int getID() { return this.cWorld.id; }
+	@Override @Deprecated public GameServer getServer() { return this; }
+	@Override @Deprecated public void setID(int iD) { }
+	@Override @Deprecated public void setServer(GameServer s) { }
+
+
+
+}

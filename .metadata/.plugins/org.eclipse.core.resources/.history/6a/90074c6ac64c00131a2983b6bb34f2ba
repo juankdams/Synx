@@ -1,0 +1,36 @@
+package GlobalObjects;
+
+
+import Abstractions.AbstractWorld;
+import Constants.CPerso;
+import Constants.CSpells;
+import Game.GameServer;
+import GameClientStrategies.GameClientStrategies;
+import GameObjects.GWorld;
+import SQL.SConfig;
+import GameClientStrategies.GameClientStrategy;
+
+public class GlobalWorld extends AbstractWorld {
+	
+	public GlobalWorld(GameClientStrategy gcs){
+		setStrategy(gcs);
+	}
+
+	public void load(){
+		
+	}
+	
+	
+
+	
+	@Override @Deprecated public int getID() { return 0; }
+	@Override @Deprecated public short getServerID() { return 0; }
+	@Override @Deprecated public GameServer getServer() { return null; }
+	@Override @Deprecated public GWorld getWorld() { return null; }
+	@Override @Deprecated public void setID(int iD) { }
+	@Override @Deprecated public void setServer(GameServer s) { }
+
+
+	
+	
+}

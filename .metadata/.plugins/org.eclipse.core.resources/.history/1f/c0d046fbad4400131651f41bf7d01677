@@ -1,0 +1,36 @@
+package GameClientStrategies;
+
+import java.util.ArrayList;
+
+import GameObjects.Fights.GFight;
+import NewThreads.FightSchedulingStrategies.DelayingFights;
+import NewThreads.FightSchedulingStrategies.FightScheduler;
+import NewThreads.FightSchedulingStrategies.FightSchedulingStrategy;
+
+public enum GameClientStrategies {
+	
+	/*
+	private static int chosenStrategy = 1;
+	
+	/**
+	 * Remember : a policy = a strategy.
+	 * /
+	private static ArrayList<GameClientStrategy> policies = new ArrayList<GameClientStrategy>();
+
+	
+	static{
+		policies.add(new DofusClientStrategy());
+		policies.add(new WakfuClientStrategy());
+	}
+	
+	/**
+	 * @return - The currently adopted strategy
+	 * /
+	public static GameClientStrategy getStrategy(){
+		return policies.get(chosenStrategy);
+	}
+	
+	*/
+	
+	
+}

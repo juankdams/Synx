@@ -1,0 +1,32 @@
+package Wakfu;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import Core.Syn;
+import Handlers.NettyHandler;
+import Login.WakfuLoginClient;
+import io.netty.channel.Channel;
+
+public class WakfuHandler extends NettyHandler {
+	
+	public static final AttributeKey<WakfuLoginClient> CLIENTSESS_ATTR = new AttributeKey<WakfuLoginClient>("ClientSession");
+
+	
+	
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		Channel c = ctx.channel();
+		c.attr(CLIENTSESS_ATTR).setIfAbsent(new WakfuLoginClient(c));
+		Syn.d("A new channel is active: " + ctx.channel());
+	}
+	
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		WakfuLoginClient sess = ctx.channel().attr(CLIENTSESS_ATTR).get();
+		Syn.d("Channel inactive: " + sess);
+		//TODO: deregister from list
+ 	}
+	
+	
+	
+}

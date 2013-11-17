@@ -1,0 +1,219 @@
+package Game;
+
+import static Enums.FightTeamEnum.ATTACKER;
+import static Enums.FightTeamEnum.DEFENDER;
+
+import java.util.concurrent.TimeUnit;
+
+import org.apache.mina.core.session.IoSession;
+
+import Constants.CWorld;
+import Core.Syn;
+import Enums.FightState;
+import Enums.SynActions.MapAction;
+import GameObjects.GPersonnage;
+import GameObjects.GWorld;
+import GameObjects.Fights.GFight;
+import Handlers.GHandler;
+import Interfaces.IObject;
+import LoginObjects.LAccount;
+import NewThreads.Task;
+import Observing.FightDeconnectedObserver;
+
+public class GClient implements IObject {
+
+	private LAccount account = null;
+	private IoSession session = null;
+	private GHandler handler = null;
+	private StringBuilder packetsRECV = new StringBuilder();
+	private String clientKeyID = "";
+	//private byte screenID = 1;
+	
+	
+	/**
+	 * XXX: n'oublie pas la reconnexion en combat qu'il faut fitter dans ca.
+	 */
+	public void terminateLater(){
+		if(account != null){
+			if(getServer().getLoginServer().clientsToTerminate.containsKey(account.getID())){
+				getServer().getLoginServer().clientsToTerminate.get(account.getID()).cancel(false);
+				//LServer.clientsToTerminate.remove(account.getID()); pas besoin, le put l'override.
+			}
+			if(getServer().getState() == CWorld.STATE_OFFLINE){
+				try {
+					this.terminate();
+				} catch (Throwable e) { e.printStackTrace(); }
+			}else{
+				Task<Object> task = getServer().threadsManager.getTaskFactory().newTerminateClientTask(this);
+				getServer().getLoginServer().clientsToTerminate.put(account.getID(),  handler.gServ.threadsManager.executeScheduledTask(task, 1, TimeUnit.MINUTES));
+			}
+		}
+	}
+	
+	/**
+	 * XXX: n'oublie pas la reconnexion en combat qu'il faut fitter dans ca.
+	 */
+	public void kick() {
+		try {
+			Syn.d("Kicking client "+session.getId()+".");
+			GFight f = null;
+			GPersonnage p = null;
+			if(account != null){
+				p = account.getCurPerso();
+				if(p != null){
+					f = p.getFight();
+					if(f == null || f.getState() != FightState.ACTIVE.get()){//Si fight null ou pas active
+						p.getWorld().removePerso(p);
+						if(p.getMap() != null){
+							p.getMap().updateSpriteList(MapAction.REMOVE_SPRITE, p);
+						}
+						if(f != null){
+							//Si combat en phase d'init ou placement ou finisehd: quitte définitivement le combat.
+							SM.Game.GM_REMOVE(p.getMap(), p);//désaffiche le perso aux combattants
+							int itemID = f.getCharacterTeamID(p);
+							if(f.getTeams().get(itemID).size() == 1  //(1 pcq si on enlève le perso, il restera 0)
+								&& (itemID == ATTACKER.ordinal() || itemID == DEFENDER.ordinal())){
+								f.endFight();
+							}
+							f.getTeams().get(itemID).remove(p);//enlève le perso de la team
+							
+						}
+						//enlève le perso du world pour le déconnecter (reste dans laccount.persolist)
+						//  -> donne possibilité de le supprimer, 
+					}else if(f != null || p.isInSellingMode()){
+						if(f != null){
+							f.getStateMachine().addObserver(new FightDeconnectedObserver(p));
+							//NewThreads.FightSchedulingStrategies.FightSchedulingStrategies.getStrategy().finish(f);
+						}
+						//Laisse perso dans world et ds map pour pouvoir reconnecter en combat/marchand
+						//PERSO DANS WORLD.HASHMAP = PERSO CONNECTÉ (meme si yes déco en cbt)
+						//+ laisse l'affichage et tout.
+					}
+				}
+			}
+			if(session != null && session.isConnected()){
+				session.removeAttribute("client");
+				session.close(true);
+			}
+			//if(this.handler != null){
+			//	this.handler.gServ.clients.remove(this);
+			//}
+			if(f == null){
+				terminateLater();
+			}
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+	/**
+	 * Quand le personnage se déconnecte en combat
+	 */
+	public void kickWithReco(){
+		
+	}
+
+	public void setAccount(LAccount account) {
+		this.account = account;
+	}
+
+	public LAccount getAccount() {
+		return account;
+	}
+
+	public void setSession(IoSession session) {
+		this.session = session;
+	}
+
+	public IoSession getSession() {
+		return session;
+	}
+
+	public void setHandler(GHandler handler) {
+		this.handler = handler;
+	}
+
+	public GHandler getHandler() {
+		return handler;
+	}
+
+	//public void setScreenID(byte screenID) {
+	//	this.screenID = screenID;
+	//}
+
+	//public byte getScreenID() {
+	//	return screenID;
+	//}
+
+	public void setPacketsRECV(StringBuilder packetsRECV) {
+		this.packetsRECV = packetsRECV;
+	}
+
+	public StringBuilder getPacketsRECV() {
+		return packetsRECV;
+	}
+
+	public void setClientkeyID(String clientKeyId) {
+		this.clientKeyID = clientKeyId;
+	}
+	public String getClientkeyID() {
+		return this.clientKeyID;
+	}
+
+
+	@Override @Deprecated
+	public int getID() { return 0; }
+	@Override @Deprecated
+	public void setID(int iD) { }
+	@Override @Deprecated
+	public void setServer(GameServer s) { }
+	
+	@Override
+	/**
+	 * return getAccount.getServerID();
+	 */
+	public short getServerID() {
+		return getAccount().getServerID();
+	}
+
+	@Override
+	/**
+	 * return getAccount.getServer();
+	 */
+	public GameServer getServer() {
+		return getAccount().getServer();
+	}
+
+	@Override
+	/**
+	 * return getAccount.getWorld();
+	 */
+	public GWorld getWorld() {
+		return getAccount().getWorld();
+	}
+
+	@Override
+	public void terminate() throws Throwable {
+		for(GPersonnage p : getAccount().getPersos()){
+			if(p != null){
+				try {
+					p.terminate();
+					p = null;
+				} catch (Throwable e) {e.printStackTrace();}
+			}
+		}
+		getServer().getLoginServer().clientsToTerminate.remove(getAccount().getID());
+		getAccount().terminate();
+		getSession().removeAttribute("client");
+		setAccount(null);
+		setSession(null);
+		setHandler(null);
+		setPacketsRECV(null);
+		setClientkeyID(null);
+	}
+	
+	public boolean isTerminated(){
+		return (session == null && handler == null && account == null);
+	}
+
+
+
+}

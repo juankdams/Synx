@@ -1,0 +1,288 @@
+package Game;
+
+import java.util.ArrayList;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import plugin.Plugins;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import Core.Syn;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Handlers.GHandler;
+import Interfaces.IService;
+import Login.LClient;
+import Login.LServer;
+import Misc.LifeRegenerator;
+import Misc.Tests.Perfs;
+import NewThreads.ThreadsManager;
+import Plugins.Managers.ActionsManager;
+import Plugins.Managers.AspectJManager;
+import Plugins.Managers.EffectsManager;
+import Plugins.Managers.FormulingManager;
+import Plugins.Managers.MacroManager;
+import Plugins.Managers.ParsingManager;
+import Plugins.Managers.PluginsManager;
+import Plugins.Managers.ProvidersManager;
+import Plugins.Managers.SystemsManager;
+import SQL.SConfig;
+import SQL.SqlServiceMySql;
+import Servers.MinaServer;
+import ZPlug.MiscEvent;
+
+public class DofusGameServer extends GameServer { //extends MinaServer /*CServers*/ implements GServer {
+
+
+	public LifeRegenerator lifeRegen = null;
+	
+	
+	public DofusGameServer(LServer s, GConfig config, CWorld cworld){
+		super(s, config, cworld);
+	}
+	
+	@Override
+	/**
+	 * Initialise le GameServer en fonction de la config qui a été donnée.<br>
+	 * Initialize ses propriétés telles le GameWorld, ThreadManager, SqlService, GHandler... <br>
+	 * Charge le reste de sa configuration en BDD SQL.
+	 */
+	public void boot() throws Exception {
+		super.boot();
+		lifeRegen = new LifeRegenerator();
+		setHandler( new GHandler(this) );
+	}
+
+	@Override
+	/**
+	 * Full reboot! SAuf pour la table game_servers dans le login qui n'est pas rechargée.
+	 * Sauvegarde le GameWorld,<br>
+	 * Off le GameServer,
+	 * Boot.
+	 */
+	public void reboot() throws Exception {
+		this.loginServer.gameServers.remove(this);
+		save();
+		off(false);
+		boot();
+		setState(Constants.CWorld.STATE_ONLINE);
+		this.loginServer.gameServers.add(this);
+	}
+	
+	/** Allume le socket et change l'état du GameServeur en Online. */
+	public void on() {
+		start();
+		setState(Constants.CWorld.STATE_ONLINE);
+	}
+	
+	/** Sauvegarde le GameWorld de ce GameServer.  */
+	public void save() {
+		this.setState(Constants.CWorld.STATE_SAVING);
+		this.getWorld().saveAll();
+		this.setState(Constants.CWorld.STATE_ONLINE);
+	}
+	
+	/** 
+	 * Kick tous les clients. <br>
+	 * Éteind le threadManager <br>
+	 * Éteind le Serveur Mina. <br>
+	 * Terminate si l'argument est true. 
+	 */
+	public void off(boolean terminate){
+		Syn.d("GServer.off 1!");
+		this.setState(Constants.CWorld.STATE_OFFLINE);
+		ArrayList<GClient> copy = new ArrayList<GClient>(clients);
+		//copy.addAll(clients);
+		//Collections.copy(copy,clients);
+		synchronized(clients){
+			Syn.d("GServer.off 2!");
+			for(GClient gc : copy){
+				//Kick tout le monde + créé des sheduledTask pour terminate les perso+compte et les save etc.
+				gc.kick();
+				Syn.d("GServer.off 2.5 !");
+			}
+			Syn.d("GServer.off 3 !");
+			this.clients.clear();
+			Syn.d("GServer.off 4 !");
+			this.threadsManager.waitAndOff();//.off();
+			Syn.d("GServer.off 5 !");
+			
+			//try {
+				//Thread.sleep(10000);
+			//} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
+			super.stop();
+			Syn.d("GServer.off done !");
+			
+			if(terminate){
+				terminate();
+			}
+			Syn.d("GServer.off done !");
+		}
+	}
+	
+	@Override
+	public void terminate() {
+		super.terminate();
+		this.clients = null;
+		this.config = null;
+		this.world.terminate();
+		this.world = null;
+		this.cWorld = null;
+		this.threadsManager = null;
+		this.lifeRegen = null;
+//		this.connexionQueue = null;
+		this.queue = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) {e.printStackTrace();}
+	}
+	
+
+	
+	public void setWorld(GWorld world) {
+		this.world = world;
+	}
+	public GWorld getWorld() {
+		return world;
+	}
+	
+	
+	/**
+	 * Donne l'uptime en ms
+	 */
+	public long getUptime() {
+		return System.currentTimeMillis()-uptime;
+	}
+
+	/**
+	 * SERVER state et non world state comme on pourrait penser
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population
+	 */
+	public byte getState(){
+		/*
+		OFFLINE((byte)0),
+        ONLINE((byte)1),
+        SAVING((byte)2);
+		 */
+		//getWorld().getcWorld().update(this);
+		return state;
+	}
+	/**
+	 * SERVER state et non world state comme on pourrait penser. ouin mais fuck off, on va faire que cest pareil pcq sinon ca sert à rien ..
+	 * <p>Call le getCWorld().update(this) aussi pour updater la population
+	 */
+	public void setState(byte state){
+		this.state = state;
+		//getWorld().getcWorld().update(this);
+	}
+
+	public ArrayList<GClient> getClients() {
+		return clients;
+	}
+
+	public void setRequiredGM(byte requiredGM) {
+		this.requiredGM = requiredGM;
+	}
+	public byte getRequiredGM() {
+		return requiredGM;
+	}
+
+	public GConfig getConfig() {
+		return config;
+	}
+	public void setConfig(GConfig config) {
+		this.config = config;
+	}
+
+	public short getID() {
+		return this.cWorld.id;
+	}
+
+	public void setLoginServer(LServer loginServer) {
+		this.loginServer = loginServer;
+	}
+	public LServer getLoginServer() {
+		return loginServer;
+	}
+
+	public void setSqlService(AbstractSqlService sqlService) {
+		this.sqlService = sqlService;
+	}
+	public AbstractSqlService getSqlService() {
+		return sqlService;
+	}
+
+
+
+	public void setPlugins(Plugins plugins) {
+		this.pluginsManager.plugins = plugins;
+	}
+
+	public Plugins getPlugins() {
+		return pluginsManager.plugins;
+	}
+
+	public void setScripts(ScriptsService<ExecutableScript> scripts) {
+		this.scripts = scripts;
+	}
+
+	public ScriptsService<ExecutableScript> getScripts() {
+		return scripts;
+	}
+
+	public void setcWorld(CWorld cWorld) {
+		this.cWorld = cWorld;
+	}
+
+	public CWorld getcWorld() {
+		return cWorld;
+	}
+
+	public Queue getQueue() {
+		return queue;
+	}
+	public void setQueue(Queue queue) {
+		this.queue = queue;
+	}
+	
+	public PluginsManager getPluginsManager(){
+		return this.pluginsManager != null ? this.pluginsManager : Syn.Services.defaultPluginsManager;
+	}
+	public ActionsManager getActionsManager(){
+		return getPluginsManager().getActionsManager();
+	}
+	public AspectJManager getAspectJManager(){
+		return getPluginsManager().getAspectJManager();
+	}
+	public EffectsManager getEffectsManager(){
+		return getPluginsManager().getEffectsManager();
+	}
+	public FormulingManager getFormulingManager(){
+		return getPluginsManager().getFormulingManager();
+	}
+	public MacroManager getMacroManager(){
+		return getPluginsManager().getMacroManager();
+	}
+	public ParsingManager getParsingManager(){
+		return getPluginsManager().getParsingManager();
+	}
+	public SystemsManager getSystemsManager(){
+		return getPluginsManager().getSystemsManager();
+	}
+	public ProvidersManager getProviders(){
+		return getPluginsManager().getProviders();
+	}
+
+	public void setGameClientStrategy(GameClientStrategy gameClientStrategy) {
+		this.gameClientStrategy = gameClientStrategy;
+	}
+
+	public GameClientStrategy getGameClientStrategy() {
+		return gameClientStrategy;
+	}
+
+}

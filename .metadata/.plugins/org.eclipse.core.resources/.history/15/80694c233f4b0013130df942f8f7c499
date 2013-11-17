@@ -1,0 +1,13 @@
+package GameClientStrategies;
+
+
+public class WakfuClientStrategy extends GameClientStrategy {
+
+
+	public WakfuClientStrategy(){
+		this.strategy = GameClientStrategies.WakfuClientStrategy;
+	}
+
+
+
+}

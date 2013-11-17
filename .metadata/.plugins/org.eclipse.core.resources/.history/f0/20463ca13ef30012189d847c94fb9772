@@ -1,0 +1,20 @@
+package Tests;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import java.io.*;
+import com.jpackages.jflashplayer.*;
+
+class FlashTest{
+
+	public static void main(String[] args){
+		
+		FlashPanel.setRequiredFlashVersion("9");
+		FlashPanel flashPanel = new FlashPanel(new File("Movie.swf")); // loaded movie}
+	}
+
+}
+
+
+//Read more: http://www.ehow.com/how_12187074_embed-java-flash.html#ixzz2Zpbcgge1

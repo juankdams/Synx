@@ -1,0 +1,14 @@
+package GameClientStrategies;
+
+public abstract class GameClientStrategy {
+	
+	private GameClientStrategies enu;
+	
+	
+	
+	public String getName(){
+		return enu.name();
+	}
+	
+
+}

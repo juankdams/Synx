@@ -1,0 +1,64 @@
+package Plugins.Managers;
+
+
+import Providers.*;
+import Interfaces.IService;
+
+public class ProvidersManager {
+	
+	protected GMonsterProvider monsters = new GMonsterProvider(); 
+	protected GPersonnageProvider personnages = new GPersonnageProvider(); 
+	protected GMonsterGroupProvider monsterGroups = new GMonsterGroupProvider();
+	protected GDropItemProvider dropItems = new GDropItemProvider();
+	protected GItemProvider items = new GItemProvider();
+	protected IAProvider intelligences = new IAProvider();
+	protected GBuffProvider buffs = new GBuffProvider();
+	protected GDropProvider drops = new GDropProvider();
+	protected GEffectProvider effects = new GEffectProvider();
+	protected GSpellProvider spells = new GSpellProvider();
+	//protected GameResultProvider gameResults = new GameResultProvider();
+	
+	public ProvidersManager(){
+		
+	}
+
+
+	public GMonsterProvider provideMonster() {
+		return monsters;
+	}
+	public GPersonnageProvider providePerso() {
+		return personnages;
+	}
+	public GMonsterGroupProvider provideMonsterGroup() {
+		return monsterGroups;
+	}
+	public GDropItemProvider provideDropItem() {
+		return dropItems;
+	}
+	public GItemProvider provideItem(){
+		return items;
+	}
+	public IAProvider provideIA(){
+		return intelligences;
+	}
+	public GBuffProvider provideBuff(){
+		return buffs;
+	}
+	//public GameResultProvider provideGameResult() {
+	//	return gameResults;
+	//}
+
+
+	public GDropProvider provideDrop() {
+		return drops;
+	}
+	public GEffectProvider provideEffect() {
+		return effects;
+	}
+	public GSpellProvider provideSpell(){
+		return spells;
+	}
+	
+	
+
+}

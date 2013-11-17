@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!--  Anciennes variables. 
+
+PLUGINS="TRUE"
+
+GConfigName="Syn_config/gconfig.xml"
+LConfigName="Syn_config/lconfig.xml"
+PConfigName="Syn_config/PluginConfig.xml"
+
+BugLogName="Syn_logs/Bug.txt"
+DebugLogName="Syn_logs/Debug.txt"
+TestLogName="Syn_logs/Test.txt"
+ -->
+
+<Config 
+
+
+
+DEBUG="TRUE" 
+ 
+i18nConfigName="Syn_config/i18n.xml"
+WConfigName="Syn_config/worldsstatics.xml"
+AConfigName="Syn_config/aconfig.xml"
+ExceptionsLogName="Syn_logs/Exceptions.xml"
+ 
+DataWorldName="Syn_data/World/"
+DataSynName="Syn_data/Syn/"
+
+emulatorName="Syn"
+emulatorCreatorName="Crystal"
+
+synDBIP="127.0.0.1"
+synDBName="syn"
+synDBUser="root"
+synDBPass=""
+
+zenDBIP="127.0.0.1"
+zenDBName="zenremake"
+zenDBUser="root"
+zenDBPass=""
+
+>
+	
+	<GameClientStrategies>
+		<DofusClientStrategy 
+			globalDBIP="127.0.0.1"
+			globalDBName="syn_global_dofus"
+			globalDBUser="root"
+			globalDBPass=""
+		></DofusClientStrategy>
+		<WakfuClientStrategy
+			globalDBIP="127.0.0.1"
+			globalDBName="syn_global_wakfu"
+			globalDBUser="root"
+			globalDBPass=""
+		></WakfuClientStrategy>
+	</GameClientStrategies>
+	
+	
+</Config>

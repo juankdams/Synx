@@ -1,0 +1,151 @@
+package GameObjects;
+
+import Abstractions.CombativeCharacter;
+import GameObjects.Fights.GFight;
+import Misc.Dice;
+import Misc.Jet;
+import Plugins.Interfaces.IEffectType;
+import Plugins.Managers.EffectsManager;
+
+public class GBuff extends GEffect{
+
+	public static enum BuffApplicationType{
+		TurnBegin,
+		TurnEnd,
+		OneShot,
+		Never;
+	}
+	
+	
+	private byte remainingTurns = 0;
+	private byte applicationMode = 0;
+	/*
+	 * 0 = apply au début du tour, 
+	 * 1 = apply à la fin du tour, 
+	 * 2 = apply juste une fois lorsqu'il recoit le buff
+	 * 	     |-> c'est juste par exemple un changement de stats pendant X tours 
+	 * 		 |-> (ex: un boost +X intel ou un renvoi de dom comme Contre, etc)
+	 */
+	
+	
+	/**
+	 * Créé un buff à partir d'un effet.
+	 */
+	public static GBuff createNew(GEffect e, byte remainingTurns, byte applicationMode){
+		GBuff b = new GBuff();
+		b.setEffectID(e.getEffectID());
+		b.setSpecialArg(new String(e.getSpecialArg()));
+		if(e.getParams().isDice()){
+			b.setDice(new Dice(e.getDice().getNumberOfDices(), e.getDice().getNumberOfFaces(), e.getDice().getBaseBoost()));
+		}else if(e.getParams().isJet()){
+			b.setJet(new Jet(e.getJet().getValue()));
+		}
+		b.remainingTurns = remainingTurns;
+		b.applicationMode = applicationMode;
+		return b;
+	}
+	/**
+	 * Créé un buff à partir d'un effet (Pareil que l'autre createNew, mais en utilisant une enum).
+	 */
+	public static GBuff createNew(GEffect e, byte remainingTurns, BuffApplicationType applicationMode){
+		return createNew(e, remainingTurns, (byte)applicationMode.ordinal());
+	}
+	
+
+	/**
+	 * Pour créer un nouveau GEffect avec des stats 
+	 * <p>Si c'est (p.Ex) un effet de dommage d'arme (DamagingEffect), les valeurs sont gardées telles quelles
+	 * <p>Sinon, on prend un jet aléatoire possible à partir de ces stats et on le set au baseBoost du Dice. Puis On set à 0 le nombre de dés et de faces dans l'objet Dice 
+	 * <p>Donc dans le premier cas, en jeu, ca va afficher X à Y  (Ex 1d50+150). Dans le deuxieme cas ca va afficher X tout cours (Ex 0d0+187).
+	 */
+	public static GEffect createNew(IEffectType iet, Dice dice, Jet jet, EffectsManager em){
+		GEffect e = new GEffect();
+		if(dice != null) e.setParams(dice);
+		if(jet != null) e.setParams(jet);
+		e.setEffectID(iet.getID());
+		e.setSpecialArg(null);
+		return e;
+	}
+	
+
+	/**
+	 * @note - Voir getRemainingTurns() pour des précisions/informations sur ce système spécial.
+	 */
+	public void setRemainingTurns(byte remainingTurns) {
+		this.remainingTurns = remainingTurns;
+	}
+	/**
+	 * @note - Voir getRemainingTurns() pour des précisions/informations sur ce système spécial.
+	 */
+	public void decrementRemainingTurns() {
+		this.remainingTurns--;
+	}
+	/**
+	 * @note - Ça peut tout aussi bien être un vrai nombre de tours (en combat)
+	 * 		   que le nombre de combat restant (style bonbon) 
+	 * 		   ou de changement de map restant (idée comme ça)
+	 */
+	public byte getRemainingTurns() {
+		return remainingTurns;
+	}
+
+	/**
+	 * @note - Voir getApplicationMode() pour des précisions/informations sur ce système spécial. 
+	 */
+	public void setApplicationMode(byte applicationMode) {
+		this.applicationMode = applicationMode;
+	}
+	/**
+	 * 0 = apply au début du tour, <br>
+	 * 1 = apply à la fin du tour, <br> 
+	 * 2 = apply juste une fois lorsque le joueur recoit le buff <br>
+	 * Voir l'enum "BuffApplicationType" sous-créée dans la classe GBuff
+	 */
+	public byte getApplicationMode() {
+		return applicationMode;
+	}
+	
+	
+	/**
+	 * Applique le buff à la personne le possédant ou call le debuff s'il ne reste plus de tours.
+	 * @param curFighter - Character possédant le buff et à qui il sera appliqué
+	 * @param f - Fight du character.
+	 * @param bat - BuffApplicationType à respecter: si c'est en début de tour, en fin de tour, une seule fois au lancement du buff...
+	 */
+	public void apply(CombativeCharacter curFighter, GFight f, BuffApplicationType bat){
+		if(this.getRemainingTurns() == 0){
+			this.debuff(curFighter);
+		}else
+		if(this.getApplicationMode() == bat.ordinal()){
+			f.getServer().getEffectsManager().applyEffect(this, curFighter, curFighter, null);
+		}
+	}
+	/**
+	 * Applique l'effet opposé au buff si necéssaire (Ex: redonne l'intelligence perdue) <br>
+	 * Et enlève le buff de la liste de buffs du character.
+	 * @param c - Le character possédant le buff.
+	 */
+	public void debuff(CombativeCharacter c){
+		if(applicationMode == BuffApplicationType.OneShot.ordinal()){
+			if(this.getEffectType(c.getServer().getEffectsManager()).getOppositeEffect() != null){
+				//Applique l'effet contraire (Ex: redonne l'intelligence perdue)
+				GEffect opposite = this.copy();
+				opposite.setEffectID(this.getEffectType(c.getServer().getEffectsManager()).getOppositeEffect().getID());
+				c.getServer().getEffectsManager().applyEffect(opposite, c, c, null);
+			}else{
+				//Fait rien, juste removeBuff plus bas.
+			}
+		}
+		c.removeBuff(this);
+	}
+	
+	@Override
+	public String toString(){
+		return "{ Buff : EffectTypeID ("+this.getID()+"), RemainingTurns ("+this.remainingTurns+"),  ApplicationMode ("+this.applicationMode+"), "
+		+ (this.getParams().isJet() ? 
+				"Jet ("+this.getJet().getValue()+")"
+				: 
+				"Dice ("+this.getDice().getString()+") }");
+	}
+	
+}

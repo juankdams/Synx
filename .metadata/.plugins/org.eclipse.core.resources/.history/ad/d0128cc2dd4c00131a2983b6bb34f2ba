@@ -1,0 +1,22 @@
+package Providers;
+
+import Login.DofusLoginServer;
+import Login.LServer;
+import Login.WakfuLoginServer;
+
+public interface LoginServerProvider {
+	
+	public LServer createNew(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss);
+	
+	private static class DofusLServerProvider implements LServerProvider {
+		public LServer createNew(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss) {
+			return new DofusLoginServer(ID, port, dbHostIP, dbName, dbUser, dbPass, ownerss);
+		}
+	}
+	private static class WakfuLServerProvider implements LServerProvider {
+		public LServer createNew(short ID, short port, String dbHostIP, String dbName, String dbUser, String dbPass, String ownerss) {
+			return new WakfuLoginServer(ID, port, dbHostIP, dbName, dbUser, dbPass, ownerss);
+		}
+	}
+
+}

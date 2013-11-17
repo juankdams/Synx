@@ -1,0 +1,27 @@
+package Wakfu;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.MessageBuf;
+import io.netty.channel.ChannelHandlerContext;
+import Login.WakfuLoginClient;
+import Servers.Netty.Decoder;
+
+public class WakfuDecoder extends Decoder {
+
+	@Override
+	protected void decode(ChannelHandlerContext ctx, ByteBuf msg, MessageBuf<Object> out) throws Exception {
+		WakfuLoginClient sess = ctx.channel().attr(WakfuHandler.CLIENTSESS_ATTR).get();
+		if (sess != null && msg.readableBytes() > 0) {
+			int size = msg.readUnsignedShort();
+			int type = msg.readByte();
+			int opcode = msg.readUnsignedShort();
+			
+			if (INCOMING_PACKET_MAP.containsKey(opcode)) {
+				INCOMING_PACKET_MAP.get(opcode).decode(sess, msg, size);
+			} else {
+				logger.info("Incoming packet. Size: " + size + ", Type: " + type + ", Opcode: " + opcode);
+			}
+		}
+	}
+
+}

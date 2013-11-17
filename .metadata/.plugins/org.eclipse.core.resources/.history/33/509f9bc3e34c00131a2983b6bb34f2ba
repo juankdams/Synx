@@ -1,0 +1,9 @@
+package com.velocity.jwakfu.model.packetwriters;
+
+import com.velocity.jwakfu.io.OutPacket;
+
+public class GameCharacterPacketWriter {
+	
+	
+
+}

@@ -1,0 +1,29 @@
+int emote = 0;//0 pour ne pas afficher s'assoir dans la liste ;)
+//1 => sit
+//2 => signe de la main
+//4 => applaudir
+//...
+
+public int getEmotes() {
+        return emotes;
+    }
+
+    public void setEmotes(int emotes) {
+        this.emotes = emotes;
+    }
+    
+    public void addEmote(int emote) {
+        emotes |= emote;
+    }
+    
+    public void addEmoteNbr(int emote) {
+        emotes |= (1 << emote);
+    }
+    
+    public boolean hasEmote(int emote) {
+        return (emotes & emote) > 0;
+    }
+    
+    public boolean hasEmoteNbr(int emote) {
+        return (emotes & (1 << emote)) > 0;
+    }

@@ -1,0 +1,188 @@
+package DofusParsers;
+
+import Core.Syn;
+import Game.DofusGameClient;
+import Game.GameServer;
+import Interfaces.IClient;
+import Login.LoginServer;
+import Management.Users.User;
+import Plugins.Abstractions.AbstractPacketParser;
+import Tool.TClient;
+
+/**
+ * Parser de ma conception pour les nouveaux packets que j'ajoute dans mon client. (Ex: stats 2.0, ladders, ...)
+ * @author Robyn
+ *
+ */
+public class CrystalParser extends AbstractPacketParser<TClient, String> {
+
+	//Pour le ToolServer/Client
+	public static final String header = "@";
+	public static final String packetDelimiter = "\n";
+	public static final String separator = "#";
+	public static final String separator1 = ";";
+	public static final String separator2 = ",";
+	public static final int connexion = 1;
+	public static final int listOwnedLoginServers = 2;
+	public static final int ownsLogin = 3;
+	public static final int bootLogin = 4;
+	public static final int onLogin = 5;
+	public static final int offLogin = 6;
+	public static final int rebootLogin = 7;
+	
+	@Override
+	public boolean parse(TClient c, String packet){
+		String sid = packet.substring(1, 4);
+		int id = Integer.parseInt(sid);
+		if(c.getUser() == null && id != connexion){
+			c.kick(); return false;
+		}
+		switch(id){
+			case connexion:
+				String username = packet.substring(4, packet.indexOf(separator));
+				String password = packet.substring(packet.indexOf(username)+username.length()+1, packet.length());
+				String ip = c.getSession().getRemoteAddress().toString().split(":")[0].substring(1);
+				User u = Syn.Services.users.get(username, password, ip);
+				SM.Sender.send(c.getSession(), header + sid + (u != null) + packetDelimiter );
+				if(u != null){
+					c.setUser(u);
+					return true;
+				}
+				c.kick(); 
+				return false;
+			case listOwnedLoginServers:
+				//@002# loginid,loginport ; gameid,gametruc ; gameid,gametruc # loginid,loginport ; gameid etc
+				String servers = "";
+				for(Integer i : c.getUser().ownedLoginServers){
+					//TODO : Corriger le packet de listOwnedLoginServers (002) dans les ToolServers/Clients
+					LoginServer lserv = Syn.Services.serversService.loginServers.get(i.shortValue());
+					if(lserv == null){
+						continue;
+					}
+					if(servers.length() > 0){
+						servers += separator;
+					}
+					servers += lserv.ID + separator2 + lserv.getPort();
+					String games = "";
+					for(GameServer g : lserv.gameServers){
+						if(servers.length() > 0){
+							servers += separator1;
+						}
+						servers += g.getServerID() 	+ separator2 
+						+ g.getPort()  		 		+ separator2
+						+ g.getState()				+ separator2
+						+ g.getcWorld().name 		+ separator2 
+						+ g.getcWorld().desc 		+ separator2
+						+ g.getcWorld().type 		+ separator2
+						+ g.getcWorld().population 	+ separator2
+						+ g.getcWorld().communityID + separator2
+						+ g.getcWorld().lang 		+ separator2
+						+ g.clients.size() 			+ separator2
+						+ g.recordConnexion  		+ separator2
+						+ g.getUptime()							;
+					}
+					servers += separator1 + games;
+				}
+				SM.Sender.send(c.getSession(), header + sid + servers + packetDelimiter );
+				return true;
+			case ownsLogin:
+			{
+				String loginid = packet.substring(4, packet.length());
+				if(ownsLoginServer(c, loginid)){
+					SM.Sender.send(c.getSession(), header + sid + true + packetDelimiter );
+				}
+				SM.Sender.send(c.getSession(), header + sid + false + packetDelimiter );
+				return false;
+			}
+			case bootLogin:
+			{
+				String loginid = packet.substring(4, packet.length());
+				if(ownsLoginServer(c, loginid)){
+					LoginServer s = Syn.Services.serversService.loginServers.get(Short.parseShort(loginid));
+					try {
+						s.boot();
+					} catch (Exception e) { e.printStackTrace(); }
+				}
+				break;
+			}
+			case onLogin:
+			{
+				String loginid = packet.substring(4, packet.length());
+				if(ownsLoginServer(c, loginid)){
+					LoginServer s = Syn.Services.serversService.loginServers.get(Short.parseShort(loginid));
+					try {
+						s.on();
+					} catch (Exception e) { e.printStackTrace(); }
+				}
+				break;
+			}
+			case offLogin:
+			{
+				String loginid = packet.substring(4, 6);
+				if(ownsLoginServer(c, loginid)){
+					LoginServer s = Syn.Services.serversService.loginServers.get(Short.parseShort(loginid));
+					try {
+						s.off(packet.toLowerCase().contains("true"));
+					} catch (Exception e) { e.printStackTrace(); }
+				}
+				break;
+			}
+			case rebootLogin:
+			{
+				String loginid = packet.substring(4, packet.length());
+				if(ownsLoginServer(c, loginid)){
+					LoginServer s = Syn.Services.serversService.loginServers.get(Short.parseShort(loginid));
+					try {
+						s.reboot();
+					} catch (Exception e) { e.printStackTrace(); }
+				}
+				break;
+			}
+				
+		}
+		return true;
+	}
+
+	
+	public boolean ownsLoginServer(TClient c, String loginid){
+		for(Integer i : c.getUser().ownedLoginServers){
+			if(loginid.equals(""+i)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	public boolean parse(DofusGameClient c, String packet) {
+		switch(packet.charAt(1)){
+			case 'S'://Stats
+				if(packet.charAt(3) == 'E' || false == c.getHandler().gServ.getConfig().isActiveStats2()){
+					return false;
+				}
+				switch(packet.charAt(2)){
+					case 'C'://Calculate
+						//SM.Crystal.SC(c, );
+						/*var infos:Array = oData.split(",");
+						 mytext2.text = infos[0];//capital
+						 lblBoost.text = infos[1];//de combien points on boost
+						 lblTotal.text = infos[2];//le total dans la charac
+						 */
+						break;
+					case 'B'://Boost
+						break;
+					case 'E'://Error
+						break;
+				}
+				break;
+			case 'L'://Ladders
+				
+				break;
+			case 'H'://Heroes
+				
+				break;
+		}
+		return true;
+	}
+
+}

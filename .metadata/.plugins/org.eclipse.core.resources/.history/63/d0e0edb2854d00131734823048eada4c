@@ -1,0 +1,9 @@
+package Game;
+
+import Interfaces.IClient;
+
+public abstract class GameClient implements IClient {
+
+	
+	
+}

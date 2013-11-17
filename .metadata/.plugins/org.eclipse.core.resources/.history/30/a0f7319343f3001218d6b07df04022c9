@@ -1,0 +1,168 @@
+package Plugins.Managers;
+
+import java.util.ArrayList;
+
+import Abstractions.AbstractCharacter;
+import Abstractions.CombativeCharacter;
+import GameObjects.GEffect;
+import Misc.ParameterHolder;
+import Plugins.Abstractions.AbstractEffectPluginListener;
+import Plugins.Interfaces.IEffectType;
+
+
+public class EffectsManager {
+
+	private AbstractEffectPluginListener aepl = null;
+	
+	
+	public void applyEffect(GEffect e, AbstractCharacter caster, AbstractCharacter target, ParameterHolder eap){
+		aepl.apply(e, caster, target, eap);
+	}
+	
+	
+	//Concerne tous les effets  (Enum SpellEffectType)
+	public IEffectType getEffect(short effectID){
+		return aepl.getEffect(effectID);
+	}
+	public IEffectType[] getEffects(){
+		return aepl.getEffects();
+	}
+	//Concerne seulement quelques effets de dommage (Enum DamagingEffects)
+	public IEffectType getDamagingEffect(short damagingEffectID){
+		return aepl.getDamagingEffect(damagingEffectID);
+	}
+	public IEffectType[] getDamagingEffects(){
+		return aepl.getDamagingEffects();
+	}
+	
+	//Concerne seulement quelques effets de healing (Enum HealingEffects)
+	public IEffectType getHealingEffect(short healingEffectID){
+		return aepl.getHealingEffect(healingEffectID);
+	}
+	public IEffectType[] getHealingEffects(){
+		return aepl.getHealingEffects();
+	}
+	
+	public IEffectType getPAAddEffect(){
+		
+	}
+	public IEffectType getPMAddEffect(){
+		
+	}
+	
+	
+	/**
+	 * Vérifie si l'effet est une effet affectant les pods (AUGMENTS_PODS_X ou REDUCE_PODS_X)
+	 * @param e - L'effet à vérifier
+	 * @return - True s'il est un des deux effets cités plus haut.
+	 */
+	public boolean isPodsEffect(GEffect e){
+		return aepl.isPodsEffect(e);
+	}
+
+	public boolean hasBrokle(CombativeCharacter c){
+		return aepl.hasBrokle(c);
+	}
+	public boolean hasPoisse(CombativeCharacter c){
+		return aepl.hasPoisse(c);
+	}
+	public boolean containsEffectObjetEnclos(ArrayList<GEffect> effects){
+		return aepl.containsEffectObjetEnclos(effects);
+	}
+	public boolean containsDurability(ArrayList<GEffect> effects){
+		return aepl.containsDurability(effects);
+	}
+	public GEffect getDurabilityEffect(ArrayList<GEffect> effects){
+		return aepl.getDurabilityEffect(effects);
+	}
+	
+	@Deprecated
+	public boolean isFixEffectBonus(GEffect ge){
+		return aepl.isFixEffectBonus(ge);
+	}
+	/**
+	 * Si les valeurs (min/max/bonusstatic) de l'effet doivent rester exactement comme le template
+	 * <p> ou si faut prendre un jet aléatoire et le setter à l'effet de l'objet unique
+	 * <p>Ex: pour un effet de +force, faut prendre UN jet aléatoire, l'effet a donc mtn une seule valeur fixe
+	 * <p>	Pour un effet de dommage d'arme, faut laisser le min/max/bonus(dans le Dice)
+	 * @param ge - Le GEffect à tester
+	 * @return - False si c'est un effet du type DamagingEffect (sur Arme) ou HealingEffect (sur Potion,Pain,Arme) ou encore vol de Kamas (sur Arme), etc
+	 */
+	public boolean isFixEffectBonus(short effectTypeID){
+		return aepl.isFixEffectBonus(effectTypeID);
+	}
+	
+	
+	public IEffectType getEffectByHexStringID(String hexID){
+		try{
+			return aepl.getEffect(Short.parseShort(hexID, 16));
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}
+	}
+	/**
+	 * Vérifie si l'effet est un effet d'invocation. 
+	 * <br>Les deux seules options sont pour invoquer une créature ou une double.
+	 */
+	public boolean isSummonsEffect(GEffect e) {
+		return aepl.isSummonsEffect(e);
+	}
+	/**
+	 * Vérifie si l'effet est un effet de pose de glyphe
+	 */
+	public boolean isGlyphEffect(GEffect e){
+		return aepl.isGlyphEffect(e);
+	}
+	/**
+	 * Vérifie si l'effet est un effet de pose de piège
+	 */
+	public boolean isTrapEffect(GEffect e) {
+		return aepl.isTrapEffect(e);
+	}
+	/**
+	 * Vérifie si l'effet est un effet d'incarnation. (Bandit, guns, etc)
+	 */
+	public boolean isIncarnationEffect(GEffect e) {
+		return aepl.isIncarnationEffect(e);
+	}
+	/**
+	 * Vérifie si l'effet est un effet d'armure élémentale. (Armures Féca surtout et qq montres)
+	 */
+	public boolean isElementalArmorEffect(GEffect e) {
+		return aepl.isElementalArmorEffect(e);
+	}
+	/**
+	 * Vérifie si l'effet est un effet d'armure normale. (Momification, Mot de Prévention et qq montres)
+	 */
+	public boolean isNormalArmorEffect(GEffect e) {
+		return aepl.isNormalArmorEffect(e);
+	}
+	
+	public IEffectType getCooldownEffect(){
+		return aepl.getCooldownEffect();
+	}
+	public IEffectType getMaxLaunchByTurnEffect() {
+		return aepl.getMaxLaunchByTurnEffect();
+	}
+	public IEffectType getMaxLaunchByTurnByTargetEffect() {
+		return aepl.getMaxLaunchByTurnByTargetEffect();
+	}
+	
+	//Ne pas toucher ! Le seul à pouvoir setEpli est le plugin d'effets 
+	public void setEpli(AbstractEffectPluginListener epli) {
+		aepl = epli;
+	}
+	public AbstractEffectPluginListener getEpli() {
+		return aepl;
+	}
+	public void unload() {
+		aepl = null;
+	}
+
+
+
+	
+	
+	
+}

@@ -1,0 +1,5 @@
+package Providers;
+
+public class GameServerProvider {
+
+}

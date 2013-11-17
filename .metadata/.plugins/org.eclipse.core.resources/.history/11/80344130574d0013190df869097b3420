@@ -1,0 +1,33 @@
+package Servers.Netty;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.MessageBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageEncoder;
+
+
+public class Encoder extends MessageToMessageEncoder<String> {
+	
+	public Encoder() {
+		super(String.class);
+	}
+	
+    @Override
+    public ByteBuf encode(ChannelHandlerContext ctx, String msg) throws Exception {
+    	ByteBuf buf = Unpooled.buffer();
+    	buf.writeBytes("".getBytes());
+    	//msg.finish();
+    	//buf.writeBytes(msg.getData());
+    	buf.writeBytes(msg.getBytes());
+        return buf;
+    }
+
+	@Override
+	protected void encode(ChannelHandlerContext ctx, String msg, MessageBuf<Object> out) throws Exception {
+		// TODO Auto-generated method stub
+		out.add(msg);
+	}
+    
+}

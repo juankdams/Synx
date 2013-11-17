@@ -1,0 +1,6 @@
+package WakfuPackets;
+
+public enum OutPacketsEnum {
+	RsaKey(1032),
+	
+}

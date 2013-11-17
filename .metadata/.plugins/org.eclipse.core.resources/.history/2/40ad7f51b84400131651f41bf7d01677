@@ -1,0 +1,43 @@
+package Game;
+
+import java.util.ArrayList;
+
+import piou.scripts.ExecutableScript;
+import piou.scripts.ScriptsService;
+import Abstractions.AbstractSqlService;
+import ConfigurationObjects.GConfig;
+import Constants.CWorld;
+import GameClientStrategies.GameClientStrategy;
+import GameObjects.GWorld;
+import Login.LServer;
+import Misc.LifeRegenerator;
+import NewThreads.ThreadsManager;
+import Plugins.Managers.PluginsManager;
+
+public interface GameServer {
+	
+
+	LServer loginServer = null;
+	GConfig config = null;
+	GWorld world = null;
+	CWorld cWorld = null;
+	AbstractSqlService sqlService = null;
+	ScriptsService<ExecutableScript> scripts = null;
+	PluginsManager pluginsManager = null;
+	GameClientStrategy gameClientStrategy = null;
+	
+	long uptime = System.currentTimeMillis();
+	byte state = 0;
+	byte requiredGM = 0;//On peut bloquer l'acces au server pour accepter seulment les GM > requiredGM
+	int recordConnexion = 0;
+
+	ArrayList<GClient> clients = null;
+	LifeRegenerator lifeRegen = null;
+	ThreadsManager threadsManager = null;
+	Queue queue = null;
+	ConnexionQueue connexionQueue = null;//TODO objet de ConnexionQueue dans GServer
+	
+	
+	
+
+}

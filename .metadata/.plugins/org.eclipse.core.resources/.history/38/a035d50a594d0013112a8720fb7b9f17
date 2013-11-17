@@ -1,0 +1,120 @@
+package Handlers;
+
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+import org.fusesource.jansi.Ansi;
+
+import Constants.Constants;
+import Core.Exceptions;
+import Core.Syn;
+import Login.LClient;
+import Login.LServer;
+
+public class LHandler extends MinaHandler{
+	
+	public LServer serv = null;
+	
+	public LHandler(LServer serv){
+		this.serv = serv;
+	}
+	
+	@Override
+	public void exceptionCaught(IoSession session, Throwable arg1)
+			throws Exception {
+		// TODO Auto-generated method stub
+		if(session.getAttribute("client") != null){
+			((LClient)session.getAttribute("client")).kick();
+		}
+		System.out.print("L exceptionCaught kicked LClient: ");
+		arg1.printStackTrace();
+		//Syn.w("exceptionCaught : "+arg1.fillInStackTrace(), Ansi.Color.RED);
+	}
+
+	@Override
+	public void messageReceived(IoSession session, Object mess) throws Exception {
+		if (!(mess instanceof String)) {
+			Exceptions.throwException("LHandler.[RECV] : le message recu n'est pas une string.");
+			return;
+		}
+		// TODO Auto-generated method stub
+		LClient c = ((LClient)session.getAttribute("client"));
+		if(c.getHandler() == null){
+			c.kick();
+        	c = null;
+        	return;
+		}
+		String packet = mess.toString();
+		if(c.getHandler().getClass() != this.getClass()){
+			c.getHandler().parse(c, packet);
+		}else{
+			Syn.w("L[RECV] << "+packet, Ansi.Color.GREEN);
+			if(packet.equals(Constants.CLIENT_VERSION)){
+				c.setHandler(new LAuthentificationHandler(serv));//ok
+			}else{//mauvais packet
+				Syn.w("le parse 1.29.1 a FAIL", Ansi.Color.RED);
+    			SM.Account.errorVersion(session);
+    			c.kick();
+            	c = null;
+			}
+		}
+		
+		
+	}
+
+	public void parse(LClient c, String packet) throws Exception{
+		//,... to Override
+	}
+	
+	@Override
+	public void messageSent(IoSession session, Object mess) throws Exception {
+		//Syn.w("messageSent :"+mess.toString());
+	}
+
+	@Override
+	public void sessionClosed(IoSession session) throws Exception {
+		Syn.w("sessionClosed", Ansi.Color.RED);
+		if(((LClient)session.getAttribute("client")) != null){
+			((LClient)session.getAttribute("client")).kick();
+		}
+	}
+
+	//@Override
+	//public void sessionCreated(IoSession arg0) throws Exception {
+		// TODO Auto-generated method stub
+	//	Syn.w("sessionCreated");
+	//}
+
+	@Override
+	public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
+		Syn.w("l sessionIdle id:"+session.getId(), Ansi.Color.RED);
+		//session.close(false);
+		if(((LClient)session.getAttribute("client")) != null){
+			((LClient)session.getAttribute("client")).kick();
+		}
+	}
+
+	@Override
+	public void sessionOpened(IoSession session) throws Exception {
+		Syn.w("l sessionOpened id:"+session.getId(), Ansi.Color.RED);
+		String ip = session.getRemoteAddress().toString().split(":")[0];
+		if(serv.world.getNbrCoPerIP(ip) > serv.MAX_CO_PER_IP){
+			SM.Account.errorTooMany(session);
+			session.close(true);
+		}else
+		if(serv.bannedIPs.contains(ip)){
+			SM.Account.errorBanned(session);
+			session.close(true);
+		}else
+		{
+			LClient c = new LClient(session);
+			session.setAttribute("client", c);
+			c.setHandler(new LHandler(serv));
+			c.setHashKey(SM.Realm.HC(session));
+			serv.clients.add(c);
+		}
+		
+		
+	}
+
+	
+}

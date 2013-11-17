@@ -1,0 +1,54 @@
+1383419460381	Rename field 'providers'
+1383428092475	Infer generic type arguments
+1383429034985	Delete element
+1383429042060	Delete element
+1383429078724	Delete element
+1383429109364	Delete element
+1383429129777	Delete element
+1383429145068	Delete element
+1383429159655	Delete element
+1383429178706	Delete element
+1383429188187	Delete element
+1383430023031	Delete element
+1383430033284	Delete element
+1383430054925	Delete element
+1383430066187	Delete element
+1383430104883	Delete elements
+1383430129340	Delete element
+1383430141166	Delete element
+1383430153762	Delete element
+1383430162516	Delete element
+1383430174738	Delete element
+1383430187207	Delete element
+1383430200954	Delete element
+1383430210439	Delete element
+1383430220963	Delete element
+1383430240585	Delete element
+1383430252247	Delete element
+1383430281926	Delete elements
+1383430293665	Delete element
+1383430344099	Delete elements
+1383430466323	Delete elements
+1383431092771	Delete element
+1383431095001	Delete element
+1383456271196	Encapsulate field 'sexe'
+1383500308616	Encapsulate field 'gameClientStrategy'
+1383500443688	Encapsulate field 'strategy'
+1383504284713	Rename type 'DofusServer'
+1383504657788	Rename type 'GServer'
+1383504668901	Rename type 'GameServer'
+1383504760676	Rename type 'DofusServer'
+1383504767704	Rename type 'WakfuServer'
+1383509592988	Rename type 'BLeh'
+1383509767303	Rename type 'Bleh'
+1383510806767	Rename local variable 'short1'
+1383510888150	Encapsulate field 'gameClientStrategy'
+1383512458798	Delete element
+1383513185994	Rename local variable 's'
+1383513188509	Rename local variable 'login'
+1383513230429	Rename local variable 's'
+1383518640625	Rename method 'getStrategy'
+1383518951873	Move compilation unit
+1383518980520	Rename type 'IWorld'
+1383519754360	Rename method 'setStrategy'
+1383521164150	Encapsulate field 'defaultPluginsManager'
